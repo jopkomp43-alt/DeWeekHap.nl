@@ -3,387 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextLevelLiving - Upgrade je Huis & Tuin</title>
+    
+    <!-- 1. SEO TITEL & BESCHRIJVING -->
+    <title>Review: BURNHARD Tony Pizzaoven - De Beste Buitenoven van 2026?</title>
+    <meta name="description" content="Review van de BURNHARD Tony Pizzaoven. Bakt krokante pizza's in 60 seconden met pellets. Is dit het beste alternatief voor Ooni? Lees onze test.">
+    
+    <!-- 2. AI & SCHEMA MARKUP -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": "BURNHARD Tony Pizzaoven",
+      "image": "https://jopkomp43-alt.github.io/next-level-living/tony.png",
+      "description": "Compacte pizzaoven voor buiten. Werkt op pellets, bereikt 500°C en bakt pizza's in minder dan 60 seconden.",
+      "brand": {
+        "@type": "Brand",
+        "name": "BURNHARD"
+      },
+      "review": {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "4.7",
+          "bestRating": "5"
+        },
+        "author": {
+          "@type": "Organization",
+          "name": "NextLevelLiving"
+        }
+      },
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "Amazon"
+        }
+      }
+    }
+    </script>
+
     <style>
-        /* Basis Instellingen */
+        /* Modern, Clean Design */
+        :root {
+            --primary: #e74c3c; /* Rood voor Pizza/Vuur sfeer */
+            --dark: #2c3e50;
+            --light: #f9fbfd;
+            --accent: #f39c12; /* Goudgeel voor de actieknop */
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f9f4;
+            background-color: var(--light);
             color: #333;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
-        /* Header */
-        header {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: white;
-            padding: 60px 20px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        header h1 {
-            margin: 0;
-            font-size: 3rem;
-            letter-spacing: 1px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-            text-transform: uppercase;
-        }
-        header p {
-            font-size: 1.3rem;
-            margin-top: 10px;
-            opacity: 0.95;
-            font-weight: 300;
-        }
-
-        /* Container */
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* Intro Box */
-        .intro-box {
+        /* Navigatie */
+        nav {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 40px;
+            padding: 20px;
             text-align: center;
-            border-left: 6px solid #27ae60;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-
-        /* Grid voor producten */
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
+        nav .brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--dark);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        /* Product Kaarten */
-        .product-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.2s, box-shadow 0.2s;
+        /* Hero Sectie */
+        .hero {
             display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-
-        /* Afbeeldingen & Fallback */
-        .image-container {
-            width: 100%;
-            height: 220px;
-            background-color: #eee;
-            position: relative;
-            overflow: hidden;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .product-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* Fallback Box */
-        .img-fallback {
-            display: none; 
-            width: 100%;
-            height: 100%;
+            flex-wrap: wrap;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
             align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #555;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-color: #e0e0e0;
-            text-align: center;
-            padding: 10px;
+            gap: 40px;
         }
 
-        .card-content {
-            padding: 25px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
+        .hero-text {
+            flex: 1;
+            min-width: 300px;
         }
 
-        .card-content h2 {
-            margin-top: 0;
-            color: #1e8449;
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-        }
-
-        .card-content p {
-            font-size: 0.95rem;
-            color: #666;
+        .hero-text h1 {
+            font-size: 2.8rem;
+            line-height: 1.1;
             margin-bottom: 20px;
+            color: var(--dark);
         }
 
-        .price-tag {
-            align-self: flex-start;
-            background-color: #e8f8f5;
-            color: #16a085;
-            padding: 5px 12px;
-            border-radius: 20px;
+        .hero-text .badge {
+            background-color: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
             font-weight: bold;
-            font-size: 0.75rem;
-            margin-bottom: 15px;
             text-transform: uppercase;
         }
 
-        .btn-buy {
-            margin-top: auto;
-            display: block;
+        .hero-image {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+            text-align: center;
+        }
+
+        .hero-image img {
             width: 100%;
-            background-color: #e67e22; 
-            color: white;
-            padding: 12px 0;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            transition: background-color 0.3s ease;
-        }
-        .btn-buy:hover {
-            background-color: #d35400;
-        }
-
-        .disclaimer {
-            font-size: 0.7rem;
-            color: #aaa;
-            text-align: center;
-            margin-top: 8px;
-        }
-
-        /* Bio Sectie */
-        .bio-section {
-            background-color: #2c3e50;
-            color: white;
-            padding: 40px 20px;
-            border-radius: 12px;
-            margin-top: 60px;
-            text-align: center;
-        }
-        .bio-section h3 {
-            margin-top: 0;
-            color: #2ecc71;
-            font-size: 1.5rem;
-        }
-        .bio-section p {
             max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.8;
-            font-size: 1rem;
+            border-radius: 20px;
+            background-color: white; 
+            padding: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            object-fit: contain;
         }
 
+        /* Actieknop */
+        .cta-button {
+            display: inline-block;
+            background-color: var(--accent);
+            color: white;
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 50px;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        }
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.6);
+        }
+
+        /* USP Grid */
+        .features {
+            background: white;
+            padding: 60px 20px;
+            margin-top: 40px;
+        }
+        
+        .features-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            text-align: left;
+            padding: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        .feature-card h3 { margin-top: 0; }
+
+        /* Sfeerfoto container */
+        .sfeer-container {
+            max-width: 900px;
+            margin: 0 auto 60px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        .sfeer-container img {
+            width: 100%;
+            display: block;
+        }
+
+        /* Review Score */
+        .score-box {
+            background: #fff;
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+        .stars { color: gold; }
+
+        /* Footer */
         footer {
             text-align: center;
             padding: 40px 20px;
-            color: #7f8c8d;
-            font-size: 0.9rem;
-            border-top: 1px solid #dcece6;
+            color: #777;
+            font-size: 0.85rem;
             margin-top: 60px;
-            background-color: white;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+        
+        .legal {
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>NextLevelLiving</h1>
-    <p>Upgrade je huis & tuin met de beste gear voor 2026</p>
-</header>
+    <nav>
+        <div class="brand">NextLevelLiving</div>
+    </nav>
 
-<div class="container">
+    <header class="hero">
+        <div class="hero-text">
+            <span class="badge">Beste Koop 2026</span>
+            <div class="score-box">
+                <span class="stars">★★★★★</span> 4.7/5 Uitstekend
+            </div>
+            
+            <h1>BURNHARD 'Tony' Pizzaoven</h1>
+            
+            <p>
+                Wil je echte Napolitaanse pizza's bakken, maar geen duizenden euro's uitgeven? De <strong>Burnhard Tony</strong> is het antwoord. 
+                Deze compacte krachtpatser stook je op met pellets tot wel <strong>500°C</strong>. Het resultaat? Een perfecte, knapperige bodem in slechts 60 seconden.
+            </p>
 
-    <div class="intro-box">
-        <h3>Onze Top 10 voor dit Seizoen</h3>
-        <p>Wij selecteren alleen de producten die je huis écht upgraden. Van slimme beveiliging tot de ultieme tuinervaring.</p>
-    </div>
+            <!-- JOUW AMAZON AFFILIATE LINK -->
+            <a href="https://amzn.eu/d/28q2jP7" target="_blank" class="cta-button">
+                Bekijk Actuele Prijs &rarr;
+            </a>
+            <p style="font-size: 0.9rem; color: #777; margin-top: 10px;">*Veilig & Snel via Amazon.nl</p>
+        </div>
 
-    <div class="product-grid">
+        <div class="hero-image">
+            <!-- 
+                HOOFDFOTO:
+                Zorg dat 'tony.png' in je GitHub staat. 
+                Dit is de foto met de witte achtergrond.
+            -->
+            <img 
+                src="tony.png" 
+                alt="BURNHARD Tony Pizzaoven"
+                onerror="this.src='https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=800&q=80'"
+            >
+        </div>
+    </header>
 
-        <!-- 1. LOUNGESET -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://images.unsplash.com/photo-1560185007-cde436f6a4d0?auto=format&fit=crop&w=600&q=80" alt="Luxe Tuinset" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #d5dbdb;">[Afbeelding: Tuinset]</div>
-            </div>
-            <div class="card-content">
-                <span class="price-tag">Tuin Topper</span>
-                <h2>GardenLife Hoekbank XL</h2>
-                <p>Weerbestendige loungeset. Geen gesleep meer met kussens bij een regenbui. Perfect voor het vroege voorjaar.</p>
-                <a href="https://www.bol.com/nl/nl/l/tuinmeubelen/12974/" target="_blank" class="btn-buy">Bekijk bij Bol.com &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
-            </div>
-        </article>
+    <section class="features">
+        
+        <!-- SFEERFOTO: Zorg dat 'tony-sfeer.jpg' in je GitHub staat -->
+        <div class="sfeer-container">
+            <img src="tony-sfeer.jpg" alt="Pizza bakken in de tuin met de Tony" onerror="this.style.display='none'">
+        </div>
 
-        <!-- 2. HOGEDRUKREINIGER -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=600&q=80" alt="Hogedrukreiniger" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #f9e79f;">[Afbeelding: Kärcher]</div>
+        <div class="features-container">
+            <div class="feature-card">
+                <h3>🔥 500°C in 15 minuten</h3>
+                <p>Geen lange wachttijden. Vul het vakje met pellets, steek ze aan en binnen een kwartier is je oven gloeiend heet en klaar voor gebruik.</p>
             </div>
-            <div class="card-content">
-                <span class="price-tag">Schoonmaak</span>
-                <h2>Kärcher K4 Power Control</h2>
-                <p>Maak je oprit en terras in één middag weer als nieuw. Krachtig tegen groene aanslag, veilig voor hout.</p>
-                <a href="https://www.coolblue.nl/hogedrukreinigers" target="_blank" class="btn-buy">Bekijk bij Coolblue &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
+            <div class="feature-card">
+                <h3>🍕 Echte Houtsmaak</h3>
+                <p>Doordat je op echte houtpellets stookt, krijg je die authentieke, rokerige steenoven-smaak die je met een elektrische oven nooit krijgt.</p>
             </div>
-        </article>
+            <div class="feature-card">
+                <h3>✅ Slim Design</h3>
+                <p>Gemaakt van geëmailleerd staal in matzwart. Hij ziet er niet alleen stoer uit, maar houdt de warmte ook perfect vast dankzij de dubbele wand.</p>
+            </div>
+        </div>
+    </section>
 
-        <!-- 3. ROBOTMAAIER -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://images.unsplash.com/photo-1586943101559-4cdcf86a6f87?auto=format&fit=crop&w=600&q=80" alt="Mooi gazon" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #a9dfbf;">[Afbeelding: Robotmaaier]</div>
-            </div>
-            <div class="card-content">
-                <span class="price-tag">Gemak</span>
-                <h2>Gardena Sileno City</h2>
-                <p>Nooit meer zelf maaien. Deze stille robot houdt je gazon elke dag perfect bij, terwijl jij in je loungeset ligt.</p>
-                <a href="https://www.coolblue.nl/robotmaaiers" target="_blank" class="btn-buy">Check voorraad &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
-            </div>
-        </article>
-
-        <!-- 4. PIZZA OVEN (FIXED) -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Pizza_oven.jpg/800px-Pizza_oven.jpg" alt="Pizza Oven" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #f5b7b1;">[Afbeelding: Pizza Oven]</div>
-            </div>
-            <div class="card-content">
-                <span class="price-tag">Kook Trend</span>
-                <h2>Ooni Koda 12 Pizzaoven</h2>
-                <p>Bak restaurant-kwaliteit pizza's in je eigen achtertuin in slechts 60 seconden. Werkt op gas, dus geen gedoe.</p>
-                <a href="https://www.amazon.nl/s?k=ooni+pizzaoven" target="_blank" class="btn-buy">Bekijk op Amazon &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
-            </div>
-        </article>
-
-        <!-- 5. TERRASVERWARMER (FIXED) -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Patio_heater.jpg/640px-Patio_heater.jpg" alt="Terras sfeer" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #fad7a0;">[Afbeelding: Heater]</div>
-            </div>
-            <div class="card-content">
-                <span class="price-tag">Warmte</span>
-                <h2>Eurom Golden Shadow</h2>
-                <p>Verleng je avonden. Met deze elektrische heater zit je er ook in februari en maart al warmpjes bij.</p>
-                <a href="https://www.bol.com/nl/nl/l/terrasverwarmers/16848/" target="_blank" class="btn-buy">Bekijk prijzen &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
-            </div>
-        </article>
-
-        <!-- 6. SLIMME VERLICHTING -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://images.unsplash.com/photo-1510265119258-db115b0e8172?auto=format&fit=crop&w=600&q=80" alt="Tuinverlichting" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #d2b4de;">[Afbeelding: Philips Hue]</div>
-            </div>
-            <div class="card-content">
-                <span class="price-tag">Sfeer</span>
-                <h2>Philips Hue Buitenlampen</h2>
-                <p>Bedien je tuinverlichting met je telefoon. Zet scenes klaar voor 'Diner', 'Feestje' of 'Relaxen'.</p>
-                <a href="https://www.coolblue.nl/slimme-verlichting/buitenverlichting" target="_blank" class="btn-buy">Bekijk starterpack &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
-            </div>
-        </article>
-
-        <!-- 7. SLIMME DEURBEL (FIXED) -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Video_doorbell.jpg/640px-Video_doorbell.jpg" alt="Voordeur" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #85c1e9;">[Afbeelding: Deurbel]</div>
-            </div>
-            <div class="card-content">
-                <span class="price-tag">Veiligheid</span>
-                <h2>Eufy Video Doorbell 2K</h2>
-                <p>Zie altijd wie er voor de deur staat, zonder maandelijkse abonnementskosten. Inclusief HomeBase.</p>
-                <a href="https://www.coolblue.nl/smart-home-beveiliging/slimme-deurbellen" target="_blank" class="btn-buy">Bekijk deal &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
-            </div>
-        </article>
-
-        <!-- 8. KAMADO BBQ -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://images.unsplash.com/photo-1592659762303-90081d34b277?auto=format&fit=crop&w=600&q=80" alt="BBQ Grill" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #566573; color:white;">[Afbeelding: BBQ]</div>
-            </div>
-            <div class="card-content">
-                <span class="price-tag">Culinair</span>
-                <h2>The Bastard Compact</h2>
-                <p>De ultieme keramische BBQ voor de echte liefhebber. Slow cooking, grillen en roken op topniveau.</p>
-                <a href="https://www.bol.com/nl/nl/l/kamado-bbqs/33364/" target="_blank" class="btn-buy">Bekijk acties &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
-            </div>
-        </article>
-
-        <!-- 9. HEGGENSCHAAR -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=600&q=80" alt="Tuinieren" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #48c9b0;">[Afbeelding: Makita]</div>
-            </div>
-            <div class="card-content">
-                <span class="price-tag">Tuingereedschap</span>
-                <h2>Makita Accu Heggenschaar</h2>
-                <p>Snoerloos snoeien met Japanse kwaliteit. Maak je tuin in maart weer strak zonder gedoe met verlengsnoeren.</p>
-                <a href="https://www.bol.com/nl/nl/l/heggenscharen/12999/" target="_blank" class="btn-buy">Check prijzen &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
-            </div>
-        </article>
-
-        <!-- 10. AIRFRYER (FIXED) -->
-        <article class="product-card">
-            <div class="image-container">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Air_fryer.jpg/640px-Air_fryer.jpg" alt="Gezond eten" class="product-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                <div class="img-fallback" style="background-color: #2c3e50; color: white;">[Afbeelding: Airfryer]</div>
-            </div>
-            <div class="card-content">
-                <span class="price-tag">Gezond</span>
-                <h2>Philips Airfryer XXL</h2>
-                <p>Gezonder snacken en koken. Perfect voor de goede voornemens. Groot genoeg voor het hele gezin.</p>
-                <a href="https://www.coolblue.nl/hetelucht-friteuses" target="_blank" class="btn-buy">Bekijk aanbieding &rarr;</a>
-                <div class="disclaimer">*Link opent in nieuw venster</div>
-            </div>
-        </article>
-
-    </div>
-
-    <!-- BIO SECTIE -->
-    <div class="bio-section">
-        <h3>Over NextLevelLiving</h3>
-        <p>
-            Bij NextLevelLiving geloven we dat je huis voor jou moet werken, niet andersom. 
-            Wij speuren het internet af naar de slimste gadgets en mooiste meubels die écht de moeite waard zijn. 
-            Geen uren meer zoeken en vergelijken: wij selecteren alleen de producten die je leven makkelijker en mooier maken.
-        </p>
-    </div>
-
-</div>
-
-<footer>
-    &copy; 2026 NextLevelLiving - <a href="#" style="color:#7f8c8d;">Privacy Policy</a><br>
-    <small>Wij ontvangen soms een commissie als je via onze links koopt.</small>
-</footer>
+    <footer>
+        <div class="legal">
+            &copy; 2026 NextLevelLiving.<br><br>
+            <strong>Disclaimer:</strong> NextLevelLiving is een deelnemer aan het Amazon Services LLC Associates Programma.
+            <br>
+            <strong>Als Amazon Associate verdien ik aan gekwalificeerde aankopen.</strong> 
+            <br>
+            Dit betekent dat wij een kleine commissie kunnen ontvangen als je via onze links iets koopt, zonder extra kosten voor jou.
+        </div>
+    </footer>
 
 </body>
 </html>

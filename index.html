@@ -1,291 +1,447 @@
-!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+import React, { useState } from 'react';
+import { ShoppingCart, ChefHat, Clock, CheckCircle, ArrowRight, Star, Truck, X, Sparkles, Utensils, Plus } from 'lucide-react';
+
+const App = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null); // Nu slaan we het hele object op
+    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [wantsUpgrade, setWantsUpgrade] = useState(false); // State voor de upgrade
     
-    <!-- 1. SEO TITEL & BESCHRIJVING -->
-    <title>Review: BURNHARD Tony Pizzaoven - De Beste Buitenoven van 2026?</title>
-    <meta name="description" content="Review van de BURNHARD Tony Pizzaoven. Bakt krokante pizza's in 60 seconden met pellets. Is dit het beste alternatief voor Ooni? Lees onze test.">
-    
-    <!-- 2. AI & SCHEMA MARKUP -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org/",
-      "@type": "Product",
-      "name": "BURNHARD Tony Pizzaoven",
-      "image": "https://jopkomp43-alt.github.io/next-level-living/tony.png",
-      "description": "Compacte pizzaoven voor buiten. Werkt op pellets, bereikt 500°C en bakt pizza's in minder dan 60 seconden.",
-      "brand": {
-        "@type": "Brand",
-        "name": "BURNHARD"
-      },
-      "review": {
-        "@type": "Review",
-        "reviewRating": {
-          "@type": "Rating",
-          "ratingValue": "4.7",
-          "bestRating": "5"
+    // State voor de Restjes Generator
+    const [leftoverInput, setLeftoverInput] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generatedRecipe, setGeneratedRecipe] = useState(null);
+
+    const upgradePrice = 5.00;
+
+    const openModal = (product) => {
+        setSelectedProduct(product);
+        setWantsUpgrade(false); // Reset de upgrade keuze bij openen
+        setIsModalOpen(true);
+        setFormSubmitted(false);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setFormSubmitted(true);
+    };
+
+    const handleGenerateRecipe = (e) => {
+        e.preventDefault();
+        if (!leftoverInput.trim()) return;
+
+        setIsGenerating(true);
+        setGeneratedRecipe(null);
+
+        // Simpele logica om een passend recept te kiezen op basis van trefwoorden
+        const lowerInput = leftoverInput.toLowerCase();
+        let dishType = "Roerbak";
+        
+        if (lowerInput.includes("pasta") || lowerInput.includes("macaroni") || lowerInput.includes("spaghetti") || lowerInput.includes("fusilli")) {
+            dishType = "Pasta";
+        } else if (lowerInput.includes("aardappel") || lowerInput.includes("krieltjes") || lowerInput.includes("puree")) {
+            dishType = "Ovenschotel";
+        } else if (lowerInput.includes("rijst") || lowerInput.includes("nasi")) {
+            dishType = "Nasi";
+        } else if (lowerInput.includes("ei") || lowerInput.includes("eieren")) {
+            dishType = "Boerenomelet";
+        } else if (lowerInput.includes("brood") || lowerInput.includes("bolletje")) {
+            dishType = "Tosti";
+        }
+
+        // Simulatie van AI die nadenkt
+        setTimeout(() => {
+            setIsGenerating(false);
+            
+            let title = "";
+            let specificSteps = [];
+
+            if (dishType === "Ovenschotel") {
+                title = `Gegratineerde Ovenschotel met ${leftoverInput}`;
+                specificSteps = [
+                    "Verwarm de oven voor op 200 graden.",
+                    `Snijd de ${leftoverInput} in plakjes of blokjes.`,
+                    "Meng alles in een ovenschaal met wat room (of melk) en een geklopt eitje.",
+                    "Strooi er flink wat geraspte kaas overheen.",
+                    "Bak 20-25 minuten in de oven tot de bovenkant goudbruin is."
+                ];
+            } else if (dishType === "Pasta") {
+                title = `Romige Pasta Surprise met ${leftoverInput}`;
+                specificSteps = [
+                    "Kook de pasta volgens de verpakking (als je die nog moet koken).",
+                    `Bak de ${leftoverInput} in een koekenpan met wat olijfolie of boter.`,
+                    "Voeg een scheutje kookroom, roomkaas of een blikje tomatenblokjes toe voor de saus.",
+                    "Meng de saus door de pasta en verwarm goed door.",
+                    "Maak af met Italiaanse kruiden, peper en zout."
+                ];
+            } else if (dishType === "Boerenomelet") {
+                title = `Rijkgevulde Boerenomelet met ${leftoverInput}`;
+                specificSteps = [
+                    "Kluts 3 eieren met een scheutje melk, peper en zout.",
+                    `Bak de ${leftoverInput} eerst even aan in de koekenpan tot het gaar is.`,
+                    "Giet het eimengsel eroverheen.",
+                    "Zet het vuur laag en doe de deksel op de pan tot het ei gestold is.",
+                    "Klap dubbel en serveer op een lekkere boterham."
+                ];
+            } else if (dishType === "Tosti") {
+                title = `Luxe 'Melt' Tosti met ${leftoverInput}`;
+                specificSteps = [
+                    "Besmeer de buitenkant van het brood dunnetjes met boter (voor extra crunch).",
+                    `Beleg het brood met kaas en jouw restjes: ${leftoverInput}.`,
+                    "Bak de tosti in de pan of tosti-ijzer tot de kaas gesmolten is.",
+                    "Serveer met een dipsausje van ketchup of curry."
+                ];
+            } else {
+                title = `Aziatische Wokschotel met ${leftoverInput}`;
+                specificSteps = [
+                    `Snijd de ${leftoverInput} in kleine, gelijke stukjes.`,
+                    "Verhit een scheut olie in een wok of hapjespan tot hij goed heet is.",
+                    "Roerbak alles 3-5 minuten op hoog vuur.",
+                    "Blus af met een scheutje sojasaus, ketjap en wat knoflookpoeder.",
+                    "Serveer direct (lekker met rijst of noedels uit de voorraadkast)."
+                ];
+            }
+
+            setGeneratedRecipe({
+                title: title,
+                intro: `Hmm, lekker! Met jouw ingrediënten (${leftoverInput}) is dit het perfecte recept:`,
+                steps: specificSteps
+            });
+        }, 1500);
+    };
+
+    const products = [
+        {
+            title: "Budget Knaller",
+            price: 10,
+            desc: "Lekker eten voor weinig geld. Focus op aanbiedingen.",
+            features: ["Max €60 boodschappen p/w", "Slimme restjes verwerking", "Recepten in PDF"],
+            color: "bg-green-100 text-green-800",
+            btnColor: "bg-green-600 hover:bg-green-700"
         },
-        "author": {
-          "@type": "Organization",
-          "name": "NextLevelLiving"
+        {
+            title: "Gezins Favoriet",
+            price: 10,
+            desc: "Gerechten die kinderen écht lusten. Veel groenten, geen gedoe.",
+            features: ["4 Personen", "Binnen 25 min op tafel", "Recepten in PDF"],
+            color: "bg-blue-100 text-blue-800",
+            btnColor: "bg-blue-600 hover:bg-blue-700"
+        },
+        {
+            title: "Snel & Simpel",
+            price: 10,
+            desc: "Voor de drukke ondernemer. Gezond eten in recordtijd.",
+            features: ["Max 15 min bereiding", "Weinig afwas", "Recepten in PDF"],
+            color: "bg-orange-100 text-orange-800",
+            btnColor: "bg-orange-600 hover:bg-orange-700"
         }
-      },
-      "offers": {
-        "@type": "Offer",
-        "priceCurrency": "EUR",
-        "availability": "https://schema.org/InStock",
-        "seller": {
-          "@type": "Organization",
-          "name": "Amazon"
-        }
-      }
-    }
-    </script>
+    ];
 
-    <style>
-        /* Modern, Clean Design */
-        :root {
-            --primary: #e74c3c; /* Rood voor Pizza/Vuur sfeer */
-            --dark: #2c3e50;
-            --light: #f9fbfd;
-            --accent: #f39c12; /* Goudgeel voor de actieknop */
-        }
+    const heroPatternStyle = {
+        backgroundColor: '#f3f4f6',
+        backgroundImage: 'radial-gradient(#3b82f6 0.5px, #f3f4f6 0.5px)',
+        backgroundSize: '10px 10px'
+    };
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--light);
-            color: #333;
-            line-height: 1.7;
-        }
+    return (
+        <div className="min-h-screen bg-white text-gray-800 font-sans">
+            {/* Navigation */}
+            <nav className="bg-white shadow-sm sticky top-0 z-40">
+                <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                        <ChefHat className="text-blue-600" size={32} />
+                        <span className="text-xl font-bold text-gray-900">Het GemaksMenu</span>
+                    </div>
+                    <div className="hidden md:flex space-x-6">
+                        <button onClick={() => document.getElementById('restjes-tool')?.scrollIntoView({behavior: 'smooth'})} className="text-gray-600 hover:text-blue-600 font-medium">
+                            Restjes Tool
+                        </button>
+                        <button onClick={() => document.getElementById('hoe-werkt-het')?.scrollIntoView({behavior: 'smooth'})} className="text-gray-600 hover:text-blue-600 font-medium">
+                            Hoe werkt het?
+                        </button>
+                    </div>
+                    <button 
+                        onClick={() => document.getElementById('producten')?.scrollIntoView({behavior: 'smooth'})} 
+                        className="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-700 transition"
+                    >
+                        Kies je Menu
+                    </button>
+                </div>
+            </nav>
 
-        /* Navigatie */
-        nav {
-            background: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        nav .brand {
-            font-weight: 800;
-            font-size: 1.5rem;
-            color: var(--dark);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+            {/* Hero Section */}
+            <header style={heroPatternStyle} className="py-20 lg:py-32">
+                <div className="container mx-auto px-6 flex flex-col lg:flex-row items-center">
+                    <div className="lg:w-1/2 mb-10 lg:mb-0">
+                        <h1 className="text-4xl lg:text-6xl font-bold leading-tight mb-6">
+                            Nooit meer stress over <span className="text-blue-600">"Wat eten we vandaag?"</span>
+                        </h1>
+                        <p className="text-lg text-gray-600 mb-8">
+                            Ontvang voor een tientje een compleet weekmenu op maat. Wil je extra gemak? Upgrade dan naar de slimme klikbare boodschappenlijst.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <button 
+                                onClick={() => document.getElementById('producten')?.scrollIntoView({behavior: 'smooth'})} 
+                                className="flex items-center justify-center bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-blue-700 transition shadow-lg"
+                            >
+                                Bekijk Menu's <ArrowRight className="ml-2" />
+                            </button>
+                            <div className="flex items-center justify-center text-gray-500 font-medium">
+                                <Star className="text-yellow-400 mr-2" fill="currentColor" /> Al door 150+ gezinnen gebruikt
+                            </div>
+                        </div>
+                    </div>
+                    <div className="lg:w-1/2 flex justify-center">
+                        <div className="relative bg-white p-6 rounded-2xl shadow-2xl max-w-md transform rotate-2 hover:rotate-0 transition duration-500">
+                            <div className="absolute -top-4 -right-4 bg-green-500 text-white px-4 py-2 rounded-full font-bold shadow-md">
+                                Bespaar ± €30 p/w
+                            </div>
+                            <div className="h-64 bg-gray-200 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1543339308-43e59f6b73a6?auto=format&fit=crop&q=80&w=600" alt="Gezond Eten" className="object-cover w-full h-full"/>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="h-4 bg-gray-100 rounded w-3/4"></div>
+                                <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                                <div className="flex items-center text-green-600 font-semibold mt-4">
+                                    <CheckCircle size={20} className="mr-2" /> Nu ook met AH koppeling
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-        /* Hero Sectie */
-        .hero {
-            display: flex;
-            flex-wrap: wrap;
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 20px;
-            align-items: center;
-            gap: 40px;
-        }
+            {/* Restjes Tool (Ongewijzigd) */}
+            <section id="restjes-tool" className="py-20 bg-blue-50">
+                <div className="container mx-auto px-6">
+                    <div className="max-w-3xl mx-auto text-center">
+                        <div className="inline-block p-3 bg-blue-100 rounded-full mb-4">
+                            <Sparkles className="text-blue-600" size={32} />
+                        </div>
+                        <h2 className="text-3xl font-bold mb-4">Probeer het gratis: De Restjes Generator</h2>
+                        <p className="text-gray-600 mb-8">
+                            Heb je nog wat in de koelkast liggen en geen inspiratie? Typ het hieronder in (bijv: "halve bloemkool, beetje rijst, ui") en ik verzin direct een recept voor je.
+                        </p>
 
-        .hero-text {
-            flex: 1;
-            min-width: 300px;
-        }
+                        <div className="bg-white p-6 rounded-2xl shadow-lg">
+                            <form onSubmit={handleGenerateRecipe} className="flex flex-col md:flex-row gap-4">
+                                <input 
+                                    type="text" 
+                                    value={leftoverInput}
+                                    onChange={(e) => setLeftoverInput(e.target.value)}
+                                    placeholder="Wat heb je in huis? (bijv. courgette, aardappels, spekjes)"
+                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                                <button 
+                                    type="submit" 
+                                    disabled={isGenerating}
+                                    className="bg-purple-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-purple-700 transition flex items-center justify-center"
+                                >
+                                    {isGenerating ? 'Aan het denken...' : 'Verzin Recept'} <Utensils className="ml-2" size={20} />
+                                </button>
+                            </form>
 
-        .hero-text h1 {
-            font-size: 2.8rem;
-            line-height: 1.1;
-            margin-bottom: 20px;
-            color: var(--dark);
-        }
+                            {generatedRecipe && (
+                                <div className="mt-8 text-left bg-green-50 p-6 rounded-xl border border-green-100 animate-[fadeInUp_0.5s_ease-out]">
+                                    <h3 className="text-xl font-bold text-green-800 mb-2">{generatedRecipe.title}</h3>
+                                    <p className="text-sm text-green-700 mb-4 italic">{generatedRecipe.intro}</p>
+                                    <ul className="space-y-2 mb-6">
+                                        {generatedRecipe.steps.map((step, idx) => (
+                                            <li key={idx} className="flex items-start text-gray-700">
+                                                <span className="bg-green-200 text-green-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">{idx + 1}</span>
+                                                {step}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <div className="border-t border-green-200 pt-4 mt-4 text-center">
+                                        <p className="font-bold text-gray-800 mb-2">Vind je dit handig?</p>
+                                        <button 
+                                            onClick={() => document.getElementById('producten')?.scrollIntoView({behavior: 'smooth'})}
+                                            className="text-blue-600 hover:text-blue-800 font-semibold hover:underline"
+                                        >
+                                            → Bestel het complete weekmenu voor €10 en hoef nooit meer na te denken!
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        .hero-text .badge {
-            background-color: var(--primary);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
+            {/* How it works */}
+            <section id="hoe-werkt-het" className="py-20 bg-white">
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold mb-4">Hoe werkt het weekmenu?</h2>
+                        <p className="text-gray-600">Kies voor gemak en breid uit met slimme tools.</p>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-12">
+                        <div className="text-center">
+                            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <ChefHat className="text-blue-600" size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">1. Het Menu (Basis)</h3>
+                            <p className="text-gray-600">Je krijgt een PDF met recepten en een standaard boodschappenlijst.</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Truck className="text-green-600" size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">2. AH Upgrade (+€5)</h3>
+                            <p className="text-gray-600">Kies je voor de upgrade? Dan is je lijstje klikbaar en vul je direct je AH mandje.</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Clock className="text-orange-600" size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">3. Kook Stressvrij</h3>
+                            <p className="text-gray-600">Elke dag een duidelijk recept. Binnen no-time aan tafel.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        .hero-image {
-            flex: 1;
-            min-width: 300px;
-            position: relative;
-            text-align: center;
-        }
+            {/* Products Section */}
+            <section id="producten" className="py-20 bg-gray-50">
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold mb-4">Kies jouw Weekmenu</h2>
+                        <p className="text-gray-600">Eenmalige aankoop. Upgrade mogelijk bij afrekenen.</p>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {products.map((product, index) => (
+                            <div key={index} className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition duration-300 border border-gray-100 flex flex-col">
+                                <div className="p-8 flex-1 flex flex-col">
+                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mb-4 w-fit ${product.color}`}>
+                                        Populair
+                                    </span>
+                                    <h3 className="text-2xl font-bold mb-2">{product.title}</h3>
+                                    <p className="text-gray-500 mb-6">{product.desc}</p>
+                                    <div className="text-4xl font-bold mb-6">€{product.price},- <span className="text-lg text-gray-400 font-normal">/ 4 weken</span></div>
+                                    
+                                    <ul className="space-y-4 mb-8 flex-1">
+                                        {product.features.map((feature, idx) => (
+                                            <li key={idx} className="flex items-center text-gray-700">
+                                                <CheckCircle size={18} className="text-green-500 mr-3" />
+                                                {feature}
+                                            </li>
+                                        ))}
+                                        <li className="flex items-center text-gray-400">
+                                            <Plus size={18} className="mr-3" />
+                                            Optie: AH Links (+€5)
+                                        </li>
+                                    </ul>
+                                    
+                                    <button 
+                                        onClick={() => openModal(product)}
+                                        className={`w-full py-3 rounded-lg text-white font-bold transition ${product.btnColor}`}
+                                    >
+                                        Bestel Nu
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-        .hero-image img {
-            width: 100%;
-            max-width: 600px;
-            border-radius: 20px;
-            background-color: white; 
-            padding: 20px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            object-fit: contain;
-        }
+            {/* Footer */}
+            <footer className="bg-gray-900 text-white py-12">
+                <div className="container mx-auto px-6 text-center">
+                    <h4 className="text-2xl font-bold mb-4">Het GemaksMenu</h4>
+                    <p className="text-gray-400 mb-8">Wij helpen je besparen, plannen en genieten.</p>
+                    <div className="border-t border-gray-800 pt-8 text-sm text-gray-500">
+                        &copy; 2024 Het GemaksMenu. Alle rechten voorbehouden.
+                    </div>
+                </div>
+            </footer>
 
-        /* Actieknop */
-        .cta-button {
-            display: inline-block;
-            background-color: var(--accent);
-            color: white;
-            padding: 18px 40px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 50px;
-            margin-top: 20px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
-        }
-        .cta-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.6);
-        }
+            {/* Order Modal */}
+            {isModalOpen && selectedProduct && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 relative animate-[fadeInUp_0.3s_ease-out]">
+                        <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                            <X size={24} />
+                        </button>
 
-        /* USP Grid */
-        .features {
-            background: white;
-            padding: 60px 20px;
-            margin-top: 40px;
-        }
-        
-        .features-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-        }
+                        {!formSubmitted ? (
+                            <>
+                                <h3 className="text-2xl font-bold mb-2">Je bestelt: {selectedProduct.title}</h3>
+                                <p className="text-gray-600 mb-6">Vul je gegevens in. Na betaling ontvang je de PDF.</p>
+                                
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    {/* Upgrade Checkbox */}
+                                    <div 
+                                        className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${wantsUpgrade ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-blue-300'}`}
+                                        onClick={() => setWantsUpgrade(!wantsUpgrade)}
+                                    >
+                                        <div className="flex items-start">
+                                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center mr-3 ${wantsUpgrade ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'}`}>
+                                                {wantsUpgrade && <CheckCircle size={14} className="text-white" />}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-gray-900">AH Bestel-Gemak Upgrade</div>
+                                                <div className="text-sm text-gray-600">Directe linkjes naar AH.nl in je PDF. Eén klik en je mandje is vol.</div>
+                                                <div className="font-bold text-green-600 mt-1">+ €{upgradePrice.toFixed(2)}</div>
+                                            </div>
+                                        </div>
+                                    </div>
 
-        .feature-card {
-            text-align: left;
-            padding: 20px;
-            border-left: 4px solid var(--primary);
-        }
-        .feature-card h3 { margin-top: 0; }
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Naam</label>
+                                        <input required type="text" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Jouw naam" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">E-mailadres</label>
+                                        <input required type="email" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="jouw@email.nl" />
+                                    </div>
+                                    
+                                    <div className="bg-blue-50 p-4 rounded-lg flex items-start space-x-3">
+                                        <Truck className="text-blue-600 mt-1" size={20} />
+                                        <p className="text-sm text-blue-800">
+                                            {wantsUpgrade 
+                                                ? "Je ontvangt het Deluxe menu met klikbare AH-lijst." 
+                                                : "Je ontvangt het standaard menu (PDF) met handmatige boodschappenlijst."}
+                                        </p>
+                                    </div>
 
-        /* Sfeerfoto container */
-        .sfeer-container {
-            max-width: 900px;
-            margin: 0 auto 60px;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-        }
-        .sfeer-container img {
-            width: 100%;
-            display: block;
-        }
-
-        /* Review Score */
-        .score-box {
-            background: #fff;
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: bold;
-            color: var(--dark);
-            margin-bottom: 20px;
-            border: 1px solid #eee;
-        }
-        .stars { color: gold; }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 40px 20px;
-            color: #777;
-            font-size: 0.85rem;
-            margin-top: 60px;
-            background: white;
-            border-top: 1px solid #eee;
-        }
-        
-        .legal {
-            max-width: 800px;
-            margin: 0 auto;
-            line-height: 1.5;
-        }
-    </style>
-</head>
-<body>
-
-    <nav>
-        <div class="brand">NextLevelLiving</div>
-    </nav>
-
-    <header class="hero">
-        <div class="hero-text">
-            <span class="badge">Beste Koop 2026</span>
-            <div class="score-box">
-                <span class="stars">★★★★★</span> 4.7/5 Uitstekend
-            </div>
-            
-            <h1>BURNHARD 'Tony' Pizzaoven</h1>
-            
-            <p>
-                Wil je echte Napolitaanse pizza's bakken, maar geen duizenden euro's uitgeven? De <strong>Burnhard Tony</strong> is het antwoord. 
-                Deze compacte krachtpatser stook je op met pellets tot wel <strong>500°C</strong>. Het resultaat? Een perfecte, knapperige bodem in slechts 60 seconden.
-            </p>
-
-            <!-- JOUW AMAZON AFFILIATE LINK -->
-            <a href="https://amzn.eu/d/28q2jP7" target="_blank" class="cta-button">
-                Bekijk Actuele Prijs &rarr;
-            </a>
-            <p style="font-size: 0.9rem; color: #777; margin-top: 10px;">*Veilig & Snel via Amazon.nl</p>
+                                    <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">
+                                        Afrekenen (€{(selectedProduct.price + (wantsUpgrade ? upgradePrice : 0)).toFixed(2)})
+                                    </button>
+                                    <p className="text-xs text-center text-gray-400 mt-2">Veilig betalen via Tikkie / iDeal (Simulatie)</p>
+                                </form>
+                            </>
+                        ) : (
+                            <div className="text-center py-8">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <CheckCircle className="text-green-600" size={40} />
+                                </div>
+                                <h3 className="text-2xl font-bold mb-2">Bedankt!</h3>
+                                <p className="text-gray-600 mb-6">
+                                    Je bestelling voor <strong>{selectedProduct.title}</strong> {wantsUpgrade && <span>(met AH upgrade)</span>} is geslaagd!<br/><br/>
+                                    Check je mail!
+                                </p>
+                                <button onClick={closeModal} className="text-blue-600 font-semibold hover:underline">
+                                    Sluiten
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+            <style>{`
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
         </div>
+    );
+};
 
-        <div class="hero-image">
-            <!-- 
-                HOOFDFOTO:
-                Zorg dat 'tony.png' in je GitHub staat. 
-                Dit is de foto met de witte achtergrond.
-            -->
-            <img 
-                src="tony.png" 
-                alt="BURNHARD Tony Pizzaoven"
-                onerror="this.src='https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=800&q=80'"
-            >
-        </div>
-    </header>
-
-    <section class="features">
-        
-        <!-- SFEERFOTO: Zorg dat 'tony-sfeer.jpg' in je GitHub staat -->
-        <div class="sfeer-container">
-            <img src="tony-sfeer.jpg" alt="Pizza bakken in de tuin met de Tony" onerror="this.style.display='none'">
-        </div>
-
-        <div class="features-container">
-            <div class="feature-card">
-                <h3>🔥 500°C in 15 minuten</h3>
-                <p>Geen lange wachttijden. Vul het vakje met pellets, steek ze aan en binnen een kwartier is je oven gloeiend heet en klaar voor gebruik.</p>
-            </div>
-            <div class="feature-card">
-                <h3>🍕 Echte Houtsmaak</h3>
-                <p>Doordat je op echte houtpellets stookt, krijg je die authentieke, rokerige steenoven-smaak die je met een elektrische oven nooit krijgt.</p>
-            </div>
-            <div class="feature-card">
-                <h3>✅ Slim Design</h3>
-                <p>Gemaakt van geëmailleerd staal in matzwart. Hij ziet er niet alleen stoer uit, maar houdt de warmte ook perfect vast dankzij de dubbele wand.</p>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <div class="legal">
-            &copy; 2026 NextLevelLiving.<br><br>
-            <strong>Disclaimer:</strong> NextLevelLiving is een deelnemer aan het Amazon Services LLC Associates Programma.
-            <br>
-            <strong>Als Amazon Associate verdien ik aan gekwalificeerde aankopen.</strong> 
-            <br>
-            Dit betekent dat wij een kleine commissie kunnen ontvangen als je via onze links iets koopt, zonder extra kosten voor jou.
-        </div>
-    </footer>
-
-</body>
-</html>
+export default App;

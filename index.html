@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WeekHap - Gezond Weekmenu</title>
     
-    <!-- React & ReactDOM laden (Development versies voor betere compatibiliteit met UMD scripts) -->
+    <!-- React & ReactDOM laden -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
@@ -15,7 +15,7 @@
     <!-- Tailwind CSS voor styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Lucide Icons (Versie 0.263.1 - werkt bewezen goed met React UMD builds) -->
+    <!-- Lucide Icons -->
     <script crossorigin src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
 
     <style>
@@ -27,6 +27,13 @@
         .animate-in {
             animation: fadeIn 0.3s ease-out forwards;
         }
+        .loading-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -34,20 +41,17 @@
 
     <script type="text/babel">
         // Haal de benodigde functies uit React
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
 
         // Veilige initialisatie van iconen
-        // We proberen verschillende globale namen die Lucide kan gebruiken
         const lucideIcons = window.lucideReact || window.lucide || {};
         
-        // Helper functie om iconen veilig op te halen (voorkomt crashes als er één mist)
+        // Helper functie om iconen veilig op te halen
         const getIcon = (name) => {
             const Icon = lucideIcons[name];
             return Icon ? Icon : () => <span className="text-xs text-gray-400">?</span>;
         };
 
-        // Destructure de iconen die we nodig hebben via de helper
-        // Dit zorgt ervoor dat de pagina niet wit wordt als er een icoon mist
         const ShoppingCart = lucideIcons.ShoppingCart || (() => <span>🛒</span>);
         const Check = lucideIcons.Check || (() => <span>✓</span>);
         const ChefHat = lucideIcons.ChefHat || (() => <span>👨‍🍳</span>);
@@ -65,6 +69,37 @@
         const MessageSquare = lucideIcons.MessageSquare || (() => <span>💬</span>);
         const ThumbsUp = lucideIcons.ThumbsUp || (() => <span>👍</span>);
         const Send = lucideIcons.Send || (() => <span>📤</span>);
+        const Sparkles = lucideIcons.Sparkles || (() => <span>✨</span>);
+        const Wand2 = lucideIcons.Wand2 || (() => <span>🪄</span>);
+        const Calendar = lucideIcons.Calendar || (() => <span>📅</span>);
+
+        // --- UTILS: Datum & Week Logica ---
+        
+        const getCurrentWeekData = () => {
+            const now = new Date();
+            // Weeknummer berekenen
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            const pastDays = (now - startOfYear) / 86400000;
+            const weekNum = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+            
+            // Datum range berekenen (Maandag - Zondag van deze week)
+            const curr = new Date(); 
+            const day = curr.getDay(); // 0 (Zondag) - 6 (Zaterdag)
+            // Verschil berekenen om bij maandag te komen. (Als zondag (0), dan -6, anders dag - 1)
+            const diff = curr.getDate() - day + (day === 0 ? -6 : 1); 
+
+            const monday = new Date(curr.setDate(diff));
+            const sunday = new Date(curr.setDate(diff + 6));
+
+            const options = { day: 'numeric', month: 'long' };
+            const dateRange = `${monday.toLocaleDateString('nl-NL', {day: 'numeric'})} t/m ${sunday.toLocaleDateString('nl-NL', options)}`;
+
+            // Huidige dag naam voor highlight (bijv "Dinsdag")
+            const days = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+            const todayName = days[new Date().getDay()];
+
+            return { weekNum, dateRange, todayName };
+        };
 
         // --- DATA ---
         
@@ -90,19 +125,30 @@
             { id: 3, user: "Lisa Bakker", rating: 5, text: "Voor 10 euro zoveel tijd besparen is het mij 100% waard. De boodschappenlijst klopt precies.", date: "1 week geleden" },
         ];
 
+        const PRICING_PLANS = {
+            SINGLE: { id: 'single', name: 'Los Weekmenu', price: 9.95, label: 'Flexibel', period: 'eenmalig' },
+            SUB: { id: 'sub', name: 'Maandabonnement', price: 29.95, label: 'Slimste Keuze', period: 'per maand' }
+        };
+
         // --- COMPONENTS ---
 
         function App() {
             const [hasPaid, setHasPaid] = useState(false);
             const [showPaymentModal, setShowPaymentModal] = useState(false);
+            const [selectedPlan, setSelectedPlan] = useState(PRICING_PLANS.SINGLE);
             const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+            
+            // Bereken datum info eenmalig bij laden
+            const currentWeekInfo = useMemo(() => getCurrentWeekData(), []);
 
-            // Functie om betaling te simuleren
+            const openPayment = (plan) => {
+                setSelectedPlan(plan);
+                setShowPaymentModal(true);
+            };
+
             const handlePayment = (e) => {
                 e.preventDefault();
-                // In een echte app koppel je hier Mollie of Stripe
                 const button = e.target.querySelector('button');
-                // Check if button exists before modifying
                 if (button) {
                     button.innerHTML = "Verwerken...";
                     button.disabled = true;
@@ -122,6 +168,7 @@
                         shoppingList={shoppingList} 
                         reviews={initialReviews}
                         setHasPaid={setHasPaid} 
+                        weekInfo={currentWeekInfo}
                     />
                 );
             }
@@ -141,12 +188,12 @@
                                 <div className="hidden md:flex items-center space-x-8">
                                     <a href="#hoe-het-werkt" className="text-gray-600 hover:text-green-600 transition">Hoe het werkt</a>
                                     <a href="#voorbeeld" className="text-gray-600 hover:text-green-600 transition">Menu Voorbeeld</a>
-                                    <a href="#reviews" className="text-gray-600 hover:text-green-600 transition">Reviews</a>
+                                    <a href="#prijzen" className="text-gray-600 hover:text-green-600 transition">Prijzen</a>
                                     <button 
-                                        onClick={() => setShowPaymentModal(true)}
+                                        onClick={() => openPayment(PRICING_PLANS.SINGLE)}
                                         className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full font-medium transition shadow-md hover:shadow-lg"
                                     >
-                                        Koop Weekmenu (€10)
+                                        Start Nu
                                     </button>
                                 </div>
                                 <div className="md:hidden">
@@ -161,12 +208,12 @@
                             <div className="md:hidden bg-white border-t p-4 space-y-4 shadow-lg animate-in">
                                 <a href="#hoe-het-werkt" className="block text-gray-600" onClick={() => setMobileMenuOpen(false)}>Hoe het werkt</a>
                                 <a href="#voorbeeld" className="block text-gray-600" onClick={() => setMobileMenuOpen(false)}>Menu Voorbeeld</a>
-                                <a href="#reviews" className="block text-gray-600" onClick={() => setMobileMenuOpen(false)}>Reviews</a>
+                                <a href="#prijzen" className="block text-gray-600" onClick={() => setMobileMenuOpen(false)}>Prijzen</a>
                                 <button 
-                                    onClick={() => { setShowPaymentModal(true); setMobileMenuOpen(false); }}
+                                    onClick={() => { openPayment(PRICING_PLANS.SINGLE); setMobileMenuOpen(false); }}
                                     className="w-full bg-green-600 text-white px-4 py-2 rounded-lg"
                                 >
-                                    Koop Nu (€10)
+                                    Start Nu
                                 </button>
                             </div>
                         )}
@@ -178,21 +225,21 @@
                         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
                             <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
                                 <div className="mb-12 lg:mb-0">
-                                    <span className="inline-block py-1 px-3 rounded-full bg-green-100 text-green-700 text-sm font-semibold mb-6">
-                                        Nieuw: Week 51 Menu Online
+                                    <span className="inline-block py-1 px-3 rounded-full bg-green-100 text-green-700 text-sm font-semibold mb-6 flex items-center gap-2 w-fit">
+                                        <Calendar className="w-4 h-4"/> Nieuw: Week {currentWeekInfo.weekNum} Menu Online
                                     </span>
                                     <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
                                         Gezond eten voor de hele week, <span className="text-green-600">zonder stress.</span>
                                     </h1>
                                     <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                                        Krijg een compleet weekmenu inclusief recepten en slimme boodschappenlijst. Bespaar tijd, geld en eet gevarieerd voor slechts €10.
+                                        Krijg het complete menu voor <strong>{currentWeekInfo.dateRange}</strong>. Inclusief recepten en slimme boodschappenlijst.
                                     </p>
                                     <div className="flex flex-col sm:flex-row gap-4">
                                         <button 
-                                            onClick={() => setShowPaymentModal(true)}
+                                            onClick={() => document.getElementById('prijzen').scrollIntoView({ behavior: 'smooth' })}
                                             className="bg-green-600 hover:bg-green-700 text-white text-lg px-8 py-4 rounded-xl font-bold transition shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2"
                                         >
-                                            Koop dit menu <ArrowRight className="w-5 h-5" />
+                                            Bekijk Opties <ArrowRight className="w-5 h-5" />
                                         </button>
                                         <div className="flex items-center gap-2 justify-center sm:justify-start px-6 py-4 text-gray-600 font-medium">
                                             <div className="flex -space-x-2">
@@ -211,10 +258,10 @@
                                     <div id="voorbeeld" className="bg-white border border-gray-100 rounded-3xl shadow-2xl p-6 relative z-10">
                                         <div className="flex justify-between items-center mb-6 border-b pb-4">
                                             <div>
-                                                <h3 className="font-bold text-xl text-gray-900">Weekmenu Preview</h3>
+                                                <h3 className="font-bold text-xl text-gray-900">Week {currentWeekInfo.weekNum} Preview</h3>
                                                 <p className="text-gray-500 text-sm">7 Dagen • Gezond & Snel</p>
                                             </div>
-                                            <span className="bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-sm">€10,00</span>
+                                            <span className="bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-sm">v.a. €9,95</span>
                                         </div>
                                         <div className="space-y-4">
                                             {weeklyMenu.slice(0, 4).map((item, idx) => (
@@ -268,7 +315,7 @@
                         </div>
                     </section>
 
-                    {/* Reviews Section (Landing Page) */}
+                    {/* Reviews Section */}
                     <section id="reviews" className="py-20 bg-white border-t border-gray-100">
                         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="text-center mb-16">
@@ -297,26 +344,88 @@
                         </div>
                     </section>
 
-                    {/* CTA Section */}
-                    <section className="bg-green-600 py-20">
-                        <div className="max-w-4xl mx-auto px-4 text-center">
-                            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                                Begin vandaag nog met stressvrij koken
-                            </h2>
-                            <p className="text-green-100 text-lg mb-8 max-w-2xl mx-auto">
-                                Direct toegang tot het menu van deze week, de boodschappenlijst en stap-voor-stap instructies.
-                            </p>
-                            <button 
-                                onClick={() => setShowPaymentModal(true)}
-                                className="bg-white text-green-700 text-xl px-10 py-4 rounded-full font-bold hover:bg-gray-100 transition shadow-xl transform hover:scale-105"
-                            >
-                                Koop nu voor €10
-                            </button>
-                            <p className="mt-4 text-green-200 text-sm">Veilig betalen met iDeal / Creditcard</p>
+                    {/* PRICING SECTION */}
+                    <section id="prijzen" className="py-20 bg-green-50 border-t border-green-100">
+                        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="text-center mb-16">
+                                <h2 className="text-3xl font-bold text-gray-900 mb-4">Kies wat bij jou past</h2>
+                                <p className="text-gray-600">Flexibel per week betalen of maximaal besparen met een abonnement.</p>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                                {/* SINGLE OPTION */}
+                                <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative hover:-translate-y-1 transition duration-300">
+                                    <div className="absolute top-0 right-0 bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">
+                                        FLEXIBEL
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">Los Weekmenu</h3>
+                                    <p className="text-gray-500 mb-6 text-sm">Probeer het eenmalig uit. Geen verplichtingen.</p>
+                                    <div className="flex items-baseline gap-1 mb-6">
+                                        <span className="text-4xl font-extrabold text-gray-900">€9,95</span>
+                                        <span className="text-gray-500">/ week</span>
+                                    </div>
+                                    <ul className="space-y-4 mb-8 text-gray-600 text-sm">
+                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> 7 Dagen gezond weekmenu</li>
+                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Slimme boodschappenlijst</li>
+                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Directe PDF download</li>
+                                        <li className="flex gap-2 text-gray-400"><X className="w-5 h-5"/> Geen korting</li>
+                                    </ul>
+                                    <button 
+                                        onClick={() => openPayment(PRICING_PLANS.SINGLE)}
+                                        className="w-full bg-gray-100 text-gray-900 font-bold py-3 rounded-xl hover:bg-gray-200 transition"
+                                    >
+                                        Kies Los Menu
+                                    </button>
+                                </div>
+
+                                {/* SUBSCRIPTION OPTION */}
+                                <div className="bg-white p-8 rounded-3xl shadow-xl border-2 border-green-500 relative transform md:scale-105">
+                                    <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl flex items-center gap-1">
+                                        <Sparkles className="w-3 h-3"/> MEEST GEKOZEN
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">Maandabonnement</h3>
+                                    <p className="text-gray-500 mb-6 text-sm">Voor de serieuze thuiskok. Bespaar 25%.</p>
+                                    <div className="flex items-baseline gap-1 mb-6">
+                                        <span className="text-4xl font-extrabold text-green-600">€29,95</span>
+                                        <span className="text-gray-500">/ maand</span>
+                                    </div>
+                                    <p className="text-xs text-green-600 font-semibold mb-6 bg-green-50 inline-block px-2 py-1 rounded">
+                                        Dat is slechts €7,50 per week!
+                                    </p>
+                                    <ul className="space-y-4 mb-8 text-gray-600 text-sm">
+                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Elke week automatisch in je mail</li>
+                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Toegang tot archief</li>
+                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Exclusieve bonus recepten</li>
+                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Altijd opzegbaar</li>
+                                    </ul>
+                                    <button 
+                                        onClick={() => openPayment(PRICING_PLANS.SUB)}
+                                        className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-lg"
+                                    >
+                                        Start Abonnement
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
-                    <footer className="bg-gray-900 text-gray-400 py-12">
+                    {/* CTA Footer Section */}
+                    <section className="bg-gray-900 py-20">
+                        <div className="max-w-4xl mx-auto px-4 text-center">
+                            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                                Klaar om tijd en geld te besparen?
+                            </h2>
+                            <button 
+                                onClick={() => document.getElementById('prijzen').scrollIntoView({ behavior: 'smooth' })}
+                                className="bg-white text-gray-900 text-xl px-10 py-4 rounded-full font-bold hover:bg-gray-100 transition shadow-xl transform hover:scale-105"
+                            >
+                                Bekijk de Prijzen
+                            </button>
+                            <p className="mt-4 text-gray-400 text-sm">Veilig betalen met iDeal / Creditcard</p>
+                        </div>
+                    </section>
+
+                    <footer className="bg-gray-950 text-gray-500 py-12 border-t border-gray-900">
                         <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
                             <div className="flex items-center gap-2">
                                 <ChefHat className="text-white w-6 h-6" />
@@ -350,10 +459,10 @@
                                             <ChefHat className="w-6 h-6 text-green-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-gray-900">Weekmenu #51</h4>
-                                            <p className="text-sm text-gray-500">Volledige toegang + PDF</p>
+                                            <h4 className="font-semibold text-gray-900">{selectedPlan.name}</h4>
+                                            <p className="text-sm text-gray-500">Week {currentWeekInfo.weekNum}</p>
                                         </div>
-                                        <div className="ml-auto font-bold text-gray-900">€10,00</div>
+                                        <div className="ml-auto font-bold text-gray-900">€{selectedPlan.price}</div>
                                     </div>
 
                                     <form onSubmit={handlePayment} className="space-y-4">
@@ -372,7 +481,7 @@
                                         </div>
                                         
                                         <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2">
-                                            <Lock className="w-4 h-4" /> Betalen €10,00
+                                            <Lock className="w-4 h-4" /> Betalen €{selectedPlan.price}
                                         </button>
                                     </form>
                                     <p className="text-xs text-center text-gray-400 mt-4">Dit is een demo. Er wordt geen geld afgeschreven.</p>
@@ -384,7 +493,7 @@
             );
         }
 
-        function DashboardView({ weeklyMenu, shoppingList, reviews, setHasPaid }) {
+        function DashboardView({ weeklyMenu, shoppingList, reviews, setHasPaid, weekInfo }) {
             const [activeTab, setActiveTab] = useState('menu');
             const [newReviewText, setNewReviewText] = useState("");
             const [localReviews, setLocalReviews] = useState(reviews);
@@ -420,8 +529,20 @@
 
                     <main className="max-w-6xl mx-auto px-4 py-8">
                         <div className="mb-8">
-                            <h1 className="text-3xl font-bold text-gray-900">Welkom! Hier is je menu.</h1>
-                            <p className="text-gray-600">Week 51 • 14 t/m 20 December</p>
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                                <div>
+                                    <span className="text-green-600 font-bold uppercase tracking-wide text-sm mb-1 block">
+                                        Week {weekInfo.weekNum}
+                                    </span>
+                                    <h1 className="text-3xl font-bold text-gray-900">Welkom! Hier is je menu.</h1>
+                                    <p className="text-gray-600 flex items-center gap-2 mt-1">
+                                        <Calendar className="w-4 h-4" /> {weekInfo.dateRange}
+                                    </p>
+                                </div>
+                                <div className="bg-green-50 border border-green-100 px-4 py-2 rounded-lg text-green-700 text-sm font-medium">
+                                    Vandaag is het {weekInfo.todayName}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Dashboard Tabs */}
@@ -431,6 +552,12 @@
                                 className={`pb-3 px-1 font-medium text-sm transition flex items-center gap-2 ${activeTab === 'menu' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
                             >
                                 <ChefHat className="w-4 h-4"/> Dagplanning
+                            </button>
+                             <button 
+                                onClick={() => setActiveTab('ai-chef')}
+                                className={`pb-3 px-1 font-medium text-sm transition flex items-center gap-2 ${activeTab === 'ai-chef' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <Wand2 className="w-4 h-4"/> AI Chef
                             </button>
                             <button 
                                 onClick={() => setActiveTab('boodschappen')}
@@ -455,29 +582,47 @@
                         {/* Content Area */}
                         {activeTab === 'menu' && (
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in">
-                                {weeklyMenu.map((item, idx) => (
-                                    <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
-                                        <div className="h-32 bg-gray-200 relative overflow-hidden">
-                                            <div className={`absolute inset-0 bg-gradient-to-br ${idx % 2 === 0 ? 'from-green-100 to-green-50' : 'from-orange-100 to-yellow-50'}`}></div>
-                                            <div className="absolute bottom-2 left-2 bg-white/90 px-2 py-1 rounded text-xs font-bold text-gray-700 shadow-sm">
-                                                {item.day}
+                                {weeklyMenu.map((item, idx) => {
+                                    const isToday = item.day === weekInfo.todayName;
+                                    return (
+                                        <div key={idx} className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition group relative
+                                            ${isToday ? 'border-green-500 ring-1 ring-green-500 shadow-md' : 'border-gray-100'}
+                                        `}>
+                                            {isToday && (
+                                                <div className="absolute top-2 right-2 z-10 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded shadow-sm">
+                                                    Vandaag op het menu
+                                                </div>
+                                            )}
+                                            <div className="h-32 bg-gray-200 relative overflow-hidden">
+                                                <div className={`absolute inset-0 bg-gradient-to-br ${idx % 2 === 0 ? 'from-green-100 to-green-50' : 'from-orange-100 to-yellow-50'}`}></div>
+                                                <div className="absolute bottom-2 left-2 bg-white/90 px-2 py-1 rounded text-xs font-bold text-gray-700 shadow-sm">
+                                                    {item.day}
+                                                </div>
+                                            </div>
+                                            <div className="p-5">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <h3 className="font-bold text-lg text-gray-900 leading-tight">{item.title}</h3>
+                                                </div>
+                                                <div className="flex gap-3 text-xs text-gray-500 mb-4">
+                                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {item.time}</span>
+                                                    <span className="flex items-center gap-1"><Leaf className="w-3 h-3"/> {item.calories}</span>
+                                                </div>
+                                                <button className={`w-full py-2 border rounded-lg text-sm font-semibold transition
+                                                    ${isToday 
+                                                        ? 'bg-green-600 text-white border-green-600 hover:bg-green-700' 
+                                                        : 'border-green-600 text-green-600 hover:bg-green-50'}
+                                                `}>
+                                                    Bekijk Recept
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="p-5">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h3 className="font-bold text-lg text-gray-900 leading-tight">{item.title}</h3>
-                                            </div>
-                                            <div className="flex gap-3 text-xs text-gray-500 mb-4">
-                                                <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {item.time}</span>
-                                                <span className="flex items-center gap-1"><Leaf className="w-3 h-3"/> {item.calories}</span>
-                                            </div>
-                                            <button className="w-full py-2 border border-green-600 text-green-600 rounded-lg text-sm font-semibold hover:bg-green-50 transition">
-                                                Bekijk Recept
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
+                        )}
+
+                        {activeTab === 'ai-chef' && (
+                            <AiChefView weekInfo={weekInfo} />
                         )}
 
                         {activeTab === 'boodschappen' && (
@@ -570,12 +715,230 @@
                                 <h2 className="text-xl font-bold mb-2">Download PDF Versie</h2>
                                 <p className="text-gray-500 mb-6">Handig om uit te printen en op de koelkast te hangen.</p>
                                 <button className="bg-gray-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-black transition flex items-center justify-center gap-2 mx-auto w-full sm:w-auto">
-                                    Download Week 51.pdf (2.4MB)
+                                    Download Week {weekInfo.weekNum}.pdf (2.4MB)
                                 </button>
                             </div>
                         )}
 
                     </main>
+                </div>
+            );
+        }
+
+        // --- AI CHEF VIEW COMPONENT ---
+        function AiChefView({ weekInfo }) {
+            const [input, setInput] = useState("");
+            const [day, setDay] = useState(weekInfo ? weekInfo.todayName : "Maandag");
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [generatedRecipe, setGeneratedRecipe] = useState(null);
+            
+            // Diet state
+            const [diet, setDiet] = useState({
+                vegetarian: false,
+                vegan: false,
+                glutenFree: false,
+                lactoseFree: false
+            });
+            const [dislikes, setDislikes] = useState("");
+
+            const handleDietChange = (e) => {
+                setDiet({...diet, [e.target.name]: e.target.checked});
+            }
+
+            const generateRecipe = () => {
+                setIsGenerating(true);
+                setGeneratedRecipe(null);
+                
+                // SIMULATIE VAN AI LOGICA
+                setTimeout(() => {
+                    const term = input.toLowerCase();
+                    let recipe = {
+                        title: "Verrassings Chef Special",
+                        desc: "Een heerlijk uitgebalanceerde maaltijd op basis van jouw wensen.",
+                        ingredients: ["Seizoensgroenten", "Kruidenmix", "Olijfolie"],
+                        time: "30 min"
+                    };
+
+                    if(term.includes("kip")) {
+                        recipe = {
+                            title: `Aziatische Kipfilet voor ${day}`,
+                            desc: "Malse kipstukjes in een zoete sojasaus met broccoli en cashewnoten. Precies zoals je vroeg!",
+                            ingredients: ["300g Kipfilet", "Broccoli", "Sojasaus", "Honing", "Cashewnoten", "Rijst"],
+                            time: "25 min"
+                        };
+                    } else if (term.includes("pasta")) {
+                        recipe = {
+                            title: `Romige Pasta voor ${day}`,
+                            desc: "Een comfort food klassieker, maar dan net even gezonder met volkoren pasta en courgette.",
+                            ingredients: ["Pasta", "Kookroom (of soja cuisine)", "Courgette", "Knoflook", "Basilicum"],
+                            time: "20 min"
+                        };
+                    } else if (term.includes("vis") || term.includes("zalm")) {
+                        recipe = {
+                            title: `Zalm uit de Oven voor ${day}`,
+                            desc: "Makkelijk, gezond en boordevol omega-3. Met geroosterde groenten.",
+                            ingredients: ["Zalmfilet", "Citroen", "Dille", "Asperges", "Aardappeltjes"],
+                            time: "35 min"
+                        };
+                    } else if (term.includes("vega") || diet.vegetarian || diet.vegan) {
+                        recipe = {
+                            title: `Gevulde Zoete Aardappel voor ${day}`,
+                            desc: "Een kleurrijk en voedzaam gerecht zonder vlees, maar met heel veel smaak.",
+                            ingredients: ["Zoete Aardappel", "Zwarte bonen", "Mais", "Avocado", "Limoen"],
+                            time: "40 min"
+                        };
+                    }
+
+                    setGeneratedRecipe(recipe);
+                    setIsGenerating(false);
+                }, 2000);
+            };
+
+            return (
+                <div className="grid md:grid-cols-2 gap-8 animate-in">
+                    {/* INPUT FORM */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-2 mb-6">
+                            <div className="bg-purple-100 p-2 rounded-lg">
+                                <Wand2 className="w-5 h-5 text-purple-600" />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-900">AI Recept Generator</h2>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Waar heb je zin in?</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Bijv. Kip, Pasta, iets lichts..." 
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Voor welke dag?</label>
+                                    <select 
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white"
+                                        value={day}
+                                        onChange={(e) => setDay(e.target.value)}
+                                    >
+                                        {['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'].map(d => (
+                                            <option key={d} value={d}>{d}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Wat lust je écht niet?</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Bijv. Koriander, Spruitjes" 
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                        value={dislikes}
+                                        onChange={(e) => setDislikes(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <span className="block text-sm font-medium text-gray-700 mb-2">Dieetwensen & Allergieën</span>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                        <input type="checkbox" name="vegetarian" checked={diet.vegetarian} onChange={handleDietChange} className="rounded text-purple-600 focus:ring-purple-500"/> Vegetarisch
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                        <input type="checkbox" name="vegan" checked={diet.vegan} onChange={handleDietChange} className="rounded text-purple-600 focus:ring-purple-500"/> Veganistisch
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                        <input type="checkbox" name="glutenFree" checked={diet.glutenFree} onChange={handleDietChange} className="rounded text-purple-600 focus:ring-purple-500"/> Glutenvrij
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                        <input type="checkbox" name="lactoseFree" checked={diet.lactoseFree} onChange={handleDietChange} className="rounded text-purple-600 focus:ring-purple-500"/> Lactosevrij
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={generateRecipe}
+                                disabled={!input || isGenerating}
+                                className={`w-full py-3 rounded-lg font-bold text-white transition flex items-center justify-center gap-2 shadow-md
+                                    ${!input || isGenerating ? 'bg-purple-300 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700 hover:shadow-lg transform hover:-translate-y-0.5'}
+                                `}
+                            >
+                                {isGenerating ? (
+                                    <>
+                                        <Sparkles className="w-5 h-5 animate-spin" /> Chef is aan het denken...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-5 h-5" /> Genereer Mijn Recept
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* RESULT CARD */}
+                    <div className="flex flex-col h-full">
+                        {!generatedRecipe && !isGenerating && (
+                            <div className="h-full border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 p-8 text-center bg-gray-50/50">
+                                <ChefHat className="w-12 h-12 mb-4 text-gray-300" />
+                                <p className="font-medium">Jouw recept verschijnt hier.</p>
+                                <p className="text-sm">Vul je wensen in en laat de AI het werk doen.</p>
+                            </div>
+                        )}
+
+                        {isGenerating && (
+                             <div className="h-full bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center justify-center text-center loading-pulse">
+                                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                                    <Sparkles className="w-8 h-8 text-purple-600 animate-spin" />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-800">Even geduld...</h3>
+                                <p className="text-gray-500 text-sm mt-2">We checken de ingrediënten en je dieetwensen.</p>
+                             </div>
+                        )}
+
+                        {generatedRecipe && !isGenerating && (
+                            <div className="bg-white rounded-xl shadow-lg border border-purple-100 overflow-hidden animate-in">
+                                <div className="bg-purple-600 p-4 text-white flex justify-between items-start">
+                                    <div>
+                                        <div className="text-purple-200 text-xs font-bold uppercase tracking-wider mb-1">Speciaal voor jou</div>
+                                        <h3 className="font-bold text-xl">{generatedRecipe.title}</h3>
+                                    </div>
+                                    <Sparkles className="w-6 h-6 text-yellow-300" />
+                                </div>
+                                <div className="p-6">
+                                    <p className="text-gray-600 mb-6 italic">"{generatedRecipe.desc}"</p>
+                                    
+                                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 border-b pb-4">
+                                        <span className="flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full"><Clock className="w-4 h-4"/> {generatedRecipe.time}</span>
+                                        <span className="flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full"><ChefHat className="w-4 h-4"/> Gemiddeld</span>
+                                    </div>
+
+                                    <h4 className="font-bold text-gray-900 mb-3">Benodigdheden:</h4>
+                                    <ul className="space-y-2 mb-8">
+                                        {generatedRecipe.ingredients.map((ing, i) => (
+                                            <li key={i} className="flex items-center gap-3 text-gray-700">
+                                                <div className="w-2 h-2 rounded-full bg-purple-400"></div>
+                                                {ing}
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    <div className="space-y-3">
+                                        <button className="w-full bg-gray-900 text-white py-3 rounded-lg font-medium hover:bg-black transition">
+                                            Bekijk Bereidingswijze
+                                        </button>
+                                        <button className="w-full border border-gray-300 text-gray-600 py-3 rounded-lg font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                                            <ShoppingCart className="w-4 h-4" /> Zet op Boodschappenlijst
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             );
         }
@@ -597,4 +960,4 @@
         root.render(<App />);
     </script>
 </body>
-      </html>
+</html>

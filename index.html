@@ -44,13 +44,9 @@
         const { useState, useEffect, useMemo } = React;
 
         // --- ICON SETUP ---
-        // We proberen Lucide veilig te laden. Verschillende versies gebruiken verschillende globale namen.
         const lucideLib = window.lucideReact || window.lucide || {};
-        
-        // Veilige fallback als een icoon niet bestaat
         const IconFallback = () => <span className="text-gray-400 text-xs">?</span>;
 
-        // Haal de specifieke iconen op
         const { 
             ShoppingCart = IconFallback, 
             Check = IconFallback, 
@@ -80,11 +76,11 @@
             Users = IconFallback,
             Flame = IconFallback,
             Euro = IconFallback,
-            Store = IconFallback
+            Store = IconFallback,
+            Mail = IconFallback
         } = lucideLib;
 
         // --- UTILS: Datum & Week Logica ---
-        
         const getCurrentWeekData = () => {
             const now = new Date();
             const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -108,7 +104,6 @@
         };
 
         // --- DATA ---
-        
         const weeklyMenu = [
             { day: "Maandag", title: "Romige Pompoensoep", time: "20 min", type: "Vegetarisch", calories: "450 kcal" },
             { day: "Dinsdag", title: "Kip Teriyaki met Rijst", time: "30 min", type: "Kip", calories: "600 kcal" },
@@ -171,6 +166,9 @@
                     button.disabled = true;
                 }
 
+                // --- STAP 1: MOLLIE LINK ---
+                // window.location.href = "https://useplink.com/payment/JOUW-MOLLIE-CODE";
+                
                 setTimeout(() => {
                     setHasPaid(true);
                     setShowPaymentModal(false);
@@ -501,7 +499,9 @@
                                             <Lock className="w-4 h-4" /> Betalen €{selectedPlan.price}
                                         </button>
                                     </form>
-                                    <p className="text-xs text-center text-gray-400 mt-4">Dit is een demo. Er wordt geen geld afgeschreven.</p>
+                                    <p className="text-xs text-center text-gray-400 mt-4">
+                                        Na betaling ontvang je de complete lijst en menu in je mailbox.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -673,12 +673,37 @@
                                     ))}
                                 </div>
                                 
-                                <div className="mt-8 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                                    <p className="text-sm text-blue-800 font-medium mb-2">💡 Slim besparen:</p>
-                                    <p className="text-sm text-blue-600">
-                                        Bestel deze lijst direct bij Albert Heijn of Jumbo via onze partner link (LinkPizza).
-                                        <span className="block mt-2 underline cursor-pointer">Direct bestellen &rarr;</span>
-                                    </p>
+                                <div className="mt-8 bg-blue-50 p-6 rounded-lg border border-blue-100">
+                                    <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
+                                        <div>
+                                            <h4 className="font-bold text-blue-900 text-lg mb-1">Liever zelf doen of hulp nodig?</h4>
+                                            <p className="text-sm text-blue-700 mb-4">
+                                                Je kunt deze lijst naar jezelf mailen. Geen zin om te zoeken? 
+                                                Stuur ons een bericht en wij zetten je mandje binnen 24 uur voor je klaar!
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <button 
+                                            onClick={() => {
+                                                const subject = "Mijn WeekHap Boodschappenlijst";
+                                                const body = `Hoi,\n\nHier is mijn boodschappenlijst voor deze week:\n\n` + 
+                                                             shoppingList.map(cat => `${cat.category}:\n${cat.items.join('\n')}`).join('\n\n') +
+                                                             `\n\nGroetjes!`;
+                                                window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                                            }}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-bold transition flex items-center gap-2 shadow-sm"
+                                        >
+                                            <Mail className="w-4 h-4"/> Mail lijst naar mezelf
+                                        </button>
+                                        <button 
+                                            onClick={() => window.location.href = "mailto:service@weekhap.nl?subject=Hulp%20bij%20bestellen&body=Hoi%20WeekHap,%20ik%20wil%20graag%20dat%20jullie%20mijn%20mandje%20vullen."}
+                                            className="bg-white border-2 border-blue-200 text-blue-700 hover:bg-blue-50 px-5 py-3 rounded-lg font-bold transition flex items-center gap-2"
+                                        >
+                                            <ChefHat className="w-4 h-4"/> Vraag 24u Service
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -756,11 +781,8 @@
         function MenuGeneratorView({ weekInfo }) {
             const [step, setStep] = useState('form');
             const [loadingProgress, setLoadingProgress] = useState(0);
-            
-            // FORM STATE
             const [persons, setPersons] = useState(2);
-            const [goal, setGoal] = useState('gezond'); // gezond, snel, budget, luxe
-            const [diet, setDiet] = useState({ meat: true, fish: true, vega: true });
+            const [goal, setGoal] = useState('gezond');
             const [supermarket, setSupermarket] = useState('jumbo');
 
             const handleGenerate = () => {
@@ -921,16 +943,30 @@
                             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                                 <div>
                                     <h4 className="font-bold text-gray-900">Boodschappenlijst ({persons} pers.)</h4>
-                                    <p className="text-sm text-gray-500">Alle ingrediënten zijn verzameld.</p>
+                                    <p className="text-sm text-gray-500 mb-2">Alle ingrediënten zijn verzameld.</p>
+                                    <p className="text-xs text-blue-600 font-bold bg-blue-50 inline-block px-2 py-1 rounded">24-uurs Service Beschikbaar</p>
                                 </div>
-                                <button className={`${supermarketColors[supermarket]} px-6 py-3 rounded-lg font-bold shadow-md transition flex items-center gap-2 transform hover:scale-105`}>
-                                    <ShoppingCart className="w-5 h-5" /> 
-                                    Zet alles in mijn {supermarket === 'jumbo' ? 'Jumbo' : 'Albert Heijn'} mandje
-                                </button>
+                                <div className="flex flex-col gap-2 w-full md:w-auto">
+                                    <button 
+                                        onClick={() => {
+                                                const subject = "Mijn WeekHap Boodschappenlijst";
+                                                const body = `Hoi,\n\nHier is mijn boodschappenlijst voor deze week:\n\n` + 
+                                                             shoppingList.map(cat => `${cat.category}:\n${cat.items.join('\n')}`).join('\n\n') +
+                                                             `\n\nGroetjes!`;
+                                                window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                                        }}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-lg font-bold shadow-md transition flex items-center justify-center gap-2"
+                                    >
+                                        <Mail className="w-4 h-4"/> Mail lijst naar mezelf
+                                    </button>
+                                    <button 
+                                        onClick={() => window.location.href = "mailto:service@weekhap.nl?subject=Hulp%20bij%20bestellen&body=Hoi%20WeekHap,%20ik%20wil%20graag%20dat%20jullie%20mijn%20mandje%20vullen%20bij%20" + supermarket}
+                                        className="bg-white border text-gray-600 hover:bg-gray-50 px-5 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
+                                    >
+                                        <ChefHat className="w-3 h-3"/> Laat WeekHap vullen (24u)
+                                    </button>
+                                </div>
                             </div>
-                            <p className="text-xs text-center text-gray-400 mt-4">
-                                * Je wordt doorgestuurd naar de website van {supermarket === 'jumbo' ? 'Jumbo' : 'Albert Heijn'} via onze partner LinkPizza.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -943,8 +979,6 @@
             const [day, setDay] = useState(weekInfo ? weekInfo.todayName : "Maandag");
             const [isGenerating, setIsGenerating] = useState(false);
             const [generatedRecipe, setGeneratedRecipe] = useState(null);
-            
-            // Diet state
             const [diet, setDiet] = useState({
                 vegetarian: false,
                 vegan: false,

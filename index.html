@@ -1,582 +1,338 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Utensils, Clock, Flame, X, Tag, ArrowRight, Search, Leaf, 
-  Home, Heart, ShoppingBasket, User, Sparkles, RefreshCw, 
-  Lock, Unlock, Star, LogOut, ChevronRight, Check, Zap, 
-  PlusCircle, Wallet, AlertCircle, Loader2, Image as ImageIcon, Camera, Filter, ListOrdered, Trash2
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uit Werking | Deel & Plan Je Menu</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .recipe-gradient { background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .animate-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-900">
+    <div id="root"></div>
 
-// --- CONSTANTEN ---
-const SUBSCRIPTION_PRICE = 2.99;
-const STORAGE_KEYS = {
-  USER: 'uw_user',
-  SAVED_RECIPES: 'uw_saved_recipes',
-  GENERATED_RECIPES: 'uw_generated_recipes',
-  USER_RECIPES: 'uw_user_recipes',
-  WALLET: 'uw_wallet',
-  PREFERENCES: 'uw_prefs'
-};
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
-// --- VEILIGHEIDSCOMPONENT ---
-class ErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { hasError: false }; }
-  static getDerivedStateFromError(error) { return { hasError: true }; }
-  render() {
-    if (this.state.hasError) return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 text-center">
-        <div>
-          <div className="bg-red-100 p-4 rounded-full inline-block mb-4 text-red-600">
-            <AlertCircle size={32}/>
-          </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Oeps, er ging iets mis.</h2>
-          <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-gray-900 text-white px-6 py-2 rounded-full font-bold">
-            Reset App & Herlaad
-          </button>
-        </div>
-      </div>
-    );
-    return this.props.children;
-  }
-}
+        // --- ICON COMPONENT ---
+        const Icon = ({ name, size = 20, className = "", fill = "none" }) => {
+            useEffect(() => { lucide.createIcons(); }, [name]);
+            return <i data-lucide={name} className={className} style={{ width: size, height: size, strokeWidth: 2.5 }}></i>;
+        };
 
-// --- DATA ---
-const ingredientImages = {
-  italian: ["https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=600&q=80", "https://images.unsplash.com/photo-1626844131082-256783844137?w=600&q=80", "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=600&q=80"],
-  asian: ["https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&q=80", "https://images.unsplash.com/photo-1503764654157-72d979d9af2f?w=600&q=80", "https://images.unsplash.com/photo-1585032226651-759b368d7246?w=600&q=80"],
-  mexican: ["https://images.unsplash.com/photo-1568158879083-c42860933ed7?w=600&q=80", "https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?w=600&q=80", "https://images.unsplash.com/photo-1620589125156-fd5028c5e05b?w=600&q=80"],
-  dutch: ["https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&q=80", "https://images.unsplash.com/photo-1590779033100-9f60a05a013d?w=600&q=80", "https://images.unsplash.com/photo-1603569283847-aa295f0d016a?w=600&q=80"]
-};
+        const SUBSCRIPTION_PRICE = 2.99;
 
-const generatorData = {
-  italian: {
-    bases: [
-        { name: "Penne", prep: "Kook de penne in ruim water met zout volgens de verpakking." },
-        { name: "Spaghetti", prep: "Kook de spaghetti al dente in 8-10 minuten." },
-        { name: "Gnocchi", prep: "Bak de gnocchi in een koekenpan met boter goudbruin." }
-    ],
-    proteins: [
-        { name: "Kipfilet", prep: "Snijd de kipfilet in blokjes en bak goudbruin." },
-        { name: "Spekjes", prep: "Bak de spekjes uit in een droge koekenpan." },
-        { name: "Zalm", prep: "Bak de zalm kort op de huid in olijfolie." }
-    ],
-    veggies: ["Courgette", "Spinazie", "Cherrytomaten", "Champignons"],
-    sauces: ["Pesto", "Carbonara", "Arrabbiata", "Bolognese"]
-  },
-  asian: {
-    bases: [
-        { name: "Witte Rijst", prep: "Kook de rijst droog in 10 minuten." },
-        { name: "Noodles", prep: "Wel de noodles 4 minuten in heet water." },
-        { name: "Gebakken Rijst", prep: "Gebruik (afgekoelde) rijst en bak deze op in de wok." }
-    ],
-    proteins: [
-        { name: "Kipdijfilet", prep: "Snijd de kipdijfilet en wok deze op hoog vuur gaar." },
-        { name: "Tofu", prep: "Druk het vocht uit de tofu en bak krokant in olie." },
-        { name: "Garnalen", prep: "Wok de garnalen kort (2 min) tot ze roze zijn." }
-    ],
-    veggies: ["Wokgroente", "Paksoi", "Broccoli", "Sperziebonen"],
-    sauces: ["Teriyaki", "Zoetzuur", "Curry", "Soja-Gember"]
-  },
-  mexican: {
-    bases: [
-        { name: "Wraps", prep: "Verwarm de wraps kort in een droge koekenpan of magnetron." },
-        { name: "Tacos", prep: "Verwarm de tacoschelpen 5 min in de oven op 180 graden." },
-        { name: "Nachos", prep: "Verspreid de nachos over een ovenschaal." }
-    ],
-    proteins: [
-        { name: "Gehakt", prep: "Rul het gehakt met Mexicaanse kruiden gaar." },
-        { name: "Kipstukjes", prep: "Bak de kipstukjes met paprika-poeder goudbruin." },
-        { name: "Bonenmix", prep: "Spoel de bonen af en verwarm ze mee in de saus." }
-    ],
-    veggies: ["Mais & Paprika", "Avocado", "Rode Ui"],
-    sauces: ["Salsa", "Guacamole", "Creme Fraiche"]
-  },
-  dutch: {
-    bases: [
-        { name: "Gekookte Aardappels", prep: "Schil de aardappels en kook ze in 20 minuten gaar." },
-        { name: "Stamppot", prep: "Kook de aardappels en stamp ze fijn met melk en boter." },
-        { name: "Puree", prep: "Bereid de puree volgens de verpakking." }
-    ],
-    proteins: [
-        { name: "Rookworst", prep: "Verwarm de rookworst in heet (niet kokend) water." },
-        { name: "Gehaktbal", prep: "Braad de gehaktbal rondom bruin en laat 15 min sudderen." },
-        { name: "Schnitzel", prep: "Bak de schnitzel in boter 3 minuten per kant." }
-    ],
-    veggies: ["Bloemkool", "Sperziebonen", "Rode Kool", "Witlof"],
-    sauces: ["Jus", "Kaassaus", "Kerriesaus"]
-  }
-};
+        // --- DATA ---
+        const recipesPool = {
+            italian: [
+                { title: "Romige Pesto Penne", ingredients: ["200g Penne", "100g Pesto", "Kipblokjes", "Cherrytomatjes"], instructions: ["Kook de pasta.", "Bak de kip.", "Meng alles met pesto."], image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=600&q=80" },
+                { title: "Snelle Gnocchi Bak", ingredients: ["500g Gnocchi", "Spinazie", "Gorgonzola", "Walnoten"], instructions: ["Bak gnocchi goudbruin.", "Voeg spinazie toe.", "Smelt de kaas erover."], image: "https://images.unsplash.com/photo-1626844131082-256783844137?w=600&q=80" }
+            ],
+            asian: [
+                { title: "Teriyaki Wok", ingredients: ["Rijst", "Wokgroenten", "Biefstukreepjes", "Teriyaki saus"], instructions: ["Kook rijst.", "Wok vlees en groente.", "Blus af met saus."], image: "https://images.unsplash.com/photo-1585032226651-759b368d7246?w=600&q=80" }
+            ]
+        };
 
-const adjectives = ["Romige", "Pittige", "Krokante", "Snelle", "Verse", "Gegrilde"];
-const generateUniqueId = () => Math.random().toString(36).substr(2, 9);
+        function App() {
+            const [view, setView] = useState('home');
+            const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('uw_user')) || null);
+            const [generated, setGenerated] = useState(() => JSON.parse(localStorage.getItem('uw_gen')) || []);
+            const [saved, setSaved] = useState(() => JSON.parse(localStorage.getItem('uw_fav')) || []);
+            const [community, setCommunity] = useState(() => JSON.parse(localStorage.getItem('uw_comm')) || []);
+            const [wallet, setWallet] = useState(() => parseFloat(localStorage.getItem('uw_wallet')) || 0.0);
+            const [selected, setSelected] = useState(null);
+            const [loading, setLoading] = useState(false);
 
-function AppContent() {
-  const [view, setView] = useState('home'); 
-  
-  // --- STATE MET LOCALSTORAGE INIT ---
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.USER);
-    return saved ? JSON.parse(saved) : null;
-  });
+            // Form State
+            const [formData, setFormData] = useState({ title: '', category: 'italian', ingredients: '', instructions: '', image: '' });
 
-  const [generatedRecipes, setGeneratedRecipes] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.GENERATED_RECIPES);
-    return saved ? JSON.parse(saved) : [];
-  });
+            useEffect(() => { localStorage.setItem('uw_user', JSON.stringify(user)); }, [user]);
+            useEffect(() => { localStorage.setItem('uw_gen', JSON.stringify(generated)); }, [generated]);
+            useEffect(() => { localStorage.setItem('uw_fav', JSON.stringify(saved)); }, [saved]);
+            useEffect(() => { localStorage.setItem('uw_comm', JSON.stringify(community)); }, [community]);
+            useEffect(() => { localStorage.setItem('uw_wallet', wallet.toString()); }, [wallet]);
 
-  const [savedRecipeIds, setSavedRecipeIds] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SAVED_RECIPES);
-    return saved ? JSON.parse(saved) : [];
-  });
+            const generateMenu = () => {
+                setLoading(true);
+                setTimeout(() => {
+                    const keys = Object.keys(recipesPool);
+                    const results = Array.from({length: 3}, () => {
+                        const cat = keys[Math.floor(Math.random() * keys.length)];
+                        const pool = recipesPool[cat];
+                        const r = pool[Math.floor(Math.random() * pool.length)];
+                        return { ...r, id: Math.random().toString(36).substr(2, 9), category: cat, time: "15-20 min", price: (Math.random() * 5 + 3).toFixed(2) };
+                    });
+                    setGenerated(results);
+                    setLoading(false);
+                }, 1000);
+            };
 
-  const [userSubmittedRecipes, setUserSubmittedRecipes] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.USER_RECIPES);
-    return saved ? JSON.parse(saved) : [];
-  });
+            const toggleFav = (r) => {
+                if (saved.find(s => s.id === r.id)) setSaved(saved.filter(s => s.id !== r.id));
+                else setSaved([...saved, r]);
+            };
 
-  const [preferences, setPreferences] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.PREFERENCES);
-    return saved ? JSON.parse(saved) : { persons: 2 };
-  });
+            const handleShare = (e) => {
+                e.preventDefault();
+                const newRecipe = {
+                    ...formData,
+                    id: Math.random().toString(36).substr(2, 9),
+                    ingredients: formData.ingredients.split(',').map(i => i.trim()),
+                    instructions: formData.instructions.split('\n').map(i => i.trim()),
+                    image: formData.image || "https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=600&q=80",
+                    isCommunity: true,
+                    author: user ? user.name : "Anoniem",
+                    time: "30 min",
+                    price: "4.50"
+                };
+                setCommunity([newRecipe, ...community]);
+                setWallet(prev => prev + 1.00);
+                setFormData({ title: '', category: 'italian', ingredients: '', instructions: '', image: '' });
+                setView('home');
+                alert('Bedankt! Je recept is gedeeld. Er is €1,00 toegevoegd aan je wallet.');
+            };
 
-  const [wallet, setWallet] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.WALLET);
-    return saved ? parseFloat(saved) : 0.00;
-  });
-
-  const [selectedRecipe, setSelectedRecipe] = useState(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [userWishes, setUserWishes] = useState("");
-
-  // --- PERSISTENCE HOOKS ---
-  useEffect(() => localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user)), [user]);
-  useEffect(() => localStorage.setItem(STORAGE_KEYS.GENERATED_RECIPES, JSON.stringify(generatedRecipes)), [generatedRecipes]);
-  useEffect(() => localStorage.setItem(STORAGE_KEYS.SAVED_RECIPES, JSON.stringify(savedRecipeIds)), [savedRecipeIds]);
-  useEffect(() => localStorage.setItem(STORAGE_KEYS.USER_RECIPES, JSON.stringify(userSubmittedRecipes)), [userSubmittedRecipes]);
-  useEffect(() => localStorage.setItem(STORAGE_KEYS.WALLET, wallet.toString()), [wallet]);
-  useEffect(() => localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(preferences)), [preferences]);
-
-  // Schakel scroll lock in als modal open is
-  useEffect(() => {
-    if (selectedRecipe) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = 'unset';
-  }, [selectedRecipe]);
-
-  const login = () => { 
-    setUser({ name: "Proever", isPremium: true }); 
-    setView('dashboard'); 
-  };
-  
-  const logout = () => { 
-    localStorage.clear();
-    setUser(null); 
-    setView('home'); 
-    setGeneratedRecipes([]); 
-    setSavedRecipeIds([]);
-    setWallet(0.00);
-    setUserWishes(""); 
-  };
-
-  // --- SLIMME GENERATOR ---
-  const createAiRecipe = () => {
-    let cuisineKeys = Object.keys(generatorData);
-    if (userWishes) {
-        const matching = cuisineKeys.filter(k => userWishes.toLowerCase().includes(k));
-        if (matching.length > 0) cuisineKeys = matching;
-    }
-
-    const cuisineKey = cuisineKeys[Math.floor(Math.random() * cuisineKeys.length)];
-    const data = generatorData[cuisineKey];
-
-    const baseObj = data.bases[Math.floor(Math.random() * data.bases.length)];
-    const protObj = data.proteins[Math.floor(Math.random() * data.proteins.length)];
-    const veggie = data.veggies[Math.floor(Math.random() * data.veggies.length)];
-    const sauce = data.sauces[Math.floor(Math.random() * data.sauces.length)];
-    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-
-    const imgPool = ingredientImages[cuisineKey] || ingredientImages['dutch'];
-    const image = imgPool[Math.floor(Math.random() * imgPool.length)];
-
-    const title = `${adj} ${protObj.name} met ${baseObj.name}`;
-    const subtitle = `${veggie} in ${sauce}`;
-    const cuisineLabel = cuisineKey.charAt(0).toUpperCase() + cuisineKey.slice(1);
-    
-    const steps = [
-        `Bereid de ${baseObj.name}: ${baseObj.prep}`,
-        `Verhit olie of boter in een pan. ${protObj.prep}`,
-        `Voeg de ${veggie} toe en bak deze 5-8 minuten mee tot beetgaar.`,
-        `Voeg de ${sauce} toe en verwarm het geheel nog 2 minuten door.`,
-        `Serveer de ${protObj.name}-mix samen met de ${baseObj.name}. Eet smakelijk!`
-    ];
-
-    const timeVal = 10 + Math.floor(Math.random() * 20);
-    const price = (2.50 + Math.random() * 3.50) * preferences.persons;
-
-    return {
-      id: generateUniqueId(),
-      title, subtitle, cuisine: cuisineLabel, image,
-      time: `${timeVal} min`, timeVal, price,
-      ingredients: [
-        { name: baseObj.name, amount: "naar wens" },
-        { name: protObj.name, amount: `${125 * preferences.persons}g` },
-        { name: veggie, amount: `${200 * preferences.persons}g` },
-        { name: sauce, amount: "1 portie" }
-      ],
-      instructions: steps,
-      prices: { ah: price * 1.1, jumbo: price * 1.05, lidl: price * 0.9 },
-      locked: false,
-      isAiGenerated: true 
-    };
-  };
-
-  const generateMenu = (days) => {
-    setIsGenerating(true);
-    setTimeout(() => {
-        try {
-            if (generatedRecipes.length > 0 && generatedRecipes.length === days) {
-                setGeneratedRecipes(prev => prev.map(r => r.locked ? r : createAiRecipe()));
-            } else {
-                const newRecipes = [];
-                for (let i = 0; i < days; i++) newRecipes.push(createAiRecipe());
-                setGeneratedRecipes(newRecipes);
-            }
-        } catch (e) {
-            console.error(e);
-        }
-        setIsGenerating(false);
-    }, 500);
-  };
-
-  const toggleLock = (id, e) => { e.stopPropagation(); setGeneratedRecipes(prev => prev.map(r => r.id === id ? { ...r, locked: !r.locked } : r)); };
-  const toggleFavorite = (recipe) => {
-    if (!user) { setView('login'); return; }
-    if (savedRecipeIds.some(r => r.id === recipe.id)) setSavedRecipeIds(savedRecipeIds.filter(r => r.id !== recipe.id));
-    else setSavedRecipeIds([...savedRecipeIds, recipe]);
-  };
-
-  // Submit Handler
-  const [formData, setFormData] = useState({ title: '', ingredients: '', description: '' });
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [submitStatus, setSubmitStatus] = useState('idle');
-
-  const handleImageUpload = () => {
-      setSubmitStatus('uploading');
-      setTimeout(() => {
-          setUploadedImage("https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80"); 
-          setSubmitStatus('idle');
-      }, 1000);
-  };
-
-  const handleRecipeSubmit = (e) => {
-      e.preventDefault();
-      if(!uploadedImage) { alert("Foto is verplicht!"); return; }
-      setSubmitStatus('checking');
-      setTimeout(() => {
-          if(formData.title.length < 3) { setSubmitStatus('error'); return; }
-          const steps = formData.description.split('\n').filter(s => s.length > 5);
-
-          const newRecipe = {
-              id: generateUniqueId(),
-              title: formData.title,
-              subtitle: `Door ${user.name}`,
-              cuisine: "Community",
-              image: uploadedImage,
-              time: "30 min", timeVal: 30, price: 0,
-              ingredients: [{ name: "Zie beschrijving", amount: "-" }],
-              instructions: steps.length > 0 ? steps : [formData.description],
-              prices: { ah:0, jumbo:0, lidl:0 },
-              isUserGenerated: true
-          };
-          setUserSubmittedRecipes([...userSubmittedRecipes, newRecipe]);
-          setWallet(prev => Math.min(prev + 1.00, SUBSCRIPTION_PRICE));
-          setSubmitStatus('success');
-          setFormData({ title: '', ingredients: '', description: '' });
-          setUploadedImage(null);
-          setTimeout(() => setSubmitStatus('idle'), 3000);
-      }, 1500);
-  };
-
-  // COMPONENTS
-  const RecipeCard = ({ recipe, showLock, isGuest }) => {
-    const isSaved = savedRecipeIds.some(r => r.id === recipe.id);
-    return (
-        <div className={`bg-white rounded-2xl shadow-sm border transition-all hover:shadow-md relative group cursor-pointer overflow-hidden ${recipe.locked ? 'border-orange-200 bg-orange-50' : 'border-gray-100'}`} onClick={() => setSelectedRecipe(recipe)}>
-            <div className="flex h-28">
-                <div className="w-32 h-full shrink-0 relative bg-gray-200">
-                    <img src={recipe.image} className="w-full h-full object-cover" onError={(e) => e.target.src = "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&q=80"} alt={recipe.title} />
-                    {recipe.isAiGenerated && <div className="absolute bottom-0 left-0 w-full bg-black/50 text-white text-[9px] px-1 py-0.5 text-center font-bold">VERSE INGREDIËNTEN</div>}
-                    <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-md py-1 px-2 rounded-lg text-[10px] font-extrabold flex items-center gap-1 text-gray-800 shadow-sm z-10"><Clock size={10} className="text-gray-600"/> {recipe.time}</div>
-                </div>
-                <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
-                    <div className="flex gap-2 mb-1.5">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider border border-gray-100 px-1 rounded">{recipe.cuisine}</span>
-                        {recipe.isUserGenerated && <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1 rounded flex items-center gap-0.5"><User size={8} /> Community</span>}
-                    </div>
-                    <h3 className="font-bold text-gray-800 leading-tight mb-0.5 truncate text-sm">{recipe.title}</h3>
-                    <p className="text-xs text-gray-500 mb-2 truncate">{recipe.subtitle}</p>
-                </div>
-            </div>
-            <div className="absolute top-2 right-2 flex flex-col gap-2">
-                {showLock && <button onClick={(e) => toggleLock(recipe.id, e)} className={`p-2 rounded-full transition-all shadow-sm ${recipe.locked ? 'bg-orange-500 text-white' : 'bg-white text-gray-400 border border-gray-100 hover:text-gray-600'}`}>{recipe.locked ? <Lock size={14} /> : <Unlock size={14} />}</button>}
-                <button onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe); }} className={`p-2 rounded-full transition-colors ${isSaved && !isGuest ? 'text-red-500 bg-red-50' : 'text-gray-400 bg-white hover:text-red-400'}`}><Heart size={16} fill={isSaved && !isGuest ? "currentColor" : "none"} /></button>
-            </div>
-        </div>
-    );
-  };
-
-  const Modal = () => {
-      if (!selectedRecipe) return null; const r = selectedRecipe;
-      return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedRecipe(null)}></div>
-            <div className="relative bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in-up flex flex-col max-h-[90vh]">
-                <div className="h-48 relative bg-gray-900 shrink-0">
-                    <img src={r.image} className="w-full h-full object-cover" onError={(e) => e.target.src = "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&q=80"} alt={r.title}/>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                    <button onClick={() => setSelectedRecipe(null)} className="absolute top-3 right-3 bg-black/40 text-white p-1.5 rounded-full hover:bg-black/60 backdrop-blur"><X size={18}/></button>
-                    <div className="absolute bottom-4 left-4 text-white"><span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded backdrop-blur border border-white/20 mb-1 inline-block">{r.cuisine}</span><h2 className="text-2xl font-bold leading-tight shadow-black drop-shadow-md">{r.title}</h2></div>
-                </div>
-                
-                <div className="p-5 overflow-y-auto">
-                    <div className="flex gap-4 mb-6 text-sm text-gray-600 border-b border-gray-100 pb-4">
-                        <div className="flex items-center gap-1"><Clock size={16}/> {r.time}</div>
-                        <div className="flex items-center gap-1"><User size={16}/> {preferences.persons} pers.</div>
-                        {r.price > 0 && <div className="flex items-center gap-1 text-green-600 font-bold ml-auto">€{r.price.toFixed(2)}</div>}
-                    </div>
-
-                    <h3 className="font-bold text-gray-800 text-sm uppercase mb-3 flex items-center gap-2"><ShoppingBasket size={16}/> Boodschappenlijst</h3>
-                    <ul className="space-y-2 mb-6 bg-gray-50 p-4 rounded-xl">
-                        {r.ingredients.map((ing, i) => (
-                            <li key={i} className="flex justify-between text-sm text-gray-700 items-center">
-                                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>{ing.name}</span> 
-                                <span className="text-gray-400 font-medium">{ing.amount}</span>
-                            </li>
-                        ))}
-                    </ul>
-
-                    <h3 className="font-bold text-gray-800 text-sm uppercase mb-3 flex items-center gap-2"><ListOrdered size={16}/> Bereiding</h3>
-                    <div className="space-y-4 mb-6">
-                        {r.instructions && r.instructions.map((step, i) => (
-                            <div key={i} className="flex gap-3">
-                                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-700 font-bold text-xs flex items-center justify-center mt-0.5">{i + 1}</div>
-                                <p className="text-sm text-gray-600 leading-relaxed">{step}</p>
+            return (
+                <div className="max-w-md mx-auto min-h-screen bg-white shadow-2xl flex flex-col relative overflow-hidden">
+                    
+                    {/* Header */}
+                    <header className="px-6 py-4 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-gray-100">
+                        <div className="flex items-center gap-2" onClick={() => setView('home')}>
+                            <div className="bg-green-600 text-white p-1.5 rounded-lg shadow-sm">
+                                <Icon name="utensils" size={18} />
                             </div>
-                        ))}
-                    </div>
+                            <span className="font-extrabold text-lg tracking-tight text-slate-800">Uit Werking</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full border border-blue-100">
+                                <Icon name="wallet" size={12} className="text-blue-500" />
+                                <span className="text-[10px] font-bold text-blue-600">€{wallet.toFixed(2)}</span>
+                            </div>
+                            {!user && <button onClick={() => setView('login')} className="text-xs font-bold text-green-600">Login</button>}
+                        </div>
+                    </header>
 
-                    <button onClick={() => {alert("Je wordt doorgestuurd naar LinkPizza..."); setSelectedRecipe(null)}} className="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 text-sm shadow-lg active:scale-95 transition-transform">Bestel Ingrediënten <ArrowRight size={16}/></button>
+                    {/* Views */}
+                    <main className="flex-1 pb-28">
+                        {view === 'home' && (
+                            <div className="animate-fade-in">
+                                <div className="p-6 bg-slate-900 text-white rounded-b-[2.5rem] shadow-xl mb-8 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/20 blur-3xl rounded-full -mr-16 -mt-16"></div>
+                                    <h1 className="text-3xl font-extrabold mb-2 relative z-10">Lekker & Simpel.</h1>
+                                    <p className="text-slate-400 text-sm mb-6 relative z-10 leading-relaxed">Deel je eigen creaties of laat ons je week plannen.</p>
+                                    <div className="flex gap-3">
+                                        <button onClick={generateMenu} className="flex-1 bg-green-500 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                                            <Icon name="zap" fill="currentColor" size={18} /> Plan Menu
+                                        </button>
+                                        <button onClick={() => setView('share')} className="bg-white/10 text-white font-bold py-4 px-6 rounded-2xl border border-white/20 active:scale-95">
+                                            <Icon name="plus" size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Community Sectie */}
+                                {community.length > 0 && (
+                                    <div className="px-6 mb-8">
+                                        <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                            <Icon name="users" size={16} className="text-blue-500" />
+                                            Nieuw van de Community
+                                        </h2>
+                                        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                                            {community.map(r => (
+                                                <div key={r.id} onClick={() => setSelected(r)} className="min-w-[140px] bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                                                    <img src={r.image} className="w-full h-24 object-cover" />
+                                                    <div className="p-2">
+                                                        <h3 className="font-bold text-[11px] truncate">{r.title}</h3>
+                                                        <p className="text-[9px] text-slate-400">Door {r.author}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="px-6 space-y-4">
+                                    {generated.length > 0 && (
+                                        <>
+                                            <div className="flex justify-between items-center">
+                                                <h2 className="font-bold text-slate-800">Suggesties voor jou</h2>
+                                            </div>
+                                            {generated.map(r => (
+                                                <div key={r.id} onClick={() => setSelected(r)} className="bg-white border border-slate-100 rounded-3xl overflow-hidden flex items-center p-2 gap-4 cursor-pointer hover:border-green-200 shadow-sm">
+                                                    <img src={r.image} className="w-20 h-20 rounded-2xl object-cover" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-bold text-sm text-slate-800 truncate">{r.title}</h3>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <div className="text-[10px] font-bold text-green-600">€{r.price}</div>
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleFav(r); }} className="p-3">
+                                                        <Icon name="heart" size={20} className={saved.find(s => s.id === r.id) ? "text-red-500 fill-red-500" : "text-slate-200"} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'share' && (
+                            <div className="p-6 animate-fade-in">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <button onClick={() => setView('home')} className="p-2 bg-slate-100 rounded-full text-slate-500"><Icon name="chevron-left" /></button>
+                                    <h2 className="text-2xl font-extrabold text-slate-800">Recept Delen</h2>
+                                </div>
+                                <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-6 flex gap-3 items-center">
+                                    <div className="bg-blue-500 text-white p-2 rounded-xl"><Icon name="gift" size={18} /></div>
+                                    <p className="text-blue-700 text-xs font-bold leading-tight">Verdien €1,00 korting per goedgekeurd recept!</p>
+                                </div>
+                                <form onSubmit={handleShare} className="space-y-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Titel</label>
+                                        <input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-green-500 outline-none" placeholder="Bijv. Oma's Gehaktballen" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Keuken</label>
+                                            <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none">
+                                                <option value="italian">Italiaans</option>
+                                                <option value="asian">Aziatisch</option>
+                                                <option value="mexican">Mexicaans</option>
+                                                <option value="dutch">Hollands</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Foto Link (Optioneel)</label>
+                                            <input value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none" placeholder="URL naar afbeelding" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Ingrediënten (gescheiden door komma's)</label>
+                                        <input required value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none" placeholder="200g kip, 1 ui, etc." />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Bereidingswijze (stap voor stap)</label>
+                                        <textarea required value={formData.instructions} onChange={e => setFormData({...formData, instructions: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none h-32" placeholder="Stap 1: Snijd de ui...&#10;Stap 2: Bak de kip..."></textarea>
+                                    </div>
+                                    <button type="submit" className="w-full bg-green-600 text-white font-extrabold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">Deel Recept & Ontvang €1,00</button>
+                                </form>
+                            </div>
+                        )}
+
+                        {view === 'favorites' && (
+                            <div className="p-6 animate-fade-in">
+                                <h2 className="text-2xl font-extrabold text-slate-800 mb-6">Mijn Kookboek</h2>
+                                {saved.length > 0 ? (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {saved.map(r => (
+                                            <div key={r.id} onClick={() => setSelected(r)} className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm flex p-2 gap-4">
+                                                <img src={r.image} className="w-16 h-16 rounded-2xl object-cover" />
+                                                <div className="flex-1 flex flex-col justify-center">
+                                                    <h3 className="font-bold text-sm text-slate-800">{r.title}</h3>
+                                                    <span className="text-[10px] text-slate-400 uppercase font-bold">{r.category}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-20 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-100">
+                                        <Icon name="heart" size={40} className="mx-auto text-slate-200 mb-4" />
+                                        <p className="text-slate-400 text-sm font-medium">Je kookboek is nog leeg.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Modal */}
+                    {selected && (
+                        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+                            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelected(null)}></div>
+                            <div className="bg-white rounded-t-[3rem] sm:rounded-[3rem] w-full max-w-sm relative overflow-hidden animate-pop max-h-[90vh] flex flex-col">
+                                <div className="h-56 relative shrink-0">
+                                    <img src={selected.image} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 recipe-gradient"></div>
+                                    <button onClick={() => setSelected(null)} className="absolute top-6 right-6 bg-black/20 backdrop-blur-md text-white p-2 rounded-full">
+                                        <Icon name="x" size={20} />
+                                    </button>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <h2 className="text-2xl font-extrabold text-white leading-tight">{selected.title}</h2>
+                                        {selected.isCommunity && <p className="text-green-400 text-[10px] font-bold uppercase mt-1">Gedeeld door {selected.author}</p>}
+                                    </div>
+                                </div>
+                                <div className="p-8 overflow-y-auto no-scrollbar">
+                                    <div className="flex gap-4 mb-6 border-b pb-4 border-slate-50">
+                                        <div className="flex flex-col items-center flex-1">
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Bereiding</span>
+                                            <span className="text-xs font-bold text-slate-700">{selected.time}</span>
+                                        </div>
+                                        <div className="flex flex-col items-center flex-1">
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Prijs p.p.</span>
+                                            <span className="text-xs font-bold text-green-600">€{selected.price}</span>
+                                        </div>
+                                    </div>
+                                    <h3 className="font-bold text-slate-800 mb-3 text-sm">Ingrediënten</h3>
+                                    <ul className="space-y-2 mb-6">
+                                        {selected.ingredients.map((ing, i) => (
+                                            <li key={i} className="flex items-center gap-3 text-slate-600 text-xs">
+                                                <div className="w-1 h-1 rounded-full bg-slate-300"></div>{ing}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <h3 className="font-bold text-slate-800 mb-3 text-sm">Bereiding</h3>
+                                    <div className="space-y-4 mb-8">
+                                        {selected.instructions && selected.instructions.map((step, i) => (
+                                            <div key={i} className="flex gap-3 text-xs leading-relaxed text-slate-500">
+                                                <span className="font-bold text-green-600">{i+1}.</span>
+                                                <p>{step}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button 
+                                        onClick={() => { alert('Je wordt doorgestuurd naar de supermarkt! (Link via LinkPizza)'); setSelected(null); }}
+                                        className="w-full bg-slate-900 text-white font-extrabold py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                    >
+                                        Bestel Ingrediënten <Icon name="arrow-right" size={18}/>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Navigation */}
+                    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-lg border-t border-slate-100 p-4 px-8 flex justify-between items-center z-40">
+                        <button onClick={() => setView('home')} className={`flex flex-col items-center gap-1 transition-all ${view === 'home' ? 'text-green-600 scale-110' : 'text-slate-300'}`}>
+                            <Icon name="home" size={22} fill={view === 'home' ? "currentColor" : "none"} />
+                            <span className="text-[9px] font-bold uppercase">Ontdek</span>
+                        </button>
+                        <button onClick={() => setView('share')} className={`flex flex-col items-center -mt-10 transition-all`}>
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white active:scale-90 transition-all ${view === 'share' ? 'bg-green-600 text-white rotate-45' : 'bg-slate-900 text-white'}`}>
+                                <Icon name="plus" size={28} />
+                            </div>
+                            <span className="text-[9px] font-extrabold mt-1 text-slate-500 uppercase">Delen</span>
+                        </button>
+                        <button onClick={() => setView('favorites')} className={`flex flex-col items-center gap-1 transition-all ${view === 'favorites' ? 'text-red-500 scale-110' : 'text-slate-300'}`}>
+                            <Icon name="heart" size={22} fill={view === 'favorites' ? "currentColor" : "none"} />
+                            <span className="text-[9px] font-bold uppercase">Bewaard</span>
+                        </button>
+                    </nav>
                 </div>
-            </div>
-        </div>
-      );
-  }
+            );
+        }
 
-  const HomeView = () => {
-    return (
-    <div className="animate-fade-in">
-      <div className="relative overflow-hidden bg-gray-900 text-white pb-8 pt-8 rounded-b-[2.5rem] shadow-xl mb-6" style={{backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1543353071-087f9fbdd034?w=800&q=80')`, backgroundSize: 'cover', backgroundPosition: 'center'}}>
-        <div className="relative z-10 text-center px-4">
-            <h1 className="text-3xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-white drop-shadow-sm">Jouw Smaak.</h1>
-            <p className="text-gray-200 mb-6 text-sm max-w-xs mx-auto leading-relaxed drop-shadow-md">Vul je wensen in, wij doen de rest.</p>
-            
-            <div className="max-w-sm mx-auto bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 mb-6 text-left">
-                <label className="text-[10px] uppercase font-bold text-gray-300 mb-2 block flex items-center gap-1"><Filter size={10}/> Wensen (Optioneel)</label>
-                <div className="relative">
-                    <input value={userWishes} onChange={(e) => setUserWishes(e.target.value)} placeholder="Bijv: wel kip, geen vis..." className="w-full bg-white/20 text-white placeholder-gray-300 text-sm px-4 py-3 rounded-xl border border-white/10 focus:border-green-400 focus:bg-white/30 outline-none transition-all"/>
-                    {userWishes && <button onClick={() => setUserWishes("")} className="absolute right-3 top-3 text-gray-300 hover:text-white"><X size={16}/></button>}
-                </div>
-            </div>
-
-            <div className="bg-black/30 backdrop-blur-md p-1 rounded-xl inline-flex items-center gap-2 mb-4 border border-white/10">
-              <span className="text-xs font-bold px-3 text-white">Eters:</span>
-              {[1, 2, 4].map(num => (
-                <button key={num} onClick={() => setPreferences({...preferences, persons: num})} className={`w-8 h-8 rounded-lg text-sm font-bold transition-all flex items-center justify-center ${preferences.persons == num ? 'bg-green-500 text-white shadow-lg' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}>
-                  {num}
-                </button>
-              ))}
-            </div><br/>
-            <button onClick={() => generateMenu(3)} disabled={isGenerating} className="bg-white text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg shadow-green-900/50 active:scale-95 transition-transform inline-flex items-center gap-2">
-              {isGenerating ? <Loader2 className="animate-spin"/> : <Zap size={18} className="text-yellow-500" fill="currentColor"/>} 
-              {isGenerating ? "AI is bezig..." : "Genereer Menu"}
-            </button>
-        </div>
-      </div>
-      <div className="px-4 pb-24 max-w-md mx-auto">
-         {generatedRecipes.length > 0 && (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-lg text-gray-800">Resultaat</h2>
-              <button onClick={() => generateMenu(3)} className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full flex items-center gap-1 border border-green-100"><RefreshCw size={10}/> Ververs</button>
-            </div>
-            <div className="space-y-3">
-              {generatedRecipes.map((recipe, index) => <RecipeCard key={recipe.id} recipe={recipe} index={index} isGuest={true} showLock={false} />)}
-            </div>
-            <div className="mt-6 bg-gradient-to-r from-green-600 to-emerald-700 text-white p-5 rounded-2xl shadow-lg text-center cursor-pointer relative overflow-hidden group" onClick={() => setView('login')}>
-              <div className="absolute right-0 top-0 h-full w-1/2 bg-white/5 skew-x-12 group-hover:translate-x-2 transition-transform"></div>
-              <h3 className="font-bold text-lg mb-1 relative z-10">Verdien Geld met Koken</h3>
-              <p className="text-green-100 text-xs mb-3 relative z-10">Upload jouw recept + foto en krijg korting.</p>
-              <div className="bg-white text-green-700 font-bold py-2 px-6 rounded-full inline-block text-sm relative z-10 shadow-sm">Word Premium</div>
-            </div>
-          </>
-         )}
-      </div>
-    </div>
-    );
-  };
-
-  const SubmitRecipeView = () => (
-      <div className="animate-fade-in pb-24 px-4 pt-6 max-w-md mx-auto">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white mb-6 shadow-lg">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h2 className="text-xl font-bold">Verdien Korting</h2>
-                  <p className="text-blue-100 text-xs mt-1">Upload jouw unieke recept. Na goedkeuring krijg je korting.</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full"><Wallet size={24} /></div>
-              </div>
-              <div className="flex items-end gap-2">
-                <span className="text-4xl font-bold">€{wallet.toFixed(2)}</span>
-                <span className="text-sm text-blue-200 mb-1">/ €{SUBSCRIPTION_PRICE} gespaard</span>
-              </div>
-              <div className="w-full bg-black/20 h-1.5 rounded-full mt-3 overflow-hidden">
-                <div className="bg-yellow-400 h-full transition-all duration-1000" style={{width: `${(wallet/SUBSCRIPTION_PRICE)*100}%`}}></div>
-              </div>
-          </div>
-          <form onSubmit={handleRecipeSubmit} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-              <h3 className="font-bold text-gray-800 mb-4">Recept Insturen</h3>
-              <div className="space-y-4">
-                  <div onClick={handleImageUpload} className={`w-full h-32 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${uploadedImage ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:bg-gray-50'}`}>
-                      {submitStatus === 'uploading' ? ( <span className="text-gray-400 flex items-center gap-2"><Loader2 className="animate-spin"/> Uploaden...</span> ) : uploadedImage ? ( <div className="relative w-full h-full overflow-hidden rounded-xl"><img src={uploadedImage} className="w-full h-full object-cover" alt="Preview"/><div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white font-bold"><Check size={20}/> Foto Geüpload</div></div> ) : ( <><Camera size={24} className="text-gray-400 mb-2"/><span className="text-xs text-gray-500 font-bold">Klik om foto te maken/uploaden</span></> )}
-                  </div>
-                  <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">Titel</label><input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-green-500 outline-none" placeholder="Bijv. Oma's Gehaktballen"/></div>
-                  <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">Bereidingswijze</label><textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-green-500 outline-none h-32" placeholder="Beschrijf je stappen hier..."/></div>
-                  <button disabled={submitStatus === 'checking' || submitStatus === 'success' || !uploadedImage} type="submit" className={`w-full font-bold py-3 rounded-xl shadow-lg flex justify-center items-center gap-2 transition-all ${submitStatus === 'success' ? 'bg-green-500 text-white' : 'bg-gray-900 text-white hover:bg-black disabled:bg-gray-300'}`}>
-                    {submitStatus === 'checking' ? <><Loader2 className="animate-spin"/> AI Controleert...</> : submitStatus === 'success' ? <><Check/> Goedgekeurd! +€1.00</> : <>Verstuur voor Korting</>}
-                  </button>
-              </div>
-          </form>
-          {userSubmittedRecipes.length > 0 && <div className="mt-8"><h3 className="font-bold text-gray-800 mb-4">Jouw Inzendingen</h3><div className="space-y-3">{userSubmittedRecipes.map((r, i) => <RecipeCard key={i} recipe={r} isGuest={false} />)}</div></div>}
-      </div>
-  );
-
-  const DashboardView = () => (
-    <div className="animate-fade-in pb-24 px-4 pt-6 max-w-md mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold text-gray-800">Mijn Weekplanner 📅</h1>
-        <button onClick={logout} className="text-gray-400 hover:text-red-500 p-2"><LogOut size={18} /></button>
-      </div>
-      <div className="bg-white p-3 rounded-xl border border-gray-200 mb-4 shadow-sm">
-        <div className="flex items-center gap-2 text-gray-400 mb-1"><Filter size={12}/> <span className="text-[10px] font-bold uppercase">Actieve Filters</span></div>
-        <input value={userWishes} onChange={(e) => setUserWishes(e.target.value)} placeholder="Speciale wensen..." className="w-full text-sm outline-none text-gray-700 bg-transparent"/>
-      </div>
-      <div className="bg-white p-3 rounded-xl shadow-md border border-gray-100 mb-4 sticky top-[72px] z-20 flex justify-between items-center backdrop-blur-md bg-white/80">
-        <div className="text-[10px] font-bold text-gray-500 uppercase"><span className="text-orange-500">{generatedRecipes.filter(r => r.locked).length}</span> Vastgezet</div>
-        <button onClick={() => generateMenu(7)} disabled={isGenerating} className="bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow-md active:scale-95 transition-transform flex items-center gap-2">
-          {isGenerating ? <Loader2 size={14} className="animate-spin"/> : <RefreshCw size={14}/>} 
-          {generatedRecipes.length > 0 ? "Ververs Week" : "Start Planner"}
-        </button>
-      </div>
-      <div className="space-y-3">
-        {generatedRecipes.map((recipe, index) => (
-          <div key={recipe.id} className="relative pl-6">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-extrabold text-gray-300 uppercase tracking-widest w-6 text-center">Dag {index + 1}</div>
-            <RecipeCard recipe={recipe} showLock={true} />
-          </div>
-        ))}
-        {generatedRecipes.length === 0 && (
-          <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-            <Sparkles className="mx-auto text-gray-300 mb-2" size={32} />
-            <p className="text-gray-400 text-sm">Klik op de knop om je week te plannen!</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const LoginView = () => (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white max-w-md mx-auto text-center">
-      <div className="bg-green-100 p-4 rounded-full mb-4 text-green-600"><Star size={32} fill="currentColor" /></div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Upgrade je Keuken</h2>
-      <p className="text-gray-500 mb-6 text-sm">Beheer je weekplanning, bewaar favorieten en verdien korting met jouw kookfoto's.</p>
-      <button onClick={login} className="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-md mb-3 active:scale-95 transition-transform">
-        Word Premium (€2,99)
-      </button>
-      <button onClick={() => setView('home')} className="text-gray-400 text-xs font-medium underline">Nu niet, ik bekijk de suggesties</button>
-    </div>
-  );
-
-  const FavoritesView = () => (
-    <div className="animate-fade-in pb-24 px-4 pt-6 max-w-md mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold text-gray-800">Favorieten ❤️</h1>
-        {savedRecipeIds.length > 0 && <button onClick={() => setSavedRecipeIds([])} className="text-gray-300 hover:text-red-500"><Trash2 size={16}/></button>}
-      </div>
-      {savedRecipeIds.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3">
-          {savedRecipeIds.map(recipe => <RecipeCard key={recipe.id} recipe={recipe} isGuest={false} />)}
-        </div>
-      ) : (
-        <div className="p-20 text-center text-gray-400 flex flex-col items-center border-2 border-dashed border-gray-100 rounded-3xl">
-          <Heart className="mb-4 text-gray-100" size={64}/> 
-          <p className="text-sm font-medium">Nog geen favorieten bewaard.</p>
-          <button onClick={() => setView(user ? 'dashboard' : 'home')} className="mt-4 text-green-600 text-xs font-bold">Ontdek Recepten</button>
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      {/* HEADER */}
-      <div className="bg-white shadow-sm py-3 px-6 flex justify-between items-center sticky top-0 z-30 max-w-md mx-auto border-b border-gray-100">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView(user ? 'dashboard' : 'home')}>
-          <div className="bg-green-600 text-white p-1 rounded shadow-inner"><Utensils size={16} /></div>
-          <span className="font-bold text-base tracking-tight">Uit Werking</span>
-        </div>
-        {!user && view !== 'login' && (
-          <button onClick={() => setView('login')} className="text-[10px] font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 shadow-sm">Premium Login</button>
-        )}
-        {user && <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{user.name}</div>}
-      </div>
-
-      <div className="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative">
-        {view === 'home' && <HomeView />}
-        {view === 'dashboard' && <DashboardView />}
-        {view === 'submit' && <SubmitRecipeView />}
-        {view === 'favorites' && <FavoritesView />}
-        {view === 'login' && <LoginView />}
-      </div>
-
-      {/* BOTTOM NAV */}
-      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 py-3 px-6 flex justify-around text-gray-400 z-40 max-w-md mx-auto right-0 backdrop-blur-md bg-white/90">
-        <button onClick={() => setView(user ? 'dashboard' : 'home')} className={`flex flex-col items-center transition-colors ${view === 'home' || view === 'dashboard' ? 'text-green-600' : 'hover:text-gray-600'}`}>
-          <Home size={22}/>
-          <span className="text-[9px] font-bold mt-0.5">Start</span>
-        </button>
-        
-        {user && (
-          <button onClick={() => setView('submit')} className={`flex flex-col items-center -mt-8`}>
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white transition-all active:scale-90 ${view === 'submit' ? 'bg-green-600 text-white' : 'bg-gray-900 text-white'}`}>
-              <PlusCircle size={28}/>
-            </div>
-            <span className="text-[9px] font-bold mt-1 text-gray-500 uppercase tracking-tighter">Verdien</span>
-          </button>
-        )}
-
-        <button onClick={() => setView('favorites')} className={`flex flex-col items-center transition-colors ${view === 'favorites' ? 'text-red-500' : 'hover:text-gray-600'}`}>
-          <Heart size={22} fill={view === 'favorites' ? 'currentColor' : 'none'}/>
-          <span className="text-[9px] font-bold mt-0.5">Kookboek</span>
-        </button>
-      </div>
-      
-      <Modal />
-    </div>
-  );
-}
-
-export default function App() { 
-  return (
-    <ErrorBoundary>
-      <AppContent />
-    </ErrorBoundary>
-  ); 
-}
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

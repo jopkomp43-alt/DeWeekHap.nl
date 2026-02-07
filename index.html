@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uit Werking | Deel, Plan & Verdien Punten</title>
+    
+    <!-- FAVICON (Het logo op het tabblad) -->
+    <!-- Je kunt de emoji hieronder vervangen door een link naar je eigen logo.png -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🍴</text></svg>">
+
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -350,7 +355,6 @@
                                                 <textarea required value={formData.instructions} onChange={e => setFormData({...formData, instructions: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-5 text-base outline-none h-32 resize-none shadow-sm" placeholder="Hoe maak je het?"></textarea>
                                             </div>
                                             
-                                            {/* JURIDISCHE CHECKBOX */}
                                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-3">
                                                 <input 
                                                     id="ownership-check"

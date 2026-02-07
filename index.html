@@ -3,17 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Uit Werking | Deel, Plan & Verdien Punten</title>
     
-    <!-- FAVICON (Het logo op het tabblad) -->
-    <!-- Je kunt de emoji hieronder vervangen door een link naar je eigen logo.png -->
+    <!-- SEO BASIS -->
+    <title>Uit Werking | Gratis Weekplanning & Community Recepten</title>
+    <meta name="description" content="Plan je weekmenu gratis met de AI van Uit Werking. Deel je eigen recepten, verdien punten en word een Master Chef. Gezond, gevarieerd en eenvoudig koken.">
+    <meta name="keywords" content="weekmenu planner, gratis recepten, maaltijdplanning, kook community, gezonde recepten, recepten delen, LinkPizza, besparen op boodschappen">
+    <meta name="author" content="Uit Werking">
+    <link rel="canonical" href="https://jouwgebruikersnaam.github.io/projectnaam/">
+
+    <!-- OPEN GRAPH (Social Media SEO) -->
+    <meta property="og:title" content="Uit Werking | De slimste manier om je weekmenu te plannen">
+    <meta property="og:description" content="Nooit meer nadenken over wat je moet eten. Genereer een uniek weekmenu en deel je eigen passie met de community.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=1200&q=80">
+    <meta property="og:url" content="https://jouwgebruikersnaam.github.io/projectnaam/">
+    <meta property="og:type" content="website">
+
+    <!-- FAVICON -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🍴</text></svg>">
+
+    <!-- STRUCTURED DATA (JSON-LD voor Google Recepten) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Uit Werking",
+      "url": "https://jouwgebruikersnaam.github.io/projectnaam/",
+      "description": "Gratis AI-gedreven weekmenu planner en community platform voor recepten.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://jouwgebruikersnaam.github.io/projectnaam/?s={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
 
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { 
@@ -30,12 +59,8 @@
             transform: translateY(-8px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        .chef-badge {
-            background: linear-gradient(45deg, #0ea5e9, #2563eb);
-        }
-        .chef-badge-master {
-            background: linear-gradient(45deg, #f59e0b, #d97706);
-        }
+        .chef-badge { background: linear-gradient(45deg, #0ea5e9, #2563eb); }
+        .chef-badge-master { background: linear-gradient(45deg, #f59e0b, #d97706); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 overflow-x-hidden">
@@ -44,10 +69,8 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- VEILIGE ICON COMPONENT ---
         const Icon = ({ name, size = 20, className = "", fill = "none" }) => {
             const wrapperRef = useRef(null);
-
             useEffect(() => {
                 if (wrapperRef.current && window.lucide) {
                     wrapperRef.current.innerHTML = `<i data-lucide="${name}"></i>`;
@@ -61,11 +84,9 @@
                     });
                 }
             }, [name, size, className, fill]);
-
             return <span ref={wrapperRef} className="inline-flex items-center justify-center leading-none" style={{ width: size, height: size }}></span>;
         };
 
-        // --- DATABASE ---
         const recipesPool = {
             italian: [
                 { title: "Romige Pesto Penne", category: "Italiaans", ingredients: ["200g Penne", "100g Pesto", "Kipblokjes", "Cherrytomatjes"], instructions: ["Kook de pasta.", "Bak de kip goudbruin.", "Meng met pesto."], image: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800&q=80" },
@@ -101,6 +122,18 @@
 
             const [formData, setFormData] = useState({ title: '', category: 'italian', ingredients: '', instructions: '', image: '', confirmOwnership: false });
 
+            // --- DYNAMISCHE SEO TITEL ---
+            useEffect(() => {
+                const baseTitle = "Uit Werking";
+                const pageTitles = {
+                    home: "Gratis Weekplanning & Recepten",
+                    about: "Onze Bedoeling & Chef Status",
+                    favorites: "Mijn Persoonlijke Kookboek",
+                    share: "Deel je Recept & Verdien Punten"
+                };
+                document.title = `${pageTitles[view] || "Planning"} | ${baseTitle}`;
+            }, [view]);
+
             useEffect(() => { localStorage.setItem('uw_user', JSON.stringify(user)); }, [user]);
             useEffect(() => { localStorage.setItem('uw_gen', JSON.stringify(generated)); }, [generated]);
             useEffect(() => { localStorage.setItem('uw_fav', JSON.stringify(saved)); }, [saved]);
@@ -117,26 +150,15 @@
             const generateMenu = () => {
                 setLoading(true);
                 if (view !== 'home') setView('home');
-                
                 setTimeout(() => {
-                    const allAvailable = [
-                        ...Object.values(recipesPool).flat(),
-                        ...community
-                    ];
+                    const allAvailable = [...Object.values(recipesPool).flat(), ...community];
                     const shuffled = [...allAvailable].sort(() => 0.5 - Math.random());
-                    const results = shuffled.slice(0, 7).map((r, index) => ({
-                        ...r,
-                        id: Math.random().toString(36).substr(2, 9),
-                        time: "20 min",
-                        price: (Math.random() * 4 + 3).toFixed(2),
-                        likes: r.likes || 0
+                    const results = shuffled.slice(0, 7).map((r) => ({
+                        ...r, id: Math.random().toString(36).substr(2, 9), time: "20 min", price: (Math.random() * 4 + 3).toFixed(2), likes: r.likes || 0
                     }));
                     setGenerated(results);
                     setLoading(false);
-                    setTimeout(() => {
-                        const el = document.getElementById('results-section');
-                        if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
+                    setTimeout(() => document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
                 }, 1000);
             };
 
@@ -152,21 +174,13 @@
 
             const handleShare = (e) => {
                 e.preventDefault();
-                if (!formData.confirmOwnership) {
-                    alert("Bevestig a.u.b. dat de foto jouw eigendom is.");
-                    return;
-                }
+                if (!formData.confirmOwnership) { alert("Bevestig a.u.b. dat de foto jouw eigendom is."); return; }
                 const newRecipe = {
-                    ...formData,
-                    id: Math.random().toString(36).substr(2, 9),
+                    ...formData, id: Math.random().toString(36).substr(2, 9),
                     ingredients: formData.ingredients.split(',').map(i => i.trim()),
                     instructions: formData.instructions.split('\n').map(i => i.trim()),
                     image: formData.image || "https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80",
-                    isCommunity: true,
-                    author: user ? user.name : "Gast",
-                    time: "30 min",
-                    price: "4.50",
-                    likes: 0
+                    isCommunity: true, author: user ? user.name : "Gast", time: "30 min", price: "4.50", likes: 0
                 };
                 setCommunity([newRecipe, ...community]);
                 setPoints(prev => prev + 50);
@@ -177,7 +191,6 @@
 
             return (
                 <div className="min-h-screen flex flex-col w-full">
-                    
                     <header className="bg-white border-b border-slate-100 sticky top-0 z-40 w-full backdrop-blur-md bg-white/90">
                         <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
                             <div className="flex items-center gap-2 cursor-pointer group" onClick={() => setView('home')}>
@@ -186,14 +199,12 @@
                                 </div>
                                 <span className="font-extrabold text-2xl tracking-tight text-slate-800">Uit Werking</span>
                             </div>
-
                             <nav className="hidden md:flex items-center gap-10">
                                 <button onClick={() => setView('home')} className={`font-bold text-sm ${view === 'home' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'}`}>Ontdekken</button>
                                 <button onClick={() => setView('about')} className={`font-bold text-sm ${view === 'about' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'}`}>De Bedoeling</button>
                                 <button onClick={() => setView('favorites')} className={`font-bold text-sm ${view === 'favorites' ? 'text-red-500' : 'text-slate-500 hover:text-slate-800'}`}>Mijn Kookboek</button>
                                 <button onClick={() => setView('share')} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-md active:scale-95">Recept Delen</button>
                             </nav>
-
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
                                     <Icon name="award" size={16} className="text-orange-500" fill="currentColor" />
@@ -207,9 +218,8 @@
                     </header>
 
                     <main className="flex-1 w-full overflow-x-hidden">
-                        
                         {view === 'about' && (
-                            <div className="animate-fade-in max-w-7xl mx-auto px-6 py-16 space-y-12 text-center">
+                            <div className="animate-fade-in max-w-7xl mx-auto px-6 py-16 space-y-12 text-center text-left">
                                 <section className="space-y-8 max-w-4xl mx-auto">
                                     <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 leading-tight">Eigen foto's, eigen smaak.</h1>
                                     <p className="text-xl text-slate-500 leading-relaxed max-w-2xl mx-auto">
@@ -219,11 +229,11 @@
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
                                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                                         <h3 className="font-bold text-2xl mb-4 flex items-center gap-2"><Icon name="camera" className="text-blue-500" /> Geen auteursrecht-zorgen</h3>
-                                        <p className="text-slate-500">Door je eigen foto's te uploaden, houden we de site eerlijk en legaal. Kopieer geen foto's van andere websites; jouw eigen kookresultaat is veel leuker!</p>
+                                        <p className="text-slate-500 text-sm">Door je eigen foto's te uploaden, houden we de site eerlijk en legaal. Kopieer geen foto's van andere websites; jouw eigen kookresultaat is veel leuker!</p>
                                     </div>
                                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                                         <h3 className="font-bold text-2xl mb-4 flex items-center gap-2"><Icon name="shield-check" className="text-green-500" /> Veilig delen</h3>
-                                        <p className="text-slate-500">Wij controleren inzendingen op echtheid. Zo blijft de community gevuld met echte, haalbare gerechten van echte mensen.</p>
+                                        <p className="text-slate-500 text-sm">Wij controleren inzendingen op echtheid. Zo blijft de community gevuld met echte, haalbare gerechten van echte mensen.</p>
                                     </div>
                                 </div>
                             </div>
@@ -233,8 +243,8 @@
                             <div className="animate-fade-in space-y-20">
                                 <section className="w-full px-6 pt-10 text-center">
                                     <div className="max-w-7xl mx-auto relative h-[450px] md:h-[600px] rounded-[4rem] overflow-hidden shadow-2xl">
-                                        <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=1600&q=80" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/40 to-transparent flex flex-col justify-center px-10 md:px-20 text-left">
+                                        <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=1600&q=80" alt="Gezond en gevarieerd eten planning" className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/40 to-transparent flex flex-col justify-center px-10 md:px-20 text-left text-left">
                                             <div className="max-w-2xl space-y-8">
                                                 <h1 className="text-5xl md:text-8xl font-black text-white leading-tight">Zeven dagen <br/> echte smaak.</h1>
                                                 <p className="text-xl text-slate-200 leading-relaxed max-w-lg">
@@ -253,15 +263,15 @@
 
                                 {community.length > 0 && (
                                     <section className="max-w-7xl mx-auto px-6">
-                                        <div className="flex items-center justify-between mb-12 border-b border-slate-100 pb-8">
+                                        <div className="flex items-center justify-between mb-12 border-b border-slate-100 pb-8 text-left">
                                             <h2 className="text-4xl font-black text-slate-800">Echte Foto's van Chefs</h2>
                                             <button onClick={() => setView('share')} className="text-blue-600 font-bold hover:translate-x-2 transition-transform underline decoration-2 underline-offset-8 text-right">Deel & Verdien Punten →</button>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 text-left">
                                             {community.map(r => (
                                                 <div key={r.id} onClick={() => setSelected(r)} className="group bg-white rounded-[3rem] overflow-hidden shadow-sm hover-card transition-all cursor-pointer border border-slate-50 flex flex-col h-full">
                                                     <div className="h-56 overflow-hidden relative">
-                                                        <img src={r.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                        <img src={r.image} alt={r.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                         <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-2xl flex items-center gap-2 border border-white">
                                                             <button onClick={(e) => handleLike(r.id, e)} className="text-red-500 hover:scale-110 transition-transform"><Icon name="heart" size={16} fill={r.likes > 0 ? "currentColor" : "none"} /></button>
                                                             <span className="text-xs font-black">{r.likes || 0}</span>
@@ -279,34 +289,34 @@
                                     </section>
                                 )}
 
-                                <section id="results-section" className="max-w-7xl mx-auto px-6 py-10">
+                                <section id="results-section" className="max-w-7xl mx-auto px-6 py-10 text-left">
                                     {generated.length > 0 ? (
                                         <div className="space-y-12">
-                                            <div className="flex items-end justify-between">
-                                                <div className="space-y-2">
-                                                    <h2 className="text-4xl md:text-5xl font-black text-slate-800">Jouw Weekmenu</h2>
-                                                    <p className="text-slate-400 font-medium">Zeven unieke gerechten, speciaal voor jou.</p>
+                                            <div className="flex items-end justify-between text-left">
+                                                <div className="space-y-2 text-left">
+                                                    <h2 className="text-4xl md:text-5xl font-black text-slate-800 text-left">Jouw Weekmenu</h2>
+                                                    <p className="text-slate-400 font-medium text-left">Zeven unieke gerechten, speciaal voor jou.</p>
                                                 </div>
                                                 <button onClick={generateMenu} className="flex items-center gap-3 text-blue-600 font-black text-sm bg-blue-50 px-6 py-3 rounded-2xl border border-blue-100 hover:bg-blue-100 transition-all text-right">
                                                     <Icon name="refresh-cw" size={18} className={loading ? "animate-spin" : ""} />
                                                     Nieuwe Variatie
                                                 </button>
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 text-left">
                                                 {generated.map((r, index) => (
                                                     <div key={r.id} onClick={() => setSelected(r)} className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover-card transition-all border border-slate-50 cursor-pointer flex flex-col group">
                                                         <div className="h-60 relative overflow-hidden">
-                                                            <img src={r.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                                                            <div className="absolute top-4 left-4 bg-slate-900 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg">
+                                                            <img src={r.image} alt={r.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                                                            <div className="absolute top-4 left-4 bg-slate-900 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg text-left">
                                                                 Dag {index + 1}
                                                             </div>
                                                             <button onClick={(e) => { e.stopPropagation(); toggleFav(r); }} className="absolute top-4 right-4 bg-white/90 backdrop-blur p-2.5 rounded-full shadow-lg hover:scale-110 transition-transform">
                                                                 <Icon name="heart" size={18} className={saved.find(s => s.id === r.id) ? "text-red-500 fill-red-500" : "text-slate-300"} />
                                                             </button>
                                                         </div>
-                                                        <div className="p-8">
+                                                        <div className="p-8 text-left">
                                                             <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 block">{r.category}</span>
-                                                            <h3 className="text-lg font-black text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">{r.title}</h3>
+                                                            <h3 className="text-lg font-black text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2 text-left">{r.title}</h3>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -324,51 +334,42 @@
                         )}
 
                         {view === 'share' && (
-                            <div className="max-w-7xl mx-auto px-6 py-16 animate-fade-in">
+                            <div className="max-w-7xl mx-auto px-6 py-16 animate-fade-in text-left">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                                    <div className="space-y-8">
+                                    <div className="space-y-8 text-left">
                                         <h2 className="text-5xl md:text-7xl font-black text-slate-800 leading-tight">Jouw foto, <br/> Jouw trots.</h2>
-                                        <p className="text-slate-500 text-xl leading-relaxed italic border-l-4 border-blue-500 pl-6">
+                                        <p className="text-slate-500 text-xl leading-relaxed italic border-l-4 border-blue-500 pl-6 text-left">
                                             "Om problemen met auteursrecht te voorkomen, vragen we je alleen foto's te uploaden die je zelf hebt gemaakt."
                                         </p>
-                                        <p className="text-slate-500 text-lg leading-relaxed">
+                                        <p className="text-slate-500 text-lg leading-relaxed text-left">
                                             Voor elk uniek recept met eigen foto ontvang je **50 punten**. Help de community veilig en eerlijk te groeien.
                                         </p>
                                     </div>
-                                    <div className="bg-white p-12 rounded-[4rem] shadow-2xl border border-slate-50">
+                                    <div className="bg-white p-12 rounded-[4rem] shadow-2xl border border-slate-50 text-left">
                                         <form onSubmit={handleShare} className="space-y-6">
                                             <div className="space-y-2">
                                                 <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-2">Titel van het gerecht</label>
                                                 <input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-5 text-base focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm" placeholder="Bijv. Mijn Favoriete Pasta" />
                                             </div>
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 text-left">
                                                 <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-2">Link naar jouw foto (URL)</label>
                                                 <input required value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-5 text-base outline-none shadow-sm focus:bg-white" placeholder="Link naar je eigen foto..." />
                                                 <p className="text-[10px] text-slate-400 ml-2">Upload je foto bijv. naar Imgur of iCloud en plak hier de link.</p>
                                             </div>
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 text-left">
                                                 <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-2">Ingrediënten</label>
                                                 <input required value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-5 text-base outline-none shadow-sm" placeholder="Penne, room, spekjes..." />
                                             </div>
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 text-left">
                                                 <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-2">Bereidingswijze</label>
                                                 <textarea required value={formData.instructions} onChange={e => setFormData({...formData, instructions: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-5 text-base outline-none h-32 resize-none shadow-sm" placeholder="Hoe maak je het?"></textarea>
                                             </div>
-                                            
                                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-3">
-                                                <input 
-                                                    id="ownership-check"
-                                                    type="checkbox" 
-                                                    checked={formData.confirmOwnership} 
-                                                    onChange={e => setFormData({...formData, confirmOwnership: e.target.checked})}
-                                                    className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
-                                                    required
-                                                />
-                                                <label htmlFor="ownership-check" className="text-xs text-slate-600 font-medium leading-tight">
+                                                <input id="ownership-check" type="checkbox" checked={formData.confirmOwnership} onChange={e => setFormData({...formData, confirmOwnership: e.target.checked})} className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" required />
+                                                <label htmlFor="ownership-check" className="text-xs text-slate-600 font-medium leading-tight text-left">
                                                     Ik bevestig dat de bovenstaande foto door mijzelf is gemaakt en dat ik Uit Werking toestemming geef deze te tonen.
                                                 </label>
                                             </div>
-
                                             <button type="submit" className="w-full bg-slate-900 text-white font-black py-6 rounded-[2.5rem] shadow-2xl active:scale-95 transition-all text-lg">
                                                 Publiceer Recept (+50 Punten)
                                             </button>
@@ -379,18 +380,18 @@
                         )}
 
                         {view === 'favorites' && (
-                            <div className="max-w-7xl mx-auto px-6 py-16 animate-fade-in text-center">
+                            <div className="max-w-7xl mx-auto px-6 py-16 animate-fade-in text-center text-left">
                                 <h2 className="text-5xl md:text-7xl font-black text-slate-800 mb-16">Mijn Kookboek</h2>
                                 {saved.length > 0 ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12 text-left">
                                         {saved.map(r => (
-                                            <div key={r.id} onClick={() => setSelected(r)} className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-sm flex flex-col group cursor-pointer hover-card transition-all h-full">
+                                            <div key={r.id} onClick={() => setSelected(r)} className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-sm flex flex-col group cursor-pointer hover-card transition-all h-full text-left">
                                                 <div className="h-64 relative overflow-hidden">
-                                                    <img src={r.image} className="w-full h-full object-cover" />
+                                                    <img src={r.image} alt={r.title} className="w-full h-full object-cover" />
                                                 </div>
-                                                <div className="p-8">
+                                                <div className="p-8 text-left">
                                                     <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{r.category}</span>
-                                                    <h3 className="font-extrabold text-xl text-slate-800 mt-2 line-clamp-1">{r.title}</h3>
+                                                    <h3 className="font-extrabold text-xl text-slate-800 mt-2 line-clamp-1 text-left">{r.title}</h3>
                                                 </div>
                                             </div>
                                         ))}
@@ -406,18 +407,16 @@
                         )}
                     </main>
 
-                    <footer className="bg-white border-t border-slate-100 py-20 mt-20">
+                    <footer className="bg-white border-t border-slate-100 py-20 mt-20 text-left">
                         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-16 text-left">
-                            <div className="space-y-6">
+                            <div className="space-y-6 text-left">
                                 <div className="flex items-center gap-3 font-black text-2xl text-slate-800">
-                                    <div className="bg-blue-600 text-white p-1 rounded-lg">
-                                        <Icon name="utensils" size={24} />
-                                    </div>
+                                    <div className="bg-blue-600 text-white p-1 rounded-lg"><Icon name="utensils" size={24} /></div>
                                     <span>Uit Werking</span>
                                 </div>
                                 <p className="text-slate-400 leading-relaxed font-medium">Zeven dagen variatie in één klik. Wij respecteren auteursrechten; upload alleen je eigen foto's.</p>
                             </div>
-                            <div>
+                            <div className="text-left">
                                 <h4 className="font-black text-slate-800 mb-8 tracking-widest uppercase text-xs">Site</h4>
                                 <ul className="text-slate-500 space-y-4 font-bold">
                                     <li><button onClick={() => setView('home')}>Ontdekken</button></li>
@@ -425,17 +424,17 @@
                                     <li><button onClick={() => setView('share')}>Deel Recept</button></li>
                                 </ul>
                             </div>
-                            <div>
+                            <div className="text-left">
                                 <h4 className="font-black text-slate-800 mb-8 tracking-widest uppercase text-xs">Support</h4>
                                 <ul className="text-slate-500 space-y-4 font-bold">
                                     <li>LinkPizza</li>
                                     <li>Affiliate Marketing</li>
                                 </ul>
                             </div>
-                            <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 text-center shadow-sm">
-                                <p className="text-xs font-bold text-slate-400 mb-6">Jouw Chef Status:</p>
-                                <span className={`${rankInfo.color} text-[10px] text-white font-black px-4 py-2 rounded-full shadow-lg block mb-6 uppercase tracking-wider`}>{rankInfo.title}</span>
-                                <button onClick={() => setView('share')} className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg">Punten Verdienen</button>
+                            <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 text-center shadow-sm text-left">
+                                <p className="text-xs font-bold text-slate-400 mb-6 text-center">Jouw Chef Status:</p>
+                                <span className={`${rankInfo.color} text-[10px] text-white font-black px-4 py-2 rounded-full shadow-lg block mb-6 uppercase tracking-wider mx-auto`}>{rankInfo.title}</span>
+                                <button onClick={() => setView('share')} className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg mx-auto block">Punten Verdienen</button>
                             </div>
                         </div>
                     </footer>
@@ -445,27 +444,22 @@
                             <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-lg" onClick={() => setSelected(null)}></div>
                             <div className="bg-white rounded-[4rem] w-full max-w-6xl relative overflow-hidden animate-pop max-h-[90vh] flex flex-col lg:flex-row shadow-2xl">
                                 <div className="lg:w-1/2 relative h-80 lg:h-auto overflow-hidden">
-                                    <img src={selected.image} className="w-full h-full object-cover shadow-inner" />
+                                    <img src={selected.image} alt={selected.title} className="w-full h-full object-cover shadow-inner" />
                                     <div className="absolute top-10 left-10 bg-white/20 backdrop-blur-xl px-6 py-3 rounded-3xl flex items-center gap-3 text-white border border-white/20 shadow-2xl">
-                                        <button onClick={() => handleLike(selected.id)} className="hover:scale-150 transition-transform text-red-500 drop-shadow-lg">
-                                            <Icon name="heart" size={24} fill={selected.likes > 0 ? "currentColor" : "none"} />
-                                        </button>
+                                        <button onClick={() => handleLike(selected.id)} className="hover:scale-150 transition-transform text-red-500 drop-shadow-lg"><Icon name="heart" size={24} fill={selected.likes > 0 ? "currentColor" : "none"} /></button>
                                         <span className="font-black text-xl">{selected.likes || 0}</span>
                                     </div>
-                                    <button onClick={() => setSelected(null)} className="absolute top-10 right-10 bg-black/30 backdrop-blur-md text-white p-3 rounded-full lg:hidden">
-                                        <Icon name="x" size={24} />
-                                    </button>
+                                    <button onClick={() => setSelected(null)} className="absolute top-10 right-10 bg-black/30 backdrop-blur-md text-white p-3 rounded-full lg:hidden"><Icon name="x" size={24} /></button>
                                 </div>
                                 <div className="lg:w-1/2 p-10 md:p-20 overflow-y-auto no-scrollbar bg-white flex flex-col text-left">
                                     <div className="mb-12 text-left">
-                                        <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-1.5 rounded-full shadow-sm">
+                                        <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-1.5 rounded-full shadow-sm text-left">
                                             {selected.category}
                                         </span>
                                         <h2 className="text-4xl md:text-5xl font-black text-slate-800 leading-tight mt-6 text-left">{selected.title}</h2>
-                                        {selected.isCommunity && <p className="mt-2 text-slate-400 font-bold italic">Authentiek recept door Chef {selected.author}</p>}
+                                        {selected.isCommunity && <p className="mt-2 text-slate-400 font-bold italic text-left">Authentiek recept door Chef {selected.author}</p>}
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-10 mb-12 border-b pb-12 border-slate-50">
+                                    <div className="grid grid-cols-2 gap-10 mb-12 border-b pb-12 border-slate-50 text-left">
                                         <div className="flex flex-col gap-2 text-left">
                                             <span className="text-xs font-black text-slate-300 uppercase tracking-widest text-left">Kosten p.p.</span>
                                             <span className="text-3xl font-black text-green-600 text-left">€{selected.price}</span>
@@ -475,13 +469,9 @@
                                             <span className="text-3xl font-black text-slate-700 text-left">{selected.time}</span>
                                         </div>
                                     </div>
-
-                                    <div className="space-y-12">
+                                    <div className="space-y-12 text-left">
                                         <div className="text-left">
-                                            <h3 className="font-black text-slate-800 mb-8 text-2xl text-left flex items-center gap-3">
-                                                <Icon name="list" className="text-blue-500" />
-                                                Ingrediënten
-                                            </h3>
+                                            <h3 className="font-black text-slate-800 mb-8 text-2xl text-left flex items-center gap-3"><Icon name="list" className="text-blue-500" /> Ingrediënten</h3>
                                             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                                                 {selected.ingredients.map((ing, i) => (
                                                     <li key={i} className="flex items-center gap-4 text-slate-600 font-bold bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm transition-all hover:bg-white hover:border-blue-100 text-left">
@@ -491,26 +481,18 @@
                                                 ))}
                                             </ul>
                                         </div>
-                                        <div className="pt-10">
-                                            <button 
-                                                onClick={() => { alert('Je wordt doorverwezen! (Gebruik hier je LinkPizza link)'); setSelected(null); }}
-                                                className="w-full bg-slate-900 text-white font-black py-8 rounded-[2.5rem] flex items-center justify-center gap-4 shadow-2xl hover:bg-slate-800 transition-all active:scale-95 text-xl mx-auto block"
-                                            >
-                                                Boodschappen Bestellen <Icon name="arrow-right" size={24}/>
-                                            </button>
+                                        <div className="pt-10 text-left">
+                                            <button onClick={() => { alert('Je wordt doorverwezen! (Gebruik hier je LinkPizza link)'); setSelected(null); }} className="w-full bg-slate-900 text-white font-black py-8 rounded-[2.5rem] flex items-center justify-center gap-4 shadow-2xl hover:bg-slate-800 transition-all active:scale-95 text-xl mx-auto block">Boodschappen Bestellen <Icon name="arrow-right" size={24}/></button>
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => setSelected(null)} className="absolute top-12 right-12 text-slate-300 hover:text-slate-800 hidden lg:block transition-colors">
-                                    <Icon name="x" size={40} />
-                                </button>
+                                <button onClick={() => setSelected(null)} className="absolute top-12 right-12 text-slate-300 hover:text-slate-800 hidden lg:block transition-colors"><Icon name="x" size={40} /></button>
                             </div>
                         </div>
                     )}
                 </div>
             );
         }
-
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>

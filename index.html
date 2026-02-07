@@ -1,1310 +1,582 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeekHap - Gezond Weekmenu</title>
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Utensils, Clock, Flame, X, Tag, ArrowRight, Search, Leaf, 
+  Home, Heart, ShoppingBasket, User, Sparkles, RefreshCw, 
+  Lock, Unlock, Star, LogOut, ChevronRight, Check, Zap, 
+  PlusCircle, Wallet, AlertCircle, Loader2, Image as ImageIcon, Camera, Filter, ListOrdered, Trash2
+} from 'lucide-react';
+
+// --- CONSTANTEN ---
+const SUBSCRIPTION_PRICE = 2.99;
+const STORAGE_KEYS = {
+  USER: 'uw_user',
+  SAVED_RECIPES: 'uw_saved_recipes',
+  GENERATED_RECIPES: 'uw_generated_recipes',
+  USER_RECIPES: 'uw_user_recipes',
+  WALLET: 'uw_wallet',
+  PREFERENCES: 'uw_prefs'
+};
+
+// --- VEILIGHEIDSCOMPONENT ---
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError(error) { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 text-center">
+        <div>
+          <div className="bg-red-100 p-4 rounded-full inline-block mb-4 text-red-600">
+            <AlertCircle size={32}/>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Oeps, er ging iets mis.</h2>
+          <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-gray-900 text-white px-6 py-2 rounded-full font-bold">
+            Reset App & Herlaad
+          </button>
+        </div>
+      </div>
+    );
+    return this.props.children;
+  }
+}
+
+// --- DATA ---
+const ingredientImages = {
+  italian: ["https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=600&q=80", "https://images.unsplash.com/photo-1626844131082-256783844137?w=600&q=80", "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=600&q=80"],
+  asian: ["https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&q=80", "https://images.unsplash.com/photo-1503764654157-72d979d9af2f?w=600&q=80", "https://images.unsplash.com/photo-1585032226651-759b368d7246?w=600&q=80"],
+  mexican: ["https://images.unsplash.com/photo-1568158879083-c42860933ed7?w=600&q=80", "https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?w=600&q=80", "https://images.unsplash.com/photo-1620589125156-fd5028c5e05b?w=600&q=80"],
+  dutch: ["https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&q=80", "https://images.unsplash.com/photo-1590779033100-9f60a05a013d?w=600&q=80", "https://images.unsplash.com/photo-1603569283847-aa295f0d016a?w=600&q=80"]
+};
+
+const generatorData = {
+  italian: {
+    bases: [
+        { name: "Penne", prep: "Kook de penne in ruim water met zout volgens de verpakking." },
+        { name: "Spaghetti", prep: "Kook de spaghetti al dente in 8-10 minuten." },
+        { name: "Gnocchi", prep: "Bak de gnocchi in een koekenpan met boter goudbruin." }
+    ],
+    proteins: [
+        { name: "Kipfilet", prep: "Snijd de kipfilet in blokjes en bak goudbruin." },
+        { name: "Spekjes", prep: "Bak de spekjes uit in een droge koekenpan." },
+        { name: "Zalm", prep: "Bak de zalm kort op de huid in olijfolie." }
+    ],
+    veggies: ["Courgette", "Spinazie", "Cherrytomaten", "Champignons"],
+    sauces: ["Pesto", "Carbonara", "Arrabbiata", "Bolognese"]
+  },
+  asian: {
+    bases: [
+        { name: "Witte Rijst", prep: "Kook de rijst droog in 10 minuten." },
+        { name: "Noodles", prep: "Wel de noodles 4 minuten in heet water." },
+        { name: "Gebakken Rijst", prep: "Gebruik (afgekoelde) rijst en bak deze op in de wok." }
+    ],
+    proteins: [
+        { name: "Kipdijfilet", prep: "Snijd de kipdijfilet en wok deze op hoog vuur gaar." },
+        { name: "Tofu", prep: "Druk het vocht uit de tofu en bak krokant in olie." },
+        { name: "Garnalen", prep: "Wok de garnalen kort (2 min) tot ze roze zijn." }
+    ],
+    veggies: ["Wokgroente", "Paksoi", "Broccoli", "Sperziebonen"],
+    sauces: ["Teriyaki", "Zoetzuur", "Curry", "Soja-Gember"]
+  },
+  mexican: {
+    bases: [
+        { name: "Wraps", prep: "Verwarm de wraps kort in een droge koekenpan of magnetron." },
+        { name: "Tacos", prep: "Verwarm de tacoschelpen 5 min in de oven op 180 graden." },
+        { name: "Nachos", prep: "Verspreid de nachos over een ovenschaal." }
+    ],
+    proteins: [
+        { name: "Gehakt", prep: "Rul het gehakt met Mexicaanse kruiden gaar." },
+        { name: "Kipstukjes", prep: "Bak de kipstukjes met paprika-poeder goudbruin." },
+        { name: "Bonenmix", prep: "Spoel de bonen af en verwarm ze mee in de saus." }
+    ],
+    veggies: ["Mais & Paprika", "Avocado", "Rode Ui"],
+    sauces: ["Salsa", "Guacamole", "Creme Fraiche"]
+  },
+  dutch: {
+    bases: [
+        { name: "Gekookte Aardappels", prep: "Schil de aardappels en kook ze in 20 minuten gaar." },
+        { name: "Stamppot", prep: "Kook de aardappels en stamp ze fijn met melk en boter." },
+        { name: "Puree", prep: "Bereid de puree volgens de verpakking." }
+    ],
+    proteins: [
+        { name: "Rookworst", prep: "Verwarm de rookworst in heet (niet kokend) water." },
+        { name: "Gehaktbal", prep: "Braad de gehaktbal rondom bruin en laat 15 min sudderen." },
+        { name: "Schnitzel", prep: "Bak de schnitzel in boter 3 minuten per kant." }
+    ],
+    veggies: ["Bloemkool", "Sperziebonen", "Rode Kool", "Witlof"],
+    sauces: ["Jus", "Kaassaus", "Kerriesaus"]
+  }
+};
+
+const adjectives = ["Romige", "Pittige", "Krokante", "Snelle", "Verse", "Gegrilde"];
+const generateUniqueId = () => Math.random().toString(36).substr(2, 9);
+
+function AppContent() {
+  const [view, setView] = useState('home'); 
+  
+  // --- STATE MET LOCALSTORAGE INIT ---
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.USER);
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [generatedRecipes, setGeneratedRecipes] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.GENERATED_RECIPES);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [savedRecipeIds, setSavedRecipeIds] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.SAVED_RECIPES);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [userSubmittedRecipes, setUserSubmittedRecipes] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.USER_RECIPES);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [preferences, setPreferences] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.PREFERENCES);
+    return saved ? JSON.parse(saved) : { persons: 2 };
+  });
+
+  const [wallet, setWallet] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.WALLET);
+    return saved ? parseFloat(saved) : 0.00;
+  });
+
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [userWishes, setUserWishes] = useState("");
+
+  // --- PERSISTENCE HOOKS ---
+  useEffect(() => localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user)), [user]);
+  useEffect(() => localStorage.setItem(STORAGE_KEYS.GENERATED_RECIPES, JSON.stringify(generatedRecipes)), [generatedRecipes]);
+  useEffect(() => localStorage.setItem(STORAGE_KEYS.SAVED_RECIPES, JSON.stringify(savedRecipeIds)), [savedRecipeIds]);
+  useEffect(() => localStorage.setItem(STORAGE_KEYS.USER_RECIPES, JSON.stringify(userSubmittedRecipes)), [userSubmittedRecipes]);
+  useEffect(() => localStorage.setItem(STORAGE_KEYS.WALLET, wallet.toString()), [wallet]);
+  useEffect(() => localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(preferences)), [preferences]);
+
+  // Schakel scroll lock in als modal open is
+  useEffect(() => {
+    if (selectedRecipe) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = 'unset';
+  }, [selectedRecipe]);
+
+  const login = () => { 
+    setUser({ name: "Proever", isPremium: true }); 
+    setView('dashboard'); 
+  };
+  
+  const logout = () => { 
+    localStorage.clear();
+    setUser(null); 
+    setView('home'); 
+    setGeneratedRecipes([]); 
+    setSavedRecipeIds([]);
+    setWallet(0.00);
+    setUserWishes(""); 
+  };
+
+  // --- SLIMME GENERATOR ---
+  const createAiRecipe = () => {
+    let cuisineKeys = Object.keys(generatorData);
+    if (userWishes) {
+        const matching = cuisineKeys.filter(k => userWishes.toLowerCase().includes(k));
+        if (matching.length > 0) cuisineKeys = matching;
+    }
+
+    const cuisineKey = cuisineKeys[Math.floor(Math.random() * cuisineKeys.length)];
+    const data = generatorData[cuisineKey];
+
+    const baseObj = data.bases[Math.floor(Math.random() * data.bases.length)];
+    const protObj = data.proteins[Math.floor(Math.random() * data.proteins.length)];
+    const veggie = data.veggies[Math.floor(Math.random() * data.veggies.length)];
+    const sauce = data.sauces[Math.floor(Math.random() * data.sauces.length)];
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+
+    const imgPool = ingredientImages[cuisineKey] || ingredientImages['dutch'];
+    const image = imgPool[Math.floor(Math.random() * imgPool.length)];
+
+    const title = `${adj} ${protObj.name} met ${baseObj.name}`;
+    const subtitle = `${veggie} in ${sauce}`;
+    const cuisineLabel = cuisineKey.charAt(0).toUpperCase() + cuisineKey.slice(1);
     
-    <!-- Tailwind CSS voor styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    const steps = [
+        `Bereid de ${baseObj.name}: ${baseObj.prep}`,
+        `Verhit olie of boter in een pan. ${protObj.prep}`,
+        `Voeg de ${veggie} toe en bak deze 5-8 minuten mee tot beetgaar.`,
+        `Voeg de ${sauce} toe en verwarm het geheel nog 2 minuten door.`,
+        `Serveer de ${protObj.name}-mix samen met de ${baseObj.name}. Eet smakelijk!`
+    ];
 
-    <style>
-        /* Extra animaties voor een soepele ervaring */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-        .loading-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
-        /* Custom scrollbar voor legal modal */
-        .legal-scroll::-webkit-scrollbar {
-            width: 8px;
-        }
-        .legal-scroll::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-        }
-        .legal-scroll::-webkit-scrollbar-thumb {
-            background: #888; 
-            border-radius: 4px;
-        }
-        .legal-scroll::-webkit-scrollbar-thumb:hover {
-            background: #555; 
-        }
-    </style>
-</head>
-<body class="bg-gray-50">
-    <div id="root"></div>
+    const timeVal = 10 + Math.floor(Math.random() * 20);
+    const price = (2.50 + Math.random() * 3.50) * preferences.persons;
 
-    <!-- SCRIPTS: Volgorde is cruciaal -->
-    <!-- 1. React Core -->
-    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
-    <!-- 2. React DOM -->
-    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
-    <!-- 3. Babel (voor JSX) -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- 4. Lucide Icons (Versie 0.263.1 - Deze is het meest stabiel voor UMD builds) -->
-    <script crossorigin src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
+    return {
+      id: generateUniqueId(),
+      title, subtitle, cuisine: cuisineLabel, image,
+      time: `${timeVal} min`, timeVal, price,
+      ingredients: [
+        { name: baseObj.name, amount: "naar wens" },
+        { name: protObj.name, amount: `${125 * preferences.persons}g` },
+        { name: veggie, amount: `${200 * preferences.persons}g` },
+        { name: sauce, amount: "1 portie" }
+      ],
+      instructions: steps,
+      prices: { ah: price * 1.1, jumbo: price * 1.05, lidl: price * 0.9 },
+      locked: false,
+      isAiGenerated: true 
+    };
+  };
 
-    <script type="text/babel">
-        // Haal de benodigde functies uit React
-        const { useState, useEffect, useMemo } = React;
+  const generateMenu = (days) => {
+    setIsGenerating(true);
+    setTimeout(() => {
+        try {
+            if (generatedRecipes.length > 0 && generatedRecipes.length === days) {
+                setGeneratedRecipes(prev => prev.map(r => r.locked ? r : createAiRecipe()));
+            } else {
+                const newRecipes = [];
+                for (let i = 0; i < days; i++) newRecipes.push(createAiRecipe());
+                setGeneratedRecipes(newRecipes);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        setIsGenerating(false);
+    }, 500);
+  };
 
-        // --- JURIDISCHE TEKSTEN (HET FORT) ---
-        const LEGAL_TEXTS = {
-            TERMS: (
-                <div className="space-y-4 text-sm text-gray-700">
-                    <h3 className="font-bold text-lg text-gray-900">Algemene Voorwaarden WeekHap</h3>
-                    <p><strong>Artikel 1. Aansprakelijkheid & Gezondheid</strong><br/>
-                    WeekHap levert recepten en weekmenu's ter inspiratie. Wij zijn geen artsen of diëtisten. Het volgen van onze menu's is volledig op eigen risico. WeekHap is niet aansprakelijk voor enige schade, direct of indirect, die voortvloeit uit het gebruik van onze recepten, inclusief maar niet beperkt tot allergische reacties, gewichtstoename of gezondheidsklachten.</p>
-                    
-                    <p><strong>Artikel 2. Boodschappen & Derden</strong><br/>
-                    WeekHap verkoopt zelf geen voedingsmiddelen. Wij bieden slechts functionaliteit om boodschappenlijsten door te sturen naar derden (zoals supermarkten). WeekHap is nimmer verantwoordelijk voor de kwaliteit, levering, prijs of beschikbaarheid van producten bij deze derde partijen.</p>
-                    
-                    <p><strong>Artikel 3. Betaling & Abonnement</strong><br/>
-                    Bij het aangaan van een abonnement gaat u akkoord met maandelijkse afschrijving. Opzeggen kan maandelijks. Restitutie van reeds betaalde periodes is niet mogelijk, tenzij wettelijk verplicht.</p>
-                    
-                    <p><strong>Artikel 4. Intellectueel Eigendom</strong><br/>
-                    Alle recepten, teksten en afbeeldingen zijn eigendom van WeekHap. Het is streng verboden deze materialen te delen, door te verkopen of openbaar te maken zonder schriftelijke toestemming. Bij overtreding wordt een boete van €500 per dag opgelegd.</p>
-                    
-                    <p><strong>Artikel 5. Beperking Aansprakelijkheid</strong><br/>
-                    Indien WeekHap toch aansprakelijk mocht zijn, is deze aansprakelijkheid beperkt tot maximaal het bedrag van het door de gebruiker betaalde abonnement over de afgelopen maand.</p>
+  const toggleLock = (id, e) => { e.stopPropagation(); setGeneratedRecipes(prev => prev.map(r => r.id === id ? { ...r, locked: !r.locked } : r)); };
+  const toggleFavorite = (recipe) => {
+    if (!user) { setView('login'); return; }
+    if (savedRecipeIds.some(r => r.id === recipe.id)) setSavedRecipeIds(savedRecipeIds.filter(r => r.id !== recipe.id));
+    else setSavedRecipeIds([...savedRecipeIds, recipe]);
+  };
+
+  // Submit Handler
+  const [formData, setFormData] = useState({ title: '', ingredients: '', description: '' });
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [submitStatus, setSubmitStatus] = useState('idle');
+
+  const handleImageUpload = () => {
+      setSubmitStatus('uploading');
+      setTimeout(() => {
+          setUploadedImage("https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80"); 
+          setSubmitStatus('idle');
+      }, 1000);
+  };
+
+  const handleRecipeSubmit = (e) => {
+      e.preventDefault();
+      if(!uploadedImage) { alert("Foto is verplicht!"); return; }
+      setSubmitStatus('checking');
+      setTimeout(() => {
+          if(formData.title.length < 3) { setSubmitStatus('error'); return; }
+          const steps = formData.description.split('\n').filter(s => s.length > 5);
+
+          const newRecipe = {
+              id: generateUniqueId(),
+              title: formData.title,
+              subtitle: `Door ${user.name}`,
+              cuisine: "Community",
+              image: uploadedImage,
+              time: "30 min", timeVal: 30, price: 0,
+              ingredients: [{ name: "Zie beschrijving", amount: "-" }],
+              instructions: steps.length > 0 ? steps : [formData.description],
+              prices: { ah:0, jumbo:0, lidl:0 },
+              isUserGenerated: true
+          };
+          setUserSubmittedRecipes([...userSubmittedRecipes, newRecipe]);
+          setWallet(prev => Math.min(prev + 1.00, SUBSCRIPTION_PRICE));
+          setSubmitStatus('success');
+          setFormData({ title: '', ingredients: '', description: '' });
+          setUploadedImage(null);
+          setTimeout(() => setSubmitStatus('idle'), 3000);
+      }, 1500);
+  };
+
+  // COMPONENTS
+  const RecipeCard = ({ recipe, showLock, isGuest }) => {
+    const isSaved = savedRecipeIds.some(r => r.id === recipe.id);
+    return (
+        <div className={`bg-white rounded-2xl shadow-sm border transition-all hover:shadow-md relative group cursor-pointer overflow-hidden ${recipe.locked ? 'border-orange-200 bg-orange-50' : 'border-gray-100'}`} onClick={() => setSelectedRecipe(recipe)}>
+            <div className="flex h-28">
+                <div className="w-32 h-full shrink-0 relative bg-gray-200">
+                    <img src={recipe.image} className="w-full h-full object-cover" onError={(e) => e.target.src = "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&q=80"} alt={recipe.title} />
+                    {recipe.isAiGenerated && <div className="absolute bottom-0 left-0 w-full bg-black/50 text-white text-[9px] px-1 py-0.5 text-center font-bold">VERSE INGREDIËNTEN</div>}
+                    <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-md py-1 px-2 rounded-lg text-[10px] font-extrabold flex items-center gap-1 text-gray-800 shadow-sm z-10"><Clock size={10} className="text-gray-600"/> {recipe.time}</div>
                 </div>
-            ),
-            PRIVACY: (
-                <div className="space-y-4 text-sm text-gray-700">
-                    <h3 className="font-bold text-lg text-gray-900">Privacyverklaring</h3>
-                    <p><strong>1. Gegevensverwerking</strong><br/>
-                    Wij verwerken uw e-mailadres en betaalgegevens enkel om onze diensten (het sturen van menu's) uit te voeren. Wij verkopen uw gegevens nooit door aan derden.</p>
-                    
-                    <p><strong>2. Cookies</strong><br/>
-                    Wij gebruiken functionele cookies om de site te laten werken. Daarnaast gebruiken wij partner-links (affiliate) om te meten of u via ons boodschappen bestelt. Hierbij worden geen persoonlijke gegevens met de supermarkt gedeeld, enkel een anonieme tracking code.</p>
-                    
-                    <p><strong>3. Bewaartermijn</strong><br/>
-                    Wij bewaren uw gegevens zolang u actief gebruiker bent. Op verzoek verwijderen wij al uw data binnen 30 dagen.</p>
-                </div>
-            )
-        };
-
-        // --- ICON SETUP ---
-        const lucideLib = window.lucideReact || window.lucide || {};
-        const IconFallback = () => <span className="text-gray-400 text-xs">?</span>;
-
-        const { 
-            ShoppingCart = IconFallback, 
-            Check = IconFallback, 
-            ChefHat = IconFallback, 
-            Lock = IconFallback, 
-            ArrowRight = IconFallback, 
-            Star = IconFallback, 
-            Clock = IconFallback, 
-            Leaf = IconFallback, 
-            DollarSign = IconFallback, 
-            Download = IconFallback, 
-            Menu = IconFallback, 
-            X = IconFallback, 
-            Instagram = IconFallback, 
-            Facebook = IconFallback, 
-            MessageSquare = IconFallback, 
-            ThumbsUp = IconFallback, 
-            Send = IconFallback, 
-            Sparkles = IconFallback, 
-            Wand2 = IconFallback, 
-            Calendar = IconFallback,
-            ClipboardList = IconFallback,
-            Target = IconFallback,
-            Dumbbell = IconFallback,
-            Scale = IconFallback,
-            Zap = IconFallback,
-            Users = IconFallback,
-            Flame = IconFallback,
-            Euro = IconFallback,
-            Store = IconFallback,
-            Mail = IconFallback,
-            ShieldCheck = IconFallback
-        } = lucideLib;
-
-        // --- UTILS: Datum & Week Logica ---
-        const getCurrentWeekData = () => {
-            const now = new Date();
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            const pastDays = (now - startOfYear) / 86400000;
-            const weekNum = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
-            
-            const curr = new Date(); 
-            const day = curr.getDay(); 
-            const diff = curr.getDate() - day + (day === 0 ? -6 : 1); 
-
-            const monday = new Date(curr.setDate(diff));
-            const sunday = new Date(curr.setDate(diff + 6));
-
-            const options = { day: 'numeric', month: 'long' };
-            const dateRange = `${monday.toLocaleDateString('nl-NL', {day: 'numeric'})} t/m ${sunday.toLocaleDateString('nl-NL', options)}`;
-
-            const days = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
-            const todayName = days[new Date().getDay()];
-
-            return { weekNum, dateRange, todayName };
-        };
-
-        // --- DATA ---
-        const weeklyMenu = [
-            { day: "Maandag", title: "Romige Pompoensoep", time: "20 min", type: "Vegetarisch", calories: "450 kcal" },
-            { day: "Dinsdag", title: "Kip Teriyaki met Rijst", time: "30 min", type: "Kip", calories: "600 kcal" },
-            { day: "Woensdag", title: "Spinazie Pasta Pesto", time: "15 min", type: "Vegetarisch", calories: "550 kcal" },
-            { day: "Donderdag", title: "Zoete Aardappel Ovenschotel", time: "45 min", type: "Vegan", calories: "500 kcal" },
-            { day: "Vrijdag", title: "Zelfgemaakte Pizza's", time: "40 min", type: "Comfort", calories: "800 kcal" },
-            { day: "Zaterdag", title: "Poké Bowl met Zalm", time: "25 min", type: "Vis", calories: "550 kcal" },
-            { day: "Zondag", title: "Restjes & Salade", time: "10 min", type: "Budget", calories: "300 kcal" },
-        ];
-
-        const shoppingList = [
-            { category: "Groente & Fruit", items: ["1kg Pompoen", "500g Spinazie", "1kg Zoete Aardappel", "Zak Rucola", "Rode Uien", "Knoflook"] },
-            { category: "Vlees & Vis", items: ["300g Kipdijfilet", "200g Gerookte Zalm", "Salami (optioneel)"] },
-            { category: "Voorraadkast", items: ["Rijst", "Pasta", "Kokosmelk", "Tomatenpuree", "Pizzabodems"] },
-        ];
-
-        const initialReviews = [
-            { id: 1, user: "Sophie de Vries", rating: 5, text: "Echt een uitkomst! De pompoensoep van maandag was heerlijk en stond zo op tafel.", date: "2 dagen geleden" },
-            { id: 2, user: "Mark Jansen", rating: 4, text: "Fijne recepten. Ik miste alleen wat extra groente bij de pizza, maar dat heb ik zelf toegevoegd.", date: "4 dagen geleden" },
-            { id: 3, user: "Lisa Bakker", rating: 5, text: "Voor 10 euro zoveel tijd besparen is het mij 100% waard. De boodschappenlijst klopt precies.", date: "1 week geleden" },
-        ];
-
-        const PRICING_PLANS = {
-            SINGLE: { id: 'single', name: 'Los Weekmenu', price: 9.95, label: 'Flexibel', period: 'eenmalig' },
-            SUB: { id: 'sub', name: 'Maandabonnement', price: 29.95, label: 'Slimste Keuze', period: 'per maand' }
-        };
-
-        // --- COMPONENTS ---
-
-        function BenefitCard({ icon, title, desc }) {
-            return (
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
-                    <div className="bg-green-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        {icon}
+                <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
+                    <div className="flex gap-2 mb-1.5">
+                        <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider border border-gray-100 px-1 rounded">{recipe.cuisine}</span>
+                        {recipe.isUserGenerated && <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1 rounded flex items-center gap-0.5"><User size={8} /> Community</span>}
                     </div>
-                    <h3 className="font-bold text-gray-900 text-lg mb-2">{title}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
+                    <h3 className="font-bold text-gray-800 leading-tight mb-0.5 truncate text-sm">{recipe.title}</h3>
+                    <p className="text-xs text-gray-500 mb-2 truncate">{recipe.subtitle}</p>
                 </div>
-            );
-        }
+            </div>
+            <div className="absolute top-2 right-2 flex flex-col gap-2">
+                {showLock && <button onClick={(e) => toggleLock(recipe.id, e)} className={`p-2 rounded-full transition-all shadow-sm ${recipe.locked ? 'bg-orange-500 text-white' : 'bg-white text-gray-400 border border-gray-100 hover:text-gray-600'}`}>{recipe.locked ? <Lock size={14} /> : <Unlock size={14} />}</button>}
+                <button onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe); }} className={`p-2 rounded-full transition-colors ${isSaved && !isGuest ? 'text-red-500 bg-red-50' : 'text-gray-400 bg-white hover:text-red-400'}`}><Heart size={16} fill={isSaved && !isGuest ? "currentColor" : "none"} /></button>
+            </div>
+        </div>
+    );
+  };
 
-        // --- LEGAL MODAL COMPONENT ---
-        function LegalModal({ content, onClose }) {
-            return (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] shadow-2xl flex flex-col">
-                        <div className="bg-gray-50 p-4 border-b flex justify-between items-center rounded-t-2xl">
-                            <div className="flex items-center gap-2 text-gray-900 font-bold">
-                                <ShieldCheck className="w-5 h-5 text-green-600" /> Juridische Informatie
-                            </div>
-                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6 overflow-y-auto legal-scroll">
-                            {content}
-                        </div>
-                        <div className="bg-gray-50 p-4 border-t text-right rounded-b-2xl">
-                            <button onClick={onClose} className="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-black transition">
-                                Ik snap het
-                            </button>
-                        </div>
-                    </div>
+  const Modal = () => {
+      if (!selectedRecipe) return null; const r = selectedRecipe;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedRecipe(null)}></div>
+            <div className="relative bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in-up flex flex-col max-h-[90vh]">
+                <div className="h-48 relative bg-gray-900 shrink-0">
+                    <img src={r.image} className="w-full h-full object-cover" onError={(e) => e.target.src = "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&q=80"} alt={r.title}/>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    <button onClick={() => setSelectedRecipe(null)} className="absolute top-3 right-3 bg-black/40 text-white p-1.5 rounded-full hover:bg-black/60 backdrop-blur"><X size={18}/></button>
+                    <div className="absolute bottom-4 left-4 text-white"><span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded backdrop-blur border border-white/20 mb-1 inline-block">{r.cuisine}</span><h2 className="text-2xl font-bold leading-tight shadow-black drop-shadow-md">{r.title}</h2></div>
                 </div>
-            );
-        }
-
-        function App() {
-            const [hasPaid, setHasPaid] = useState(false);
-            const [showPaymentModal, setShowPaymentModal] = useState(false);
-            const [selectedPlan, setSelectedPlan] = useState(PRICING_PLANS.SINGLE);
-            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-            
-            // Legal State
-            const [activeLegalDoc, setActiveLegalDoc] = useState(null); // 'TERMS' or 'PRIVACY'
-            
-            const currentWeekInfo = useMemo(() => getCurrentWeekData(), []);
-
-            const openPayment = (plan) => {
-                setSelectedPlan(plan);
-                setShowPaymentModal(true);
-            };
-
-            const handlePayment = (e) => {
-                e.preventDefault();
-                const button = e.target.querySelector('button');
-                if (button) {
-                    button.innerHTML = "Verwerken...";
-                    button.disabled = true;
-                }
-
-                // --- STAP 1: MOLLIE LINK ---
-                // window.location.href = "https://useplink.com/payment/JOUW-MOLLIE-CODE";
                 
-                setTimeout(() => {
-                    setHasPaid(true);
-                    setShowPaymentModal(false);
-                    window.scrollTo(0, 0);
-                }, 1500);
-            };
-
-            if (hasPaid) {
-                return (
-                    <>
-                        <DashboardView 
-                            weeklyMenu={weeklyMenu} 
-                            shoppingList={shoppingList} 
-                            reviews={initialReviews}
-                            setHasPaid={setHasPaid} 
-                            weekInfo={currentWeekInfo}
-                        />
-                        {activeLegalDoc && (
-                            <LegalModal 
-                                content={LEGAL_TEXTS[activeLegalDoc]} 
-                                onClose={() => setActiveLegalDoc(null)} 
-                            />
-                        )}
-                        {/* Dashboard Footer needs to be able to open legal docs too */}
-                    </>
-                );
-            }
-
-            return (
-                <div className="font-sans text-gray-800 bg-gray-50 min-h-screen flex flex-col">
-                    {/* Navigation */}
-                    <nav className="bg-white shadow-sm sticky top-0 z-50">
-                        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex justify-between h-16 items-center">
-                                <div className="flex items-center gap-2">
-                                    <div className="bg-green-500 p-2 rounded-lg">
-                                        <ChefHat className="text-white w-6 h-6" />
-                                    </div>
-                                    <span className="font-bold text-xl tracking-tight text-gray-900">WeekHap</span>
-                                </div>
-                                <div className="hidden md:flex items-center space-x-8">
-                                    <a href="#hoe-het-werkt" className="text-gray-600 hover:text-green-600 transition">Hoe het werkt</a>
-                                    <a href="#voorbeeld" className="text-gray-600 hover:text-green-600 transition">Menu Voorbeeld</a>
-                                    <a href="#prijzen" className="text-gray-600 hover:text-green-600 transition">Prijzen</a>
-                                    <button 
-                                        onClick={() => openPayment(PRICING_PLANS.SINGLE)}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full font-medium transition shadow-md hover:shadow-lg"
-                                    >
-                                        Start Nu
-                                    </button>
-                                </div>
-                                <div className="md:hidden">
-                                    <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                                        {mobileMenuOpen ? <X /> : <Menu />}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        {/* Mobile Menu */}
-                        {mobileMenuOpen && (
-                            <div className="md:hidden bg-white border-t p-4 space-y-4 shadow-lg animate-in">
-                                <a href="#hoe-het-werkt" className="block text-gray-600" onClick={() => setMobileMenuOpen(false)}>Hoe het werkt</a>
-                                <a href="#voorbeeld" className="block text-gray-600" onClick={() => setMobileMenuOpen(false)}>Menu Voorbeeld</a>
-                                <a href="#prijzen" className="block text-gray-600" onClick={() => setMobileMenuOpen(false)}>Prijzen</a>
-                                <button 
-                                    onClick={() => { openPayment(PRICING_PLANS.SINGLE); setMobileMenuOpen(false); }}
-                                    className="w-full bg-green-600 text-white px-4 py-2 rounded-lg"
-                                >
-                                    Start Nu
-                                </button>
-                            </div>
-                        )}
-                    </nav>
-
-                    {/* Hero Section */}
-                    <header className="bg-white pb-16 pt-12 lg:pt-24 overflow-hidden relative">
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-green-100 rounded-full blur-3xl opacity-50"></div>
-                        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                            <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
-                                <div className="mb-12 lg:mb-0">
-                                    <span className="inline-block py-1 px-3 rounded-full bg-green-100 text-green-700 text-sm font-semibold mb-6 flex items-center gap-2 w-fit">
-                                        <Calendar className="w-4 h-4"/> Nieuw: Week {currentWeekInfo.weekNum} Menu Online
-                                    </span>
-                                    <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-                                        Gezond eten voor de hele week, <span className="text-green-600">zonder stress.</span>
-                                    </h1>
-                                    <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                                        Krijg het complete menu voor <strong>{currentWeekInfo.dateRange}</strong>. Inclusief recepten en slimme boodschappenlijst.
-                                    </p>
-                                    <div className="flex flex-col sm:flex-row gap-4">
-                                        <button 
-                                            onClick={() => document.getElementById('prijzen').scrollIntoView({ behavior: 'smooth' })}
-                                            className="bg-green-600 hover:bg-green-700 text-white text-lg px-8 py-4 rounded-xl font-bold transition shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2"
-                                        >
-                                            Bekijk Opties <ArrowRight className="w-5 h-5" />
-                                        </button>
-                                        <div className="flex items-center gap-2 justify-center sm:justify-start px-6 py-4 text-gray-600 font-medium">
-                                            <div className="flex -space-x-2">
-                                                {[1,2,3].map(i => (
-                                                    <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs overflow-hidden">
-                                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i*13}`} alt="user" />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <span>Al 500+ verkocht</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="relative">
-                                    <div className="absolute inset-0 bg-green-600 rounded-3xl rotate-3 opacity-10"></div>
-                                    <div id="voorbeeld" className="bg-white border border-gray-100 rounded-3xl shadow-2xl p-6 relative z-10">
-                                        <div className="flex justify-between items-center mb-6 border-b pb-4">
-                                            <div>
-                                                <h3 className="font-bold text-xl text-gray-900">Week {currentWeekInfo.weekNum} Preview</h3>
-                                                <p className="text-gray-500 text-sm">7 Dagen • Gezond & Snel</p>
-                                            </div>
-                                            <span className="bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-sm">v.a. €9,95</span>
-                                        </div>
-                                        <div className="space-y-4">
-                                            {weeklyMenu.slice(0, 4).map((item, idx) => (
-                                                <div key={idx} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg transition">
-                                                    <div className="bg-gray-100 p-2 rounded-lg">
-                                                        {idx === 0 ? <Leaf className="w-5 h-5 text-green-600"/> : 
-                                                         idx === 1 ? <DollarSign className="w-5 h-5 text-orange-500"/> :
-                                                         <Clock className="w-5 h-5 text-blue-500"/>}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h4 className="font-semibold text-gray-800">{item.day}</h4>
-                                                        <p className="text-gray-500 text-sm">{item.title}</p>
-                                                    </div>
-                                                    {idx > 1 && <Lock className="w-4 h-4 text-gray-300" />}
-                                                </div>
-                                            ))}
-                                            <div className="p-3 bg-gray-50 rounded-lg text-center text-sm text-gray-500 italic">
-                                                + 3 andere dagen, volledige recepten & boodschappenlijst
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* Benefits Section */}
-                    <section id="hoe-het-werkt" className="py-20 bg-gray-50">
-                        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center max-w-3xl mx-auto mb-16">
-                                <h2 className="text-3xl font-bold text-gray-900 mb-4">Waarom kiezen voor WeekHap?</h2>
-                                <p className="text-gray-600">Wij doen het denkwerk, jij hoeft alleen maar te koken en te genieten.</p>
-                            </div>
-                            <div className="grid md:grid-cols-3 gap-8">
-                                <BenefitCard 
-                                    icon={<Clock className="w-8 h-8 text-green-600"/>}
-                                    title="Bespaar 2+ uur per week"
-                                    desc="Nooit meer nadenken over 'wat eten we vandaag?'. Alles staat voor je klaar."
-                                />
-                                <BenefitCard 
-                                    icon={<DollarSign className="w-8 h-8 text-green-600"/>}
-                                    title="Bespaar op boodschappen"
-                                    desc="Onze menu's zijn zo samengesteld dat je geen ingrediënten verspilt. Goed voor de portemonnee."
-                                />
-                                <BenefitCard 
-                                    icon={<Leaf className="w-8 h-8 text-green-600"/>}
-                                    title="Gezond & Gevarieerd"
-                                    desc="Elke week een nieuwe balans tussen groente, proteïne en comfort food."
-                                />
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Reviews Section */}
-                    <section id="reviews" className="py-20 bg-white border-t border-gray-100">
-                        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center mb-16">
-                                <h2 className="text-3xl font-bold text-gray-900 mb-4">Wat onze gebruikers zeggen</h2>
-                                <p className="text-gray-600">Al meer dan 500 tevreden thuiskoks.</p>
-                            </div>
-                            <div className="grid md:grid-cols-3 gap-8">
-                                {initialReviews.map((review) => (
-                                    <div key={review.id} className="bg-gray-50 p-6 rounded-2xl relative">
-                                        <div className="flex gap-1 mb-4 text-yellow-400">
-                                            {[...Array(review.rating)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
-                                        </div>
-                                        <p className="text-gray-700 italic mb-4">"{review.text}"</p>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700 text-sm">
-                                                {review.user.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-gray-900">{review.user}</p>
-                                                <p className="text-xs text-gray-500">{review.date}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* PRICING SECTION */}
-                    <section id="prijzen" className="py-20 bg-green-50 border-t border-green-100">
-                        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center mb-16">
-                                <h2 className="text-3xl font-bold text-gray-900 mb-4">Kies wat bij jou past</h2>
-                                <p className="text-gray-600">Flexibel per week betalen of maximaal besparen met een abonnement.</p>
-                            </div>
-                            
-                            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                                {/* SINGLE OPTION */}
-                                <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative hover:-translate-y-1 transition duration-300">
-                                    <div className="absolute top-0 right-0 bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">
-                                        FLEXIBEL
-                                    </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2">Los Weekmenu</h3>
-                                    <p className="text-gray-500 mb-6 text-sm">Probeer het eenmalig uit. Geen verplichtingen.</p>
-                                    <div className="flex items-baseline gap-1 mb-6">
-                                        <span className="text-4xl font-extrabold text-gray-900">€9,95</span>
-                                        <span className="text-gray-500">/ week</span>
-                                    </div>
-                                    <ul className="space-y-4 mb-8 text-gray-600 text-sm">
-                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> 7 Dagen gezond weekmenu</li>
-                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Slimme boodschappenlijst</li>
-                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Directe PDF download</li>
-                                        <li className="flex gap-2 text-gray-400"><X className="w-5 h-5"/> Geen korting</li>
-                                    </ul>
-                                    <button 
-                                        onClick={() => openPayment(PRICING_PLANS.SINGLE)}
-                                        className="w-full bg-gray-100 text-gray-900 font-bold py-3 rounded-xl hover:bg-gray-200 transition"
-                                    >
-                                        Kies Los Menu
-                                    </button>
-                                </div>
-
-                                {/* SUBSCRIPTION OPTION */}
-                                <div className="bg-white p-8 rounded-3xl shadow-xl border-2 border-green-500 relative transform md:scale-105">
-                                    <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl flex items-center gap-1">
-                                        <Sparkles className="w-3 h-3"/> MEEST GEKOZEN
-                                    </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2">Maandabonnement</h3>
-                                    <p className="text-gray-500 mb-6 text-sm">Voor de serieuze thuiskok. Bespaar 25%.</p>
-                                    <div className="flex items-baseline gap-1 mb-6">
-                                        <span className="text-4xl font-extrabold text-green-600">€29,95</span>
-                                        <span className="text-gray-500">/ maand</span>
-                                    </div>
-                                    <p className="text-xs text-green-600 font-semibold mb-6 bg-green-50 inline-block px-2 py-1 rounded">
-                                        Dat is slechts €7,50 per week!
-                                    </p>
-                                    <ul className="space-y-4 mb-8 text-gray-600 text-sm">
-                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Elke week automatisch in je mail</li>
-                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Toegang tot archief</li>
-                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Exclusieve bonus recepten</li>
-                                        <li className="flex gap-2"><Check className="w-5 h-5 text-green-500"/> Altijd opzegbaar</li>
-                                    </ul>
-                                    <button 
-                                        onClick={() => openPayment(PRICING_PLANS.SUB)}
-                                        className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-lg"
-                                    >
-                                        Start Abonnement
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* CTA Footer Section */}
-                    <section className="bg-gray-900 py-20">
-                        <div className="max-w-4xl mx-auto px-4 text-center">
-                            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                                Klaar om tijd en geld te besparen?
-                            </h2>
-                            <button 
-                                onClick={() => document.getElementById('prijzen').scrollIntoView({ behavior: 'smooth' })}
-                                className="bg-white text-gray-900 text-xl px-10 py-4 rounded-full font-bold hover:bg-gray-100 transition shadow-xl transform hover:scale-105"
-                            >
-                                Bekijk de Prijzen
-                            </button>
-                            <p className="mt-4 text-gray-400 text-sm">Veilig betalen met iDeal / Creditcard</p>
-                        </div>
-                    </section>
-
-                    <footer className="bg-gray-950 text-gray-500 py-12 border-t border-gray-900">
-                        <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div className="flex items-center gap-2">
-                                <ChefHat className="text-white w-6 h-6" />
-                                <span className="font-bold text-xl text-white">WeekHap</span>
-                            </div>
-                            <div className="flex gap-6 text-sm">
-                                <button onClick={() => setActiveLegalDoc('TERMS')} className="hover:text-white transition">Algemene Voorwaarden</button>
-                                <button onClick={() => setActiveLegalDoc('PRIVACY')} className="hover:text-white transition">Privacy</button>
-                                <a href="mailto:service@weekhap.nl" className="hover:text-white transition">Contact</a>
-                            </div>
-                            <div className="flex gap-4">
-                                <Instagram className="w-5 h-5 cursor-pointer hover:text-white" />
-                                <Facebook className="w-5 h-5 cursor-pointer hover:text-white" />
-                            </div>
-                        </div>
-                    </footer>
-
-                    {/* Legal Modal Display */}
-                    {activeLegalDoc && (
-                        <LegalModal 
-                            content={LEGAL_TEXTS[activeLegalDoc]} 
-                            onClose={() => setActiveLegalDoc(null)} 
-                        />
-                    )}
-
-                    {/* Payment Modal */}
-                    {showPaymentModal && (
-                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in">
-                                <div className="bg-gray-50 p-4 border-b flex justify-between items-center">
-                                    <h3 className="font-bold text-lg">Afrekenen</h3>
-                                    <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-gray-600">
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                </div>
-                                <div className="p-6">
-                                    <div className="flex items-center gap-4 mb-6 bg-green-50 p-4 rounded-lg border border-green-100">
-                                        <div className="bg-green-100 p-2 rounded-md">
-                                            <ChefHat className="w-6 h-6 text-green-600" />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-semibold text-gray-900">{selectedPlan.name}</h4>
-                                            <p className="text-sm text-gray-500">Week {currentWeekInfo.weekNum}</p>
-                                        </div>
-                                        <div className="ml-auto font-bold text-gray-900">€{selectedPlan.price}</div>
-                                    </div>
-
-                                    <form onSubmit={handlePayment} className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">E-mailadres</label>
-                                            <input type="email" required placeholder="jouw@email.nl" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Selecteer Bank</label>
-                                            <select className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white">
-                                                <option>ING</option>
-                                                <option>Rabobank</option>
-                                                <option>ABN AMRO</option>
-                                                <option>Bunq</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div className="text-xs text-gray-500 mb-4">
-                                            Door te betalen gaat u akkoord met de <button onClick={() => {setShowPaymentModal(false); setActiveLegalDoc('TERMS');}} className="text-green-600 underline">Algemene Voorwaarden</button>.
-                                        </div>
-
-                                        <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2">
-                                            <Lock className="w-4 h-4" /> Betalen €{selectedPlan.price}
-                                        </button>
-                                    </form>
-                                    <p className="text-xs text-center text-gray-400 mt-4">
-                                        Na betaling ontvang je de complete lijst en menu in je mailbox.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        function DashboardView({ weeklyMenu, shoppingList, reviews, setHasPaid, weekInfo }) {
-            const [activeTab, setActiveTab] = useState('menu');
-            const [newReviewText, setNewReviewText] = useState("");
-            const [localReviews, setLocalReviews] = useState(reviews);
-
-            const handleAddReview = () => {
-                if(!newReviewText) return;
-                const newReview = {
-                    id: Date.now(),
-                    user: "Jij (Nieuw)",
-                    rating: 5,
-                    text: newReviewText,
-                    date: "Zojuist"
-                };
-                setLocalReviews([newReview, ...localReviews]);
-                setNewReviewText("");
-            };
-
-            return (
-                <div className="min-h-screen bg-gray-50 font-sans animate-in">
-                    <nav className="bg-white shadow-sm sticky top-0 z-40">
-                        <div className="max-w-6xl mx-auto px-4">
-                            <div className="flex justify-between h-16 items-center">
-                                <div className="flex items-center gap-2">
-                                    <ChefHat className="text-green-600 w-6 h-6" />
-                                    <span className="font-bold text-xl text-gray-900">Mijn WeekHap</span>
-                                </div>
-                                <button onClick={() => setHasPaid(false)} className="text-sm text-gray-500 hover:text-red-500">
-                                    Uitloggen
-                                </button>
-                            </div>
-                        </div>
-                    </nav>
-
-                    <main className="max-w-6xl mx-auto px-4 py-8">
-                        <div className="mb-8">
-                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                                <div>
-                                    <span className="text-green-600 font-bold uppercase tracking-wide text-sm mb-1 block">
-                                        Week {weekInfo.weekNum}
-                                    </span>
-                                    <h1 className="text-3xl font-bold text-gray-900">Welkom! Hier is je menu.</h1>
-                                    <p className="text-gray-600 flex items-center gap-2 mt-1">
-                                        <Calendar className="w-4 h-4" /> {weekInfo.dateRange}
-                                    </p>
-                                </div>
-                                <div className="bg-green-50 border border-green-100 px-4 py-2 rounded-lg text-green-700 text-sm font-medium">
-                                    Vandaag is het {weekInfo.todayName}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Dashboard Tabs */}
-                        <div className="flex gap-4 mb-6 border-b overflow-x-auto">
-                            <button 
-                                onClick={() => setActiveTab('menu')}
-                                className={`pb-3 px-1 font-medium text-sm transition flex items-center gap-2 ${activeTab === 'menu' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <ChefHat className="w-4 h-4"/> Dagplanning
-                            </button>
-                             <button 
-                                onClick={() => setActiveTab('ai-chef')}
-                                className={`pb-3 px-1 font-medium text-sm transition flex items-center gap-2 ${activeTab === 'ai-chef' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <Wand2 className="w-4 h-4"/> AI Chef
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('menu-generator')}
-                                className={`pb-3 px-1 font-medium text-sm transition flex items-center gap-2 whitespace-nowrap ${activeTab === 'menu-generator' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <ClipboardList className="w-4 h-4"/> Menu Generator
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('boodschappen')}
-                                className={`pb-3 px-1 font-medium text-sm transition flex items-center gap-2 ${activeTab === 'boodschappen' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <ShoppingCart className="w-4 h-4"/> Boodschappenlijst
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('reviews')}
-                                className={`pb-3 px-1 font-medium text-sm transition flex items-center gap-2 ${activeTab === 'reviews' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <MessageSquare className="w-4 h-4"/> Reviews
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('downloads')}
-                                className={`pb-3 px-1 font-medium text-sm transition flex items-center gap-2 ${activeTab === 'downloads' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <Download className="w-4 h-4"/> Downloads
-                            </button>
-                        </div>
-
-                        {/* Content Area */}
-                        {activeTab === 'menu' && (
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in">
-                                {weeklyMenu.map((item, idx) => {
-                                    const isToday = item.day === weekInfo.todayName;
-                                    return (
-                                        <div key={idx} className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition group relative
-                                            ${isToday ? 'border-green-500 ring-1 ring-green-500 shadow-md' : 'border-gray-100'}
-                                        `}>
-                                            {isToday && (
-                                                <div className="absolute top-2 right-2 z-10 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded shadow-sm">
-                                                    Vandaag op het menu
-                                                </div>
-                                            )}
-                                            <div className="h-32 bg-gray-200 relative overflow-hidden">
-                                                <div className={`absolute inset-0 bg-gradient-to-br ${idx % 2 === 0 ? 'from-green-100 to-green-50' : 'from-orange-100 to-yellow-50'}`}></div>
-                                                <div className="absolute bottom-2 left-2 bg-white/90 px-2 py-1 rounded text-xs font-bold text-gray-700 shadow-sm">
-                                                    {item.day}
-                                                </div>
-                                            </div>
-                                            <div className="p-5">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <h3 className="font-bold text-lg text-gray-900 leading-tight">{item.title}</h3>
-                                                </div>
-                                                <div className="flex gap-3 text-xs text-gray-500 mb-4">
-                                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {item.time}</span>
-                                                    <span className="flex items-center gap-1"><Leaf className="w-3 h-3"/> {item.calories}</span>
-                                                </div>
-                                                <button className={`w-full py-2 border rounded-lg text-sm font-semibold transition
-                                                    ${isToday 
-                                                        ? 'bg-green-600 text-white border-green-600 hover:bg-green-700' 
-                                                        : 'border-green-600 text-green-600 hover:bg-green-50'}
-                                                `}>
-                                                    Bekijk Recept
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {activeTab === 'ai-chef' && (
-                            <AiChefView weekInfo={weekInfo} />
-                        )}
-
-                        {activeTab === 'menu-generator' && (
-                            <MenuGeneratorView weekInfo={weekInfo} />
-                        )}
-
-                        {activeTab === 'boodschappen' && (
-                            <div className="bg-white rounded-xl shadow-sm border p-6 max-w-2xl animate-in">
-                                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                                    <ShoppingCart className="w-5 h-5 text-green-600" /> Boodschappenlijst
-                                </h2>
-                                <div className="space-y-6">
-                                    {shoppingList.map((category, idx) => (
-                                        <div key={idx}>
-                                            <h3 className="font-semibold text-gray-900 mb-3 border-b pb-1">{category.category}</h3>
-                                            <ul className="space-y-2">
-                                                {category.items.map((item, i) => (
-                                                    <li key={i} className="flex items-center gap-3 text-gray-600">
-                                                        <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer" />
-                                                        <span>{item}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    ))}
-                                </div>
-                                
-                                <div className="mt-8 bg-blue-50 p-6 rounded-lg border border-blue-100">
-                                    <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
-                                        <div>
-                                            <h4 className="font-bold text-blue-900 text-lg mb-1">Liever zelf doen of hulp nodig?</h4>
-                                            <p className="text-sm text-blue-700 mb-4">
-                                                Je kunt deze lijst naar jezelf mailen. Geen zin om te zoeken? 
-                                                Stuur ons een bericht en wij zetten je mandje binnen 24 uur voor je klaar!
-                                            </p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="flex flex-col sm:flex-row gap-3">
-                                        <button 
-                                            onClick={() => {
-                                                const subject = "Mijn WeekHap Boodschappenlijst";
-                                                const body = `Hoi,\n\nHier is mijn boodschappenlijst voor deze week:\n\n` + 
-                                                             shoppingList.map(cat => `${cat.category}:\n${cat.items.join('\n')}`).join('\n\n') +
-                                                             `\n\nGroetjes!`;
-                                                window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                                            }}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-bold transition flex items-center gap-2 shadow-sm"
-                                        >
-                                            <Mail className="w-4 h-4"/> Mail lijst naar mezelf
-                                        </button>
-                                        <button 
-                                            onClick={() => window.location.href = "mailto:service@weekhap.nl?subject=Hulp%20bij%20bestellen&body=Hoi%20WeekHap,%20ik%20wil%20graag%20dat%20jullie%20mijn%20mandje%20vullen."}
-                                            className="bg-white border-2 border-blue-200 text-blue-700 hover:bg-blue-50 px-5 py-3 rounded-lg font-bold transition flex items-center gap-2"
-                                        >
-                                            <ChefHat className="w-4 h-4"/> Vraag 24u Service
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'reviews' && (
-                            <div className="max-w-4xl animate-in">
-                                <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
-                                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                        <MessageSquare className="w-5 h-5 text-green-600" />
-                                        Jouw ervaring
-                                    </h2>
-                                    <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                                        <textarea 
-                                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-gray-700 placeholder-gray-400"
-                                            placeholder="Wat vond je van het menu van deze week? Deel je tips met andere leden..."
-                                            rows="3"
-                                            value={newReviewText}
-                                            onChange={(e) => setNewReviewText(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex gap-1 text-gray-300">
-                                            {[1,2,3,4,5].map(star => (
-                                                <Star key={star} className="w-6 h-6 hover:text-yellow-400 cursor-pointer transition" />
-                                            ))}
-                                        </div>
-                                        <button onClick={handleAddReview} className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition flex items-center gap-2">
-                                            <Send className="w-4 h-4" /> Plaats Review
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <h3 className="text-lg font-bold text-gray-900 mb-4">Ervaringen van andere leden</h3>
-                                <div className="grid gap-4">
-                                    {localReviews.map((review) => (
-                                        <div key={review.id} className="bg-white p-5 rounded-xl border shadow-sm">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="font-bold text-gray-900">{review.user}</div>
-                                                    <span className="text-xs text-gray-400">• {review.date}</span>
-                                                </div>
-                                                <div className="flex text-yellow-400">
-                                                    {[...Array(review.rating)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
-                                                </div>
-                                            </div>
-                                            <p className="text-gray-600">{review.text}</p>
-                                            <div className="mt-3 flex items-center gap-4 text-xs text-gray-400">
-                                                <button className="flex items-center gap-1 hover:text-green-600 transition"><ThumbsUp className="w-3 h-3"/> Nuttig</button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'downloads' && (
-                            <div className="bg-white rounded-xl shadow-sm border p-8 text-center max-w-lg mx-auto animate-in">
-                                <div className="bg-green-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Download className="w-8 h-8 text-green-600" />
-                                </div>
-                                <h2 className="text-xl font-bold mb-2">Download PDF Versie</h2>
-                                <p className="text-gray-500 mb-6">Handig om uit te printen en op de koelkast te hangen.</p>
-                                <button className="bg-gray-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-black transition flex items-center justify-center gap-2 mx-auto w-full sm:w-auto">
-                                    Download Week {weekInfo.weekNum}.pdf (2.4MB)
-                                </button>
-                            </div>
-                        )}
-
-                    </main>
-                </div>
-            );
-        }
-
-        // --- MENU GENERATOR VIEW COMPONENT ---
-        function MenuGeneratorView({ weekInfo }) {
-            const [step, setStep] = useState('form');
-            const [loadingProgress, setLoadingProgress] = useState(0);
-            const [persons, setPersons] = useState(2);
-            const [goal, setGoal] = useState('gezond');
-            const [supermarket, setSupermarket] = useState('jumbo');
-
-            const handleGenerate = () => {
-                setStep('loading');
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 5;
-                    setLoadingProgress(progress);
-                    if(progress >= 100) {
-                        clearInterval(interval);
-                        setStep('result');
-                    }
-                }, 100);
-            };
-
-            const supermarketColors = {
-                jumbo: 'bg-yellow-400 hover:bg-yellow-500 text-black',
-                ah: 'bg-blue-500 hover:bg-blue-600 text-white'
-            };
-
-            const handleShopClick = () => {
-                // --- STAP 2: HIER KOMT JOUW LINKPIZZA LINK ---
-                // Vervang de URL hieronder met jouw LinkPizza affiliate link naar Jumbo of AH
-                const link = supermarket === 'jumbo' 
-                    ? "https://linkpizza.com/jumbo-affiliate-link" 
-                    : "https://linkpizza.com/ah-affiliate-link";
-                
-                window.open(link, '_blank');
-            };
-
-            if(step === 'form') {
-                return (
-                    <div className="max-w-2xl mx-auto animate-in">
-                        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                            <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <ChefHat className="w-8 h-8 text-green-600" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Jouw Weekmenu Generator</h2>
-                                <p className="text-gray-500">Vul je wensen in, wij doen de rest.</p>
-                            </div>
-                            
-                            <div className="space-y-8">
-                                {/* AANTAL PERSONEN */}
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                        <Users className="w-4 h-4"/> Wie eten er mee?
-                                    </label>
-                                    <div className="flex items-center gap-4">
-                                        <input 
-                                            type="range" min="1" max="6" step="1" 
-                                            value={persons} 
-                                            onChange={(e) => setPersons(e.target.value)}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                                        />
-                                        <span className="font-bold text-xl w-8 text-center">{persons}</span>
-                                    </div>
-                                    <p className="text-xs text-gray-400 mt-1">Personen</p>
-                                </div>
-
-                                {/* DOEL */}
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                        <Target className="w-4 h-4"/> Waar heb je behoefte aan?
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div onClick={() => setGoal('gezond')} className={`cursor-pointer p-3 rounded-lg border-2 text-center transition ${goal === 'gezond' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-100 hover:border-gray-200'}`}>
-                                            <Leaf className="w-6 h-6 mx-auto mb-1"/>
-                                            <span className="text-sm font-semibold">Gezond & Slank</span>
-                                        </div>
-                                        <div onClick={() => setGoal('snel')} className={`cursor-pointer p-3 rounded-lg border-2 text-center transition ${goal === 'snel' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-100 hover:border-gray-200'}`}>
-                                            <Clock className="w-6 h-6 mx-auto mb-1"/>
-                                            <span className="text-sm font-semibold">Snel & Makkelijk</span>
-                                        </div>
-                                        <div onClick={() => setGoal('budget')} className={`cursor-pointer p-3 rounded-lg border-2 text-center transition ${goal === 'budget' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-100 hover:border-gray-200'}`}>
-                                            <Euro className="w-6 h-6 mx-auto mb-1"/>
-                                            <span className="text-sm font-semibold">Budget (Let op de kleintjes)</span>
-                                        </div>
-                                        <div onClick={() => setGoal('luxe')} className={`cursor-pointer p-3 rounded-lg border-2 text-center transition ${goal === 'luxe' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-100 hover:border-gray-200'}`}>
-                                            <Flame className="w-6 h-6 mx-auto mb-1"/>
-                                            <span className="text-sm font-semibold">Uitgebreid Koken</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* SUPERMARKT */}
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                        <Store className="w-4 h-4"/> Waar doe je boodschappen?
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div onClick={() => setSupermarket('jumbo')} className={`cursor-pointer p-4 rounded-lg border-2 flex items-center justify-center gap-2 transition ${supermarket === 'jumbo' ? 'border-yellow-400 bg-yellow-50' : 'border-gray-100 hover:border-gray-200'}`}>
-                                            <div className="w-4 h-4 rounded-full bg-yellow-400"></div> <span className="font-bold">Jumbo</span>
-                                        </div>
-                                        <div onClick={() => setSupermarket('ah')} className={`cursor-pointer p-4 rounded-lg border-2 flex items-center justify-center gap-2 transition ${supermarket === 'ah' ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`}>
-                                            <div className="w-4 h-4 rounded-full bg-blue-500"></div> <span className="font-bold">Albert Heijn</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button 
-                                    onClick={handleGenerate}
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition shadow-lg text-lg flex items-center justify-center gap-2"
-                                >
-                                    <Sparkles className="w-5 h-5" /> Genereer Mijn Menu
-                                </button>
-                            </div>
-                        </div>
+                <div className="p-5 overflow-y-auto">
+                    <div className="flex gap-4 mb-6 text-sm text-gray-600 border-b border-gray-100 pb-4">
+                        <div className="flex items-center gap-1"><Clock size={16}/> {r.time}</div>
+                        <div className="flex items-center gap-1"><User size={16}/> {preferences.persons} pers.</div>
+                        {r.price > 0 && <div className="flex items-center gap-1 text-green-600 font-bold ml-auto">€{r.price.toFixed(2)}</div>}
                     </div>
-                );
-            }
 
-            if(step === 'loading') {
-                return (
-                    <div className="max-w-2xl mx-auto text-center py-12 animate-in">
-                        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Sparkles className="w-10 h-10 text-green-600 animate-spin" />
-                        </div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">Menu wordt samengesteld...</h2>
-                        <p className="text-gray-500 mb-6">
-                            Rekening houden met {persons} personen, {goal} recepten en {supermarket === 'jumbo' ? 'Jumbo' : 'AH'} aanbiedingen.
-                        </p>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-200 max-w-sm mx-auto">
-                            <div className="bg-green-600 h-2.5 rounded-full transition-all duration-300" style={{width: `${loadingProgress}%`}}></div>
-                        </div>
+                    <h3 className="font-bold text-gray-800 text-sm uppercase mb-3 flex items-center gap-2"><ShoppingBasket size={16}/> Boodschappenlijst</h3>
+                    <ul className="space-y-2 mb-6 bg-gray-50 p-4 rounded-xl">
+                        {r.ingredients.map((ing, i) => (
+                            <li key={i} className="flex justify-between text-sm text-gray-700 items-center">
+                                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>{ing.name}</span> 
+                                <span className="text-gray-400 font-medium">{ing.amount}</span>
+                            </li>
+                        ))}
+                    </ul>
+
+                    <h3 className="font-bold text-gray-800 text-sm uppercase mb-3 flex items-center gap-2"><ListOrdered size={16}/> Bereiding</h3>
+                    <div className="space-y-4 mb-6">
+                        {r.instructions && r.instructions.map((step, i) => (
+                            <div key={i} className="flex gap-3">
+                                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-700 font-bold text-xs flex items-center justify-center mt-0.5">{i + 1}</div>
+                                <p className="text-sm text-gray-600 leading-relaxed">{step}</p>
+                            </div>
+                        ))}
                     </div>
-                );
-            }
 
-            // RESULT VIEW
-            return (
-                <div className="animate-in">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-                        <div className="bg-green-600 p-6 text-white flex justify-between items-center">
-                            <div>
-                                <h2 className="text-2xl font-bold flex items-center gap-2">
-                                    <Check className="w-6 h-6" /> Jouw Persoonlijke Menu
-                                </h2>
-                                <p className="text-green-100 opacity-90 text-sm mt-1">
-                                    Gegenereerd voor {persons} personen • Focus: {goal}
-                                </p>
-                            </div>
-                            <button onClick={() => setStep('form')} className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded transition">
-                                Pas aan
-                            </button>
-                        </div>
-                        
-                        <div className="p-6">
-                            <h3 className="font-bold text-gray-900 mb-4 border-b pb-2">Je Weekplanning</h3>
-                            <div className="space-y-4">
-                                {weeklyMenu.map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-4 py-2 hover:bg-gray-50 rounded-lg px-2 transition">
-                                        <div className="w-24 text-sm font-bold text-gray-500">{item.day}</div>
-                                        <div className="flex-1">
-                                            <div className="font-semibold text-gray-900">{item.title}</div>
-                                            <div className="text-xs text-gray-500 flex gap-2">
-                                                <span>⏱ {item.time}</span>
-                                                <span>🔥 {item.calories}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* SHOPPING LIST ACTION */}
-                        <div className="bg-gray-50 p-6 border-t">
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                                <div>
-                                    <h4 className="font-bold text-gray-900">Boodschappenlijst ({persons} pers.)</h4>
-                                    <p className="text-sm text-gray-500 mb-2">Alle ingrediënten zijn verzameld.</p>
-                                    <p className="text-xs text-blue-600 font-bold bg-blue-50 inline-block px-2 py-1 rounded">24-uurs Service Beschikbaar</p>
-                                </div>
-                                <div className="flex flex-col gap-2 w-full md:w-auto">
-                                    <button 
-                                        onClick={() => {
-                                                const subject = "Mijn WeekHap Boodschappenlijst";
-                                                const body = `Hoi,\n\nHier is mijn boodschappenlijst voor deze week:\n\n` + 
-                                                             shoppingList.map(cat => `${cat.category}:\n${cat.items.join('\n')}`).join('\n\n') +
-                                                             `\n\nGroetjes!`;
-                                                window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                                        }}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-lg font-bold shadow-md transition flex items-center justify-center gap-2"
-                                    >
-                                        <Mail className="w-4 h-4"/> Mail lijst naar mezelf
-                                    </button>
-                                    <button 
-                                        onClick={() => window.location.href = "mailto:service@weekhap.nl?subject=Hulp%20bij%20bestellen&body=Hoi%20WeekHap,%20ik%20wil%20graag%20dat%20jullie%20mijn%20mandje%20vullen%20bij%20" + supermarket}
-                                        className="bg-white border text-gray-600 hover:bg-gray-50 px-5 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
-                                    >
-                                        <ChefHat className="w-3 h-3"/> Laat WeekHap vullen (24u)
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <button onClick={() => {alert("Je wordt doorgestuurd naar LinkPizza..."); setSelectedRecipe(null)}} className="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 text-sm shadow-lg active:scale-95 transition-transform">Bestel Ingrediënten <ArrowRight size={16}/></button>
                 </div>
-            );
-        }
+            </div>
+        </div>
+      );
+  }
 
-        // --- AI CHEF VIEW COMPONENT ---
-        function AiChefView({ weekInfo }) {
-            const [input, setInput] = useState("");
-            const [day, setDay] = useState(weekInfo ? weekInfo.todayName : "Maandag");
-            const [isGenerating, setIsGenerating] = useState(false);
-            const [generatedRecipe, setGeneratedRecipe] = useState(null);
+  const HomeView = () => {
+    return (
+    <div className="animate-fade-in">
+      <div className="relative overflow-hidden bg-gray-900 text-white pb-8 pt-8 rounded-b-[2.5rem] shadow-xl mb-6" style={{backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1543353071-087f9fbdd034?w=800&q=80')`, backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        <div className="relative z-10 text-center px-4">
+            <h1 className="text-3xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-white drop-shadow-sm">Jouw Smaak.</h1>
+            <p className="text-gray-200 mb-6 text-sm max-w-xs mx-auto leading-relaxed drop-shadow-md">Vul je wensen in, wij doen de rest.</p>
             
-            // Diet state
-            const [diet, setDiet] = useState({
-                vegetarian: false,
-                vegan: false,
-                glutenFree: false,
-                lactoseFree: false
-            });
-            const [dislikes, setDislikes] = useState("");
-
-            const handleDietChange = (e) => {
-                setDiet({...diet, [e.target.name]: e.target.checked});
-            }
-
-            const generateRecipe = () => {
-                setIsGenerating(true);
-                setGeneratedRecipe(null);
-                
-                // SIMULATIE VAN AI LOGICA
-                setTimeout(() => {
-                    const term = input.toLowerCase();
-                    let recipe = {
-                        title: "Verrassings Chef Special",
-                        desc: "Een heerlijk uitgebalanceerde maaltijd op basis van jouw wensen.",
-                        ingredients: ["Seizoensgroenten", "Kruidenmix", "Olijfolie"],
-                        time: "30 min"
-                    };
-
-                    if(term.includes("kip")) {
-                        recipe = {
-                            title: `Aziatische Kipfilet voor ${day}`,
-                            desc: "Malse kipstukjes in een zoete sojasaus met broccoli en cashewnoten. Precies zoals je vroeg!",
-                            ingredients: ["300g Kipfilet", "Broccoli", "Sojasaus", "Honing", "Cashewnoten", "Rijst"],
-                            time: "25 min"
-                        };
-                    } else if (term.includes("pasta")) {
-                        recipe = {
-                            title: `Romige Pasta voor ${day}`,
-                            desc: "Een comfort food klassieker, maar dan net even gezonder met volkoren pasta en courgette.",
-                            ingredients: ["Pasta", "Kookroom (of soja cuisine)", "Courgette", "Knoflook", "Basilicum"],
-                            time: "20 min"
-                        };
-                    } else if (term.includes("vis") || term.includes("zalm")) {
-                        recipe = {
-                            title: `Zalm uit de Oven voor ${day}`,
-                            desc: "Makkelijk, gezond en boordevol omega-3. Met geroosterde groenten.",
-                            ingredients: ["Zalmfilet", "Citroen", "Dille", "Asperges", "Aardappeltjes"],
-                            time: "35 min"
-                        };
-                    } else if (term.includes("vega") || diet.vegetarian || diet.vegan) {
-                        recipe = {
-                            title: `Gevulde Zoete Aardappel voor ${day}`,
-                            desc: "Een kleurrijk en voedzaam gerecht zonder vlees, maar met heel veel smaak.",
-                            ingredients: ["Zoete Aardappel", "Zwarte bonen", "Mais", "Avocado", "Limoen"],
-                            time: "40 min"
-                        };
-                    }
-
-                    setGeneratedRecipe(recipe);
-                    setIsGenerating(false);
-                }, 2000);
-            };
-
-            return (
-                <div className="grid md:grid-cols-2 gap-8 animate-in">
-                    {/* INPUT FORM */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-2 mb-6">
-                            <div className="bg-purple-100 p-2 rounded-lg">
-                                <Wand2 className="w-5 h-5 text-purple-600" />
-                            </div>
-                            <h2 className="text-xl font-bold text-gray-900">AI Recept Generator</h2>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Waar heb je zin in?</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="Bijv. Kip, Pasta, iets lichts..." 
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Voor welke dag?</label>
-                                    <select 
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white"
-                                        value={day}
-                                        onChange={(e) => setDay(e.target.value)}
-                                    >
-                                        {['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'].map(d => (
-                                            <option key={d} value={d}>{d}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Wat lust je écht niet?</label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Bijv. Koriander, Spruitjes" 
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                                        value={dislikes}
-                                        onChange={(e) => setDislikes(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <span className="block text-sm font-medium text-gray-700 mb-2">Dieetwensen & Allergieën</span>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                                        <input type="checkbox" name="vegetarian" checked={diet.vegetarian} onChange={handleDietChange} className="rounded text-purple-600 focus:ring-purple-500"/> Vegetarisch
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                                        <input type="checkbox" name="vegan" checked={diet.vegan} onChange={handleDietChange} className="rounded text-purple-600 focus:ring-purple-500"/> Veganistisch
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                                        <input type="checkbox" name="glutenFree" checked={diet.glutenFree} onChange={handleDietChange} className="rounded text-purple-600 focus:ring-purple-500"/> Glutenvrij
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                                        <input type="checkbox" name="lactoseFree" checked={diet.lactoseFree} onChange={handleDietChange} className="rounded text-purple-600 focus:ring-purple-500"/> Lactosevrij
-                                    </label>
-                                </div>
-                            </div>
-
-                            <button 
-                                onClick={generateRecipe}
-                                disabled={!input || isGenerating}
-                                className={`w-full py-3 rounded-lg font-bold text-white transition flex items-center justify-center gap-2 shadow-md
-                                    ${!input || isGenerating ? 'bg-purple-300 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700 hover:shadow-lg transform hover:-translate-y-0.5'}
-                                `}
-                            >
-                                {isGenerating ? (
-                                    <>
-                                        <Sparkles className="w-5 h-5 animate-spin" /> Chef is aan het denken...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles className="w-5 h-5" /> Genereer Mijn Recept
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* RESULT CARD */}
-                    <div className="flex flex-col h-full">
-                        {!generatedRecipe && !isGenerating && (
-                            <div className="h-full border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 p-8 text-center bg-gray-50/50">
-                                <ChefHat className="w-12 h-12 mb-4 text-gray-300" />
-                                <p className="font-medium">Jouw recept verschijnt hier.</p>
-                                <p className="text-sm">Vul je wensen in en laat de AI het werk doen.</p>
-                            </div>
-                        )}
-
-                        {isGenerating && (
-                             <div className="h-full bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center justify-center text-center loading-pulse">
-                                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                                    <Sparkles className="w-8 h-8 text-purple-600 animate-spin" />
-                                </div>
-                                <h3 className="text-lg font-bold text-gray-800">Even geduld...</h3>
-                                <p className="text-gray-500 text-sm mt-2">We checken de ingrediënten en je dieetwensen.</p>
-                             </div>
-                        )}
-
-                        {generatedRecipe && !isGenerating && (
-                            <div className="bg-white rounded-xl shadow-lg border border-purple-100 overflow-hidden animate-in">
-                                <div className="bg-purple-600 p-4 text-white flex justify-between items-start">
-                                    <div>
-                                        <div className="text-purple-200 text-xs font-bold uppercase tracking-wider mb-1">Speciaal voor jou</div>
-                                        <h3 className="font-bold text-xl">{generatedRecipe.title}</h3>
-                                    </div>
-                                    <Sparkles className="w-6 h-6 text-yellow-300" />
-                                </div>
-                                <div className="p-6">
-                                    <p className="text-gray-600 mb-6 italic">"{generatedRecipe.desc}"</p>
-                                    
-                                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 border-b pb-4">
-                                        <span className="flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full"><Clock className="w-4 h-4"/> {generatedRecipe.time}</span>
-                                        <span className="flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full"><ChefHat className="w-4 h-4"/> Gemiddeld</span>
-                                    </div>
-
-                                    <h4 className="font-bold text-gray-900 mb-3">Benodigdheden:</h4>
-                                    <ul className="space-y-2 mb-8">
-                                        {generatedRecipe.ingredients.map((ing, i) => (
-                                            <li key={i} className="flex items-center gap-3 text-gray-700">
-                                                <div className="w-2 h-2 rounded-full bg-purple-400"></div>
-                                                {ing}
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                    <div className="space-y-3">
-                                        <button className="w-full bg-gray-900 text-white py-3 rounded-lg font-medium hover:bg-black transition">
-                                            Bekijk Bereidingswijze
-                                        </button>
-                                        <button className="w-full border border-gray-300 text-gray-600 py-3 rounded-lg font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
-                                            <ShoppingCart className="w-4 h-4" /> Zet op Boodschappenlijst
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+            <div className="max-w-sm mx-auto bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 mb-6 text-left">
+                <label className="text-[10px] uppercase font-bold text-gray-300 mb-2 block flex items-center gap-1"><Filter size={10}/> Wensen (Optioneel)</label>
+                <div className="relative">
+                    <input value={userWishes} onChange={(e) => setUserWishes(e.target.value)} placeholder="Bijv: wel kip, geen vis..." className="w-full bg-white/20 text-white placeholder-gray-300 text-sm px-4 py-3 rounded-xl border border-white/10 focus:border-green-400 focus:bg-white/30 outline-none transition-all"/>
+                    {userWishes && <button onClick={() => setUserWishes("")} className="absolute right-3 top-3 text-gray-300 hover:text-white"><X size={16}/></button>}
                 </div>
-            );
-        }
+            </div>
 
-        // --- RENDER APP ---
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+            <div className="bg-black/30 backdrop-blur-md p-1 rounded-xl inline-flex items-center gap-2 mb-4 border border-white/10">
+              <span className="text-xs font-bold px-3 text-white">Eters:</span>
+              {[1, 2, 4].map(num => (
+                <button key={num} onClick={() => setPreferences({...preferences, persons: num})} className={`w-8 h-8 rounded-lg text-sm font-bold transition-all flex items-center justify-center ${preferences.persons == num ? 'bg-green-500 text-white shadow-lg' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}>
+                  {num}
+                </button>
+              ))}
+            </div><br/>
+            <button onClick={() => generateMenu(3)} disabled={isGenerating} className="bg-white text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg shadow-green-900/50 active:scale-95 transition-transform inline-flex items-center gap-2">
+              {isGenerating ? <Loader2 className="animate-spin"/> : <Zap size={18} className="text-yellow-500" fill="currentColor"/>} 
+              {isGenerating ? "AI is bezig..." : "Genereer Menu"}
+            </button>
+        </div>
+      </div>
+      <div className="px-4 pb-24 max-w-md mx-auto">
+         {generatedRecipes.length > 0 && (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-bold text-lg text-gray-800">Resultaat</h2>
+              <button onClick={() => generateMenu(3)} className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full flex items-center gap-1 border border-green-100"><RefreshCw size={10}/> Ververs</button>
+            </div>
+            <div className="space-y-3">
+              {generatedRecipes.map((recipe, index) => <RecipeCard key={recipe.id} recipe={recipe} index={index} isGuest={true} showLock={false} />)}
+            </div>
+            <div className="mt-6 bg-gradient-to-r from-green-600 to-emerald-700 text-white p-5 rounded-2xl shadow-lg text-center cursor-pointer relative overflow-hidden group" onClick={() => setView('login')}>
+              <div className="absolute right-0 top-0 h-full w-1/2 bg-white/5 skew-x-12 group-hover:translate-x-2 transition-transform"></div>
+              <h3 className="font-bold text-lg mb-1 relative z-10">Verdien Geld met Koken</h3>
+              <p className="text-green-100 text-xs mb-3 relative z-10">Upload jouw recept + foto en krijg korting.</p>
+              <div className="bg-white text-green-700 font-bold py-2 px-6 rounded-full inline-block text-sm relative z-10 shadow-sm">Word Premium</div>
+            </div>
+          </>
+         )}
+      </div>
+    </div>
+    );
+  };
+
+  const SubmitRecipeView = () => (
+      <div className="animate-fade-in pb-24 px-4 pt-6 max-w-md mx-auto">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white mb-6 shadow-lg">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-xl font-bold">Verdien Korting</h2>
+                  <p className="text-blue-100 text-xs mt-1">Upload jouw unieke recept. Na goedkeuring krijg je korting.</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-full"><Wallet size={24} /></div>
+              </div>
+              <div className="flex items-end gap-2">
+                <span className="text-4xl font-bold">€{wallet.toFixed(2)}</span>
+                <span className="text-sm text-blue-200 mb-1">/ €{SUBSCRIPTION_PRICE} gespaard</span>
+              </div>
+              <div className="w-full bg-black/20 h-1.5 rounded-full mt-3 overflow-hidden">
+                <div className="bg-yellow-400 h-full transition-all duration-1000" style={{width: `${(wallet/SUBSCRIPTION_PRICE)*100}%`}}></div>
+              </div>
+          </div>
+          <form onSubmit={handleRecipeSubmit} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+              <h3 className="font-bold text-gray-800 mb-4">Recept Insturen</h3>
+              <div className="space-y-4">
+                  <div onClick={handleImageUpload} className={`w-full h-32 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${uploadedImage ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:bg-gray-50'}`}>
+                      {submitStatus === 'uploading' ? ( <span className="text-gray-400 flex items-center gap-2"><Loader2 className="animate-spin"/> Uploaden...</span> ) : uploadedImage ? ( <div className="relative w-full h-full overflow-hidden rounded-xl"><img src={uploadedImage} className="w-full h-full object-cover" alt="Preview"/><div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white font-bold"><Check size={20}/> Foto Geüpload</div></div> ) : ( <><Camera size={24} className="text-gray-400 mb-2"/><span className="text-xs text-gray-500 font-bold">Klik om foto te maken/uploaden</span></> )}
+                  </div>
+                  <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">Titel</label><input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-green-500 outline-none" placeholder="Bijv. Oma's Gehaktballen"/></div>
+                  <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">Bereidingswijze</label><textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-green-500 outline-none h-32" placeholder="Beschrijf je stappen hier..."/></div>
+                  <button disabled={submitStatus === 'checking' || submitStatus === 'success' || !uploadedImage} type="submit" className={`w-full font-bold py-3 rounded-xl shadow-lg flex justify-center items-center gap-2 transition-all ${submitStatus === 'success' ? 'bg-green-500 text-white' : 'bg-gray-900 text-white hover:bg-black disabled:bg-gray-300'}`}>
+                    {submitStatus === 'checking' ? <><Loader2 className="animate-spin"/> AI Controleert...</> : submitStatus === 'success' ? <><Check/> Goedgekeurd! +€1.00</> : <>Verstuur voor Korting</>}
+                  </button>
+              </div>
+          </form>
+          {userSubmittedRecipes.length > 0 && <div className="mt-8"><h3 className="font-bold text-gray-800 mb-4">Jouw Inzendingen</h3><div className="space-y-3">{userSubmittedRecipes.map((r, i) => <RecipeCard key={i} recipe={r} isGuest={false} />)}</div></div>}
+      </div>
+  );
+
+  const DashboardView = () => (
+    <div className="animate-fade-in pb-24 px-4 pt-6 max-w-md mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-xl font-bold text-gray-800">Mijn Weekplanner 📅</h1>
+        <button onClick={logout} className="text-gray-400 hover:text-red-500 p-2"><LogOut size={18} /></button>
+      </div>
+      <div className="bg-white p-3 rounded-xl border border-gray-200 mb-4 shadow-sm">
+        <div className="flex items-center gap-2 text-gray-400 mb-1"><Filter size={12}/> <span className="text-[10px] font-bold uppercase">Actieve Filters</span></div>
+        <input value={userWishes} onChange={(e) => setUserWishes(e.target.value)} placeholder="Speciale wensen..." className="w-full text-sm outline-none text-gray-700 bg-transparent"/>
+      </div>
+      <div className="bg-white p-3 rounded-xl shadow-md border border-gray-100 mb-4 sticky top-[72px] z-20 flex justify-between items-center backdrop-blur-md bg-white/80">
+        <div className="text-[10px] font-bold text-gray-500 uppercase"><span className="text-orange-500">{generatedRecipes.filter(r => r.locked).length}</span> Vastgezet</div>
+        <button onClick={() => generateMenu(7)} disabled={isGenerating} className="bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow-md active:scale-95 transition-transform flex items-center gap-2">
+          {isGenerating ? <Loader2 size={14} className="animate-spin"/> : <RefreshCw size={14}/>} 
+          {generatedRecipes.length > 0 ? "Ververs Week" : "Start Planner"}
+        </button>
+      </div>
+      <div className="space-y-3">
+        {generatedRecipes.map((recipe, index) => (
+          <div key={recipe.id} className="relative pl-6">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-extrabold text-gray-300 uppercase tracking-widest w-6 text-center">Dag {index + 1}</div>
+            <RecipeCard recipe={recipe} showLock={true} />
+          </div>
+        ))}
+        {generatedRecipes.length === 0 && (
+          <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+            <Sparkles className="mx-auto text-gray-300 mb-2" size={32} />
+            <p className="text-gray-400 text-sm">Klik op de knop om je week te plannen!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const LoginView = () => (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white max-w-md mx-auto text-center">
+      <div className="bg-green-100 p-4 rounded-full mb-4 text-green-600"><Star size={32} fill="currentColor" /></div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Upgrade je Keuken</h2>
+      <p className="text-gray-500 mb-6 text-sm">Beheer je weekplanning, bewaar favorieten en verdien korting met jouw kookfoto's.</p>
+      <button onClick={login} className="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-md mb-3 active:scale-95 transition-transform">
+        Word Premium (€2,99)
+      </button>
+      <button onClick={() => setView('home')} className="text-gray-400 text-xs font-medium underline">Nu niet, ik bekijk de suggesties</button>
+    </div>
+  );
+
+  const FavoritesView = () => (
+    <div className="animate-fade-in pb-24 px-4 pt-6 max-w-md mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-xl font-bold text-gray-800">Favorieten ❤️</h1>
+        {savedRecipeIds.length > 0 && <button onClick={() => setSavedRecipeIds([])} className="text-gray-300 hover:text-red-500"><Trash2 size={16}/></button>}
+      </div>
+      {savedRecipeIds.length > 0 ? (
+        <div className="grid grid-cols-1 gap-3">
+          {savedRecipeIds.map(recipe => <RecipeCard key={recipe.id} recipe={recipe} isGuest={false} />)}
+        </div>
+      ) : (
+        <div className="p-20 text-center text-gray-400 flex flex-col items-center border-2 border-dashed border-gray-100 rounded-3xl">
+          <Heart className="mb-4 text-gray-100" size={64}/> 
+          <p className="text-sm font-medium">Nog geen favorieten bewaard.</p>
+          <button onClick={() => setView(user ? 'dashboard' : 'home')} className="mt-4 text-green-600 text-xs font-bold">Ontdek Recepten</button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+      {/* HEADER */}
+      <div className="bg-white shadow-sm py-3 px-6 flex justify-between items-center sticky top-0 z-30 max-w-md mx-auto border-b border-gray-100">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView(user ? 'dashboard' : 'home')}>
+          <div className="bg-green-600 text-white p-1 rounded shadow-inner"><Utensils size={16} /></div>
+          <span className="font-bold text-base tracking-tight">Uit Werking</span>
+        </div>
+        {!user && view !== 'login' && (
+          <button onClick={() => setView('login')} className="text-[10px] font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 shadow-sm">Premium Login</button>
+        )}
+        {user && <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{user.name}</div>}
+      </div>
+
+      <div className="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative">
+        {view === 'home' && <HomeView />}
+        {view === 'dashboard' && <DashboardView />}
+        {view === 'submit' && <SubmitRecipeView />}
+        {view === 'favorites' && <FavoritesView />}
+        {view === 'login' && <LoginView />}
+      </div>
+
+      {/* BOTTOM NAV */}
+      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 py-3 px-6 flex justify-around text-gray-400 z-40 max-w-md mx-auto right-0 backdrop-blur-md bg-white/90">
+        <button onClick={() => setView(user ? 'dashboard' : 'home')} className={`flex flex-col items-center transition-colors ${view === 'home' || view === 'dashboard' ? 'text-green-600' : 'hover:text-gray-600'}`}>
+          <Home size={22}/>
+          <span className="text-[9px] font-bold mt-0.5">Start</span>
+        </button>
+        
+        {user && (
+          <button onClick={() => setView('submit')} className={`flex flex-col items-center -mt-8`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white transition-all active:scale-90 ${view === 'submit' ? 'bg-green-600 text-white' : 'bg-gray-900 text-white'}`}>
+              <PlusCircle size={28}/>
+            </div>
+            <span className="text-[9px] font-bold mt-1 text-gray-500 uppercase tracking-tighter">Verdien</span>
+          </button>
+        )}
+
+        <button onClick={() => setView('favorites')} className={`flex flex-col items-center transition-colors ${view === 'favorites' ? 'text-red-500' : 'hover:text-gray-600'}`}>
+          <Heart size={22} fill={view === 'favorites' ? 'currentColor' : 'none'}/>
+          <span className="text-[9px] font-bold mt-0.5">Kookboek</span>
+        </button>
+      </div>
+      
+      <Modal />
+    </div>
+  );
+}
+
+export default function App() { 
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  ); 
+}

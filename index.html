@@ -4,35 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- --- SEO OPTIMALISATIE --- -->
-    <title>De Weekhap | Slimme Weekplanning & Gezonde Community Recepten</title>
-    <meta name="description" content="Plan je weekmenu in één klik met De Weekhap. Ontdek gezonde recepten, deel je eigen creaties en beheer je kookboek online. Altijd gesynchroniseerd op elk apparaat.">
-    <meta name="keywords" content="weekmenu planner, gratis recepten, gezond eten, maaltijdplanner, koken community, LinkPizza, besparen op boodschappen">
-    <meta name="author" content="De Weekhap">
-    <link rel="canonical" href="https://deweekhap.nl">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://deweekhap.nl/">
-    <meta property="og:title" content="De Weekhap | Slimme Weekplanning op Maat">
-    <meta property="og:description" content="Kies elke dag wat anders en beheer je kookboek in de cloud. Gratis en simpel voor iedereen.">
+    <!-- SEO & Social Media -->
+    <title>De Weekhap | Simpel, Vrolijk & Gezond Plannen</title>
+    <meta name="description" content="Plan je weekmenu in één klik. Gezond, community-gedreven en altijd online gesynchroniseerd op elk apparaat.">
     <meta property="og:image" content="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg">
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="De Weekhap | Jouw Persoonlijke Planner">
-    <meta property="twitter:description" content="Plan je weekmenu direct en deel je eigen haps met de community.">
-    <meta property="twitter:image" content="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg">
     
-    <!-- FAVICON -->
     <link rel="icon" type="image/jpeg" href="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg">
 
-    <!-- Firebase SDKs (Compat versies voor maximale stabiliteit op GitHub) -->
+    <!-- Firebase Compat SDKs (Meest stabiel voor GitHub) -->
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
 
-    <!-- React, Tailwind & Lucide Icons -->
+    <!-- React, Tailwind & Icons -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -50,10 +34,9 @@
         .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
-        .hover-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
+        .bg-sunny { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
+        .text-gradient-orange { background: linear-gradient(to right, #f59e0b, #ea580c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
         .logo-container {
             width: 48px;
             height: 48px;
@@ -66,10 +49,9 @@
             border: 1px solid #e2e8f0;
         }
         .logo-img { width: 100%; height: 100%; object-fit: cover; }
+        .hover-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         .chef-badge { background: linear-gradient(45deg, #0ea5e9, #2563eb); }
         .chef-badge-master { background: linear-gradient(45deg, #f59e0b, #d97706); }
-        .bg-sunny { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
-        .text-gradient-orange { background: linear-gradient(to right, #f59e0b, #ea580c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body class="bg-white text-slate-900 overflow-x-hidden text-left">
@@ -78,20 +60,22 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- FIREBASE SETUP ---
-        // We gebruiken een try-catch om te voorkomen dat de site crasht als de config mist
-        let db, auth;
+        // --- VEILIGE FIREBASE INITIALISATIE ---
+        let db = null;
+        let auth = null;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'de-weekhap';
 
         try {
-            const firebaseConfig = JSON.parse(__firebase_config || '{}');
-            if (firebaseConfig.apiKey && !firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-                auth = firebase.auth();
-                db = firebase.firestore();
+            if (typeof __firebase_config !== 'undefined') {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                if (firebaseConfig.apiKey && !firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                    auth = firebase.auth();
+                    db = firebase.firestore();
+                }
             }
         } catch (e) {
-            console.warn("Firebase niet geconfigureerd, we gaan verder in lokale modus.");
+            console.warn("Firebase config niet gevonden, we draaien in offline-modus.");
         }
 
         // --- ICON COMPONENT ---
@@ -114,34 +98,27 @@
             const [user, setUser] = useState(null);
             const [authLoading, setAuthLoading] = useState(true);
             const [communityRecipes, setCommunityRecipes] = useState([]);
-            const [pendingRecipes, setPendingRecipes] = useState([]);
             const [savedRecipes, setSavedRecipes] = useState([]);
-            const [userProfile, setUserProfile] = useState({ name: 'Gast', points: 0 });
+            const [userProfile, setUserProfile] = useState({ name: 'Lekkerbek', points: 0 });
             
-            // UI State
+            // UI States
             const [generated, setGenerated] = useState([]);
             const [loading, setLoading] = useState(false);
             const [selected, setSelected] = useState(null);
             const [searchTerm, setSearchTerm] = useState("");
-            const [uploadedImage, setUploadedImage] = useState(null);
-            const [formData, setFormData] = useState({ title: '', category: 'italiaans', ingredients: '', instructions: '' });
-            const [editingRecipe, setEditingRecipe] = useState(null);
             const [logoError, setLogoError] = useState(false);
 
-            const fileInputRef = useRef(null);
-            const adminFileInputRef = useRef(null);
-
-            // Berekende rank
+            // Berekende rank (altijd gedefinieerd om errors te voorkomen)
             const rankInfo = useMemo(() => {
-                const p = userProfile.points || 0;
+                const p = userProfile?.points || 0;
                 if (p >= 500) return { title: "Master Chef", color: "chef-badge-master" };
                 if (p >= 150) return { title: "Hobbykok", color: "chef-badge" };
                 return { title: "Nieuweling", color: "bg-slate-200 text-slate-500" };
-            }, [userProfile.points]);
+            }, [userProfile?.points]);
 
-            const isAdmin = useMemo(() => userProfile.name?.toLowerCase() === 'admin', [userProfile.name]);
+            const isAdmin = useMemo(() => userProfile?.name?.toLowerCase() === 'admin', [userProfile?.name]);
 
-            // 1. AUTH SYNC
+            // 1. AUTH LOGICA
             useEffect(() => {
                 if (!auth) { setAuthLoading(false); return; }
                 const initAuth = async () => {
@@ -151,7 +128,7 @@
                         } else {
                             await auth.signInAnonymously();
                         }
-                    } catch (e) { console.error("Auth fout:", e); }
+                    } catch (e) { console.error("Authenticatie fout:", e); }
                 };
                 initAuth();
 
@@ -162,15 +139,15 @@
                 return () => unsubscribe();
             }, []);
 
-            // 2. DATA SYNC
+            // 2. DATA LOGICA
             useEffect(() => {
                 if (!db || !user) return;
 
                 const profileRef = db.doc(`artifacts/${appId}/users/${user.uid}/profile/data`);
                 const unsubProfile = profileRef.onSnapshot(doc => {
                     if (doc.exists) setUserProfile(doc.data());
-                    else profileRef.set({ name: 'Chef', points: 0 });
-                });
+                    else profileRef.set({ name: 'Gast', points: 0 });
+                }, (err) => console.error("Geen rechten voor profiel nog."));
 
                 const unsubPublic = db.collection(`artifacts/${appId}/public/data/recipes`).onSnapshot(s => {
                     setCommunityRecipes(s.docs.map(d => ({...d.data(), id: d.id})));
@@ -180,22 +157,17 @@
                     setSavedRecipes(s.docs.map(d => ({...d.data(), id: d.id})));
                 });
 
-                const unsubPending = db.collection(`artifacts/${appId}/public/data/pending`).onSnapshot(s => {
-                    setPendingRecipes(s.docs.map(d => ({...d.data(), id: d.id})));
-                });
-
-                return () => { unsubProfile(); unsubPublic(); unsubSaved(); unsubPending(); };
+                return () => { unsubProfile(); unsubPublic(); unsubSaved(); };
             }, [user]);
 
             const generateMenu = () => {
                 setLoading(true);
                 setTimeout(() => {
-                    const fallbackPool = [
-                        { id: 'f1', title: 'Romige Pasta Pesto', category: 'Italiaans', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800', ingredients: ['Pasta', 'Pesto', 'Kip'], instructions: ['Kook pasta', 'Bak kip', 'Meng alles'] },
-                        { id: 'f2', title: 'Gezonde Wokschotel', category: 'Aziatisch', image: 'https://images.unsplash.com/photo-1512058560566-d8b437a1d7f8?w=800', ingredients: ['Rijst', 'Groenten', 'Saus'], instructions: ['Kook rijst', 'Wok groenten', 'Voeg saus toe'] },
-                        { id: 'f3', title: 'Verse Taco\'s', category: 'Mexicaans', image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800', ingredients: ['Taco', 'Gehakt', 'Mais'], instructions: ['Bak gehakt', 'Vul taco', 'Eet smakelijk'] }
+                    const pool = communityRecipes.length >= 7 ? communityRecipes : [
+                        { id: '1', title: 'Pasta Pesto', category: 'Italiaans', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800', ingredients: ['Penne', 'Pesto', 'Kip'], instructions: ['Kook pasta', 'Bak kip', 'Meng alles'] },
+                        { id: '2', title: 'Taco Party', category: 'Mexicaans', image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800', ingredients: ['Taco', 'Gehakt', 'Mais'], instructions: ['Bak vlees', 'Vul taco'] },
+                        { id: '3', title: 'Wok Snel', category: 'Aziatisch', image: 'https://images.unsplash.com/photo-1512058560566-d8b437a1d7f8?w=800', ingredients: ['Rijst', 'Groente', 'Ei'], instructions: ['Kook rijst', 'Wok alles'] }
                     ];
-                    const pool = communityRecipes.length > 0 ? communityRecipes : fallbackPool;
                     const shuffled = [...pool].sort(() => 0.5 - Math.random());
                     setGenerated(shuffled.slice(0, 7));
                     setLoading(false);
@@ -211,36 +183,16 @@
                 else await ref.set(recipe);
             };
 
-            const submitRecipe = async (e) => {
-                e.preventDefault();
-                if (!uploadedImage) return alert("Voeg een foto toe!");
-                const newRecipe = {
-                    ...formData, image: uploadedImage, author: userProfile.name, authorId: user?.uid || 'gast',
-                    ingredients: formData.ingredients.split(','), instructions: formData.instructions.split('\n'),
-                    likes: 0, date: Date.now()
-                };
-                if (db) {
-                    await db.collection(`artifacts/${appId}/public/data/pending`).add(newRecipe);
-                    await db.doc(`artifacts/${appId}/users/${user.uid}/profile/data`).update({ points: (userProfile.points || 0) + 50 });
-                    alert("Je hap staat in de wachtrij!");
-                } else {
-                    alert("Database niet verbonden, lokaal opslaan niet mogelijk.");
-                }
-                setFormData({ title: '', category: 'italiaans', ingredients: '', instructions: '' });
-                setUploadedImage(null);
-                setView('home');
-            };
-
-            if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-white"><Icon name="loader-2" className="animate-spin text-blue-600" size={40}/></div>;
+            if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-white"><Icon name="loader" className="animate-spin text-blue-600" size={40}/></div>;
 
             return (
                 <div className="min-h-screen flex flex-col w-full text-left">
-                    {/* Header: NIET AANKOMEN (Vastgezet per instructie) */}
-                    <header className="bg-white/80 border-b border-slate-100 sticky top-0 z-40 w-full backdrop-blur-md">
+                    {/* Header: NIET AANKOMEN (Vastgezet) */}
+                    <header className="bg-white border-b border-slate-100 sticky top-0 z-40 w-full backdrop-blur-md">
                         <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center text-left">
                             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView('home')}>
                                 <div className="logo-container">
-                                    {!logoError ? <img src="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg" alt="Logo van De Weekhap" className="logo-img" onError={() => setLogoError(true)} /> : <div className="bg-blue-600 text-white font-black w-full h-full flex items-center justify-center text-xs">HAP</div>}
+                                    {!logoError ? <img src="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg" alt="De Weekhap Logo" className="logo-img" onError={() => setLogoError(true)} /> : <div className="bg-blue-600 text-white font-black w-full h-full flex items-center justify-center text-xs">HAP</div>}
                                 </div>
                                 <span className="font-black text-2xl tracking-tighter text-slate-900 uppercase">De Weekhap</span>
                             </div>
@@ -248,11 +200,7 @@
                             <div className="flex items-center gap-6 lg:gap-10 text-left">
                                 <nav className="hidden md:flex items-center gap-8 text-left">
                                     <button onClick={() => setView('home')} className={`font-bold text-sm ${view === 'home' ? 'text-blue-600' : 'text-slate-500 hover:text-blue-600'}`}>Home</button>
-                                    <button onClick={() => setView('add')} className={`font-bold text-sm ${view === 'add' ? 'text-blue-600' : 'text-slate-500 hover:text-blue-600'}`}>Hap Toevoegen</button>
                                     <button onClick={() => setView('favorites')} className={`font-bold text-sm ${view === 'favorites' ? 'text-red-500' : 'text-slate-500 hover:text-red-500'}`}>Kookboek</button>
-                                    {isAdmin && (
-                                        <button onClick={() => setView('admin')} className="bg-orange-500 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase animate-pulse">Beheer ({pendingRecipes.length})</button>
-                                    )}
                                 </nav>
                                 
                                 <div className="flex items-center gap-4 pl-6 border-l border-slate-100 text-left">
@@ -275,19 +223,20 @@
                             <div className="animate-fade-in text-left">
                                 {/* VROLIJKE HERO SECTIE */}
                                 <section className="max-w-7xl mx-auto px-6 py-12 lg:py-20 text-left">
-                                    <div className="bg-sunny rounded-[4rem] p-10 md:p-20 relative overflow-hidden shadow-sm border border-amber-100">
-                                        <article className="max-w-2xl relative z-10 space-y-8">
-                                            <header>
-                                                <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[0.95] uppercase tracking-tighter">
-                                                    Plan je hap <br/> <span className="text-gradient-orange">in één klik.</span>
-                                                </h1>
-                                            </header>
-                                            <p className="text-xl text-slate-600 leading-relaxed max-w-lg font-medium">
-                                                Plan je volledige week in één klik. Gezond, gevarieerd en super simpel met De Weekhap. Begin direct met plannen!
+                                    <div className="bg-sunny rounded-[4rem] p-10 md:p-20 relative overflow-hidden shadow-sm border border-amber-100 text-left">
+                                        <div className="max-w-2xl relative z-10 space-y-8 text-left">
+                                            <div className="inline-flex items-center gap-2 bg-orange-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-left">
+                                                Plan direct & gratis! 🚀
+                                            </div>
+                                            <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[0.95] uppercase tracking-tighter text-left">
+                                                Lekker eten, <br/> <span className="text-gradient-orange text-left">Zonder moeite.</span>
+                                            </h1>
+                                            <p className="text-xl text-slate-600 leading-relaxed max-w-lg font-medium text-left">
+                                                De Weekhap is de slimste manier om je weekmenu te vullen. Gezond, gevarieerd en helemaal gratis. Start direct hieronder!
                                             </p>
                                             
-                                            <div className="max-w-md space-y-4">
-                                                <div className="relative group">
+                                            <div className="max-w-md space-y-4 text-left">
+                                                <div className="relative group text-left">
                                                     <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-amber-400">
                                                         <Icon name="search" size={24} />
                                                     </div>
@@ -295,163 +244,172 @@
                                                         type="text" 
                                                         value={searchTerm}
                                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                                        placeholder="Zoek op 'vega' of 'kip'..." 
+                                                        placeholder="Wensen? 'Vega', 'Kip'..." 
                                                         className="w-full bg-white border-2 border-amber-200 rounded-[2.5rem] py-6 pl-14 pr-6 text-slate-900 font-bold shadow-xl outline-none focus:ring-8 ring-orange-500/10 focus:border-orange-400 transition-all text-lg"
                                                     />
                                                 </div>
-                                                <button onClick={generateMenu} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-6 rounded-[2.5rem] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 text-xl uppercase tracking-widest text-center">
+                                                <button onClick={generateMenu} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-6 rounded-[2.5rem] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 text-xl uppercase tracking-widest">
                                                     {loading ? <Icon name="refresh-cw" className="animate-spin" /> : <Icon name="zap" fill="currentColor" />}
-                                                    Plan mijn Weekhap
+                                                    Genereer mijn week
                                                 </button>
                                             </div>
-                                        </article>
-                                        <div className="absolute right-[-10%] top-[10%] hidden xl:block w-[600px] h-[600px] opacity-20 pointer-events-none">
-                                            <Icon name="utensils-crossed" size={500} className="text-orange-300"/>
+                                        </div>
+                                        <div className="absolute right-[-10%] top-[10%] hidden xl:block w-[500px] h-[500px] opacity-10 pointer-events-none">
+                                            <Icon name="utensils" size={500} className="text-orange-400"/>
                                         </div>
                                     </div>
                                 </section>
 
-                                {/* RESULTATEN */}
+                                {/* PLANNING RESULTATEN */}
                                 {generated.length > 0 && (
                                     <section id="results" className="max-w-7xl mx-auto px-6 py-16 animate-fade-in text-left">
-                                        <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter border-b pb-8 mb-12">Jouw Menu is klaar! 🍎</h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                        <div className="flex items-end justify-between border-b border-slate-100 pb-10 mb-12 text-left">
+                                            <div className="text-left text-left">
+                                                <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter text-left">Jouw Verse Menu 🍎</h2>
+                                                <p className="text-slate-400 font-bold mt-2">Zeven unieke suggesties voor je week.</p>
+                                            </div>
+                                            <button onClick={generateMenu} className="bg-orange-50 text-orange-600 font-black px-8 py-3 rounded-2xl hover:bg-orange-100 transition-all flex items-center gap-2 text-sm uppercase">
+                                                <Icon name="refresh-cw" size={16} /> Andere variatie
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-left text-left">
                                             {generated.map((r, i) => (
-                                                <section key={r.id} onClick={() => setSelected(r)} className="group bg-white rounded-[3rem] overflow-hidden shadow-sm hover-card transition-all cursor-pointer border border-slate-50 flex flex-col">
-                                                    <div className="h-48 relative overflow-hidden">
+                                                <div key={r.id} onClick={() => setSelected(r)} className="group bg-white rounded-[3rem] overflow-hidden shadow-sm hover-card transition-all cursor-pointer border border-slate-50 flex flex-col text-left">
+                                                    <div className="h-48 relative overflow-hidden text-left">
                                                         <img src={r.image} alt={r.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                                                        <div className="absolute top-4 left-4 bg-slate-900 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">Dag {i+1}</div>
+                                                        <div className="absolute top-4 left-4 bg-slate-900 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase text-left">Dag {i+1}</div>
                                                     </div>
-                                                    <div className="p-8 text-left">
-                                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-2 block">{r.category}</span>
-                                                        <h3 className="font-bold text-xl text-slate-800 line-clamp-1 uppercase">{r.title}</h3>
+                                                    <div className="p-8 text-left text-left">
+                                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-2 block text-left">Culinair</span>
+                                                        <h3 className="font-bold text-xl text-slate-800 line-clamp-1 uppercase text-left">{r.title}</h3>
                                                     </div>
-                                                </section>
+                                                </div>
                                             ))}
                                         </div>
                                     </section>
                                 )}
 
-                                {/* INFORMATIE BLOKKEN */}
-                                <section id="hoe-het-werkt" className="py-24 bg-slate-50 text-left border-t border-slate-100">
-                                    <div className="max-w-7xl mx-auto px-6">
-                                        <header className="mb-16">
-                                            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-slate-900">Hoe werkt De Weekhap?</h2>
-                                        </header>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-left">
-                                            <article className="space-y-6 bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
-                                                <div className="w-16 h-16 bg-blue-600 text-white rounded-3xl flex items-center justify-center text-2xl font-black shadow-xl">1</div>
-                                                <h3 className="text-2xl font-black uppercase text-slate-900">Zoek & Filter</h3>
-                                                <p className="text-slate-500 leading-relaxed">Zoek eenvoudig op dieetwensen, allergieën of je favoriete ingrediënten.</p>
-                                            </article>
-                                            <article className="space-y-6 bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
-                                                <div className="w-16 h-16 bg-blue-600 text-white rounded-3xl flex items-center justify-center text-2xl font-black shadow-xl">2</div>
-                                                <h3 className="text-2xl font-black uppercase text-slate-900">Plan je Week</h3>
-                                                <p className="text-slate-500 leading-relaxed">Krijg direct 7 recepten voor de hele week. Je kunt dagen verversen tot je tevreden bent.</p>
-                                            </article>
-                                            <article className="space-y-6 bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
-                                                <div className="w-16 h-16 bg-blue-600 text-white rounded-3xl flex items-center justify-center text-2xl font-black shadow-xl">3</div>
-                                                <h3 className="text-2xl font-black uppercase text-slate-900">Shop bij Partners</h3>
-                                                <p className="text-slate-500 leading-relaxed">Bestel je ingrediënten direct via onze partner **LinkPizza** bij jouw supermarkt.</p>
-                                            </article>
+                                {/* INFO BLOKKEN */}
+                                <section className="py-24 bg-slate-50 text-left border-t border-slate-100">
+                                    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 text-left">
+                                        <div className="bg-white p-10 rounded-[3rem] shadow-sm space-y-6 text-left">
+                                            <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center"><Icon name="cloud" size={28}/></div>
+                                            <h3 className="text-2xl font-black uppercase tracking-tighter text-left">Cloud Sync</h3>
+                                            <p className="text-slate-500 leading-relaxed text-left">Sla je menu op je laptop op en open je boodschappenlijst direct in de winkel op je telefoon.</p>
+                                        </div>
+                                        <div className="bg-white p-10 rounded-[3rem] shadow-sm space-y-6 text-left text-left">
+                                            <div className="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center"><Icon name="users" size={28}/></div>
+                                            <h3 className="text-2xl font-black uppercase tracking-tighter text-left text-left">Community</h3>
+                                            <p className="text-slate-500 leading-relaxed text-left">Geen neppe foto's. Alleen echte maaltijden die door andere gebruikers van De Weekhap zijn gedeeld.</p>
+                                        </div>
+                                        <div className="bg-white p-10 rounded-[3rem] shadow-sm space-y-6 text-left text-left text-left">
+                                            <div className="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center"><Icon name="tag" size={28}/></div>
+                                            <h3 className="text-2xl font-black uppercase tracking-tighter text-left text-left">Bespaar Geld</h3>
+                                            <p className="text-slate-500 leading-relaxed text-left">Door gepland te winkelen bespaar je op impulsaankopen. Check de deals via **LinkPizza** in je lijst!</p>
                                         </div>
                                     </div>
                                 </section>
                             </div>
                         )}
 
-                        {/* PRODUCT TOEVOEGEN VIEW */}
-                        {view === 'add' && (
-                            <div className="max-w-3xl mx-auto py-16 animate-fade-in text-left">
-                                <h1 className="text-5xl font-black text-slate-800 uppercase tracking-tighter mb-12">Hap Toevoegen</h1>
-                                <form onSubmit={submitRecipe} className="bg-white p-12 rounded-[3.5rem] shadow-2xl border border-slate-50 space-y-8 text-left">
-                                    <input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Naam van het gerecht..." className="w-full bg-slate-50 p-5 rounded-2xl font-bold outline-none border-0 text-left" />
-                                    <input required value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} placeholder="Ingrediënten (met komma's)..." className="w-full bg-slate-50 p-5 rounded-2xl font-bold outline-none border-0 text-left" />
-                                    <textarea required value={formData.instructions} onChange={e => setFormData({...formData, instructions: e.target.value})} placeholder="Vertel kort hoe je het maakt..." className="w-full bg-slate-50 p-5 rounded-2xl font-bold outline-none border-0 h-40 text-left" />
-                                    <button type="submit" className="w-full bg-slate-900 text-white font-black py-6 rounded-2xl shadow-xl uppercase tracking-widest active:scale-95 transition-all text-center">Insturen voor Controle (+50 Punten)</button>
-                                </form>
-                            </div>
-                        )}
-
-                        {/* LOGIN / PROFIEL VIEW */}
+                        {/* PROFIEL / LOGIN VIEW */}
                         {view === 'login' && (
                             <div className="max-w-md mx-auto py-24 animate-fade-in text-left">
-                                <div className="bg-white p-12 rounded-[3.5rem] shadow-2xl border border-slate-50 text-center">
-                                    <h2 className="text-4xl font-black uppercase tracking-tighter mb-8 text-center">Chef Profiel</h2>
-                                    <input className="w-full bg-slate-50 p-5 rounded-2xl font-bold outline-none border-0 mb-6 text-left" placeholder="Naam..." value={userProfile.name} onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (db && user) db.doc(`artifacts/${appId}/users/${user.uid}/profile/data`).set({ name: val }, { merge: true });
-                                        else setUserProfile({...userProfile, name: val});
-                                    }} />
-                                    <button onClick={() => setView('home')} className="w-full bg-orange-500 text-white font-black py-6 rounded-2xl shadow-xl uppercase tracking-widest text-center">Starten & Opslaan</button>
-                                    {user && !user.isAnonymous && <button onClick={() => auth.signOut().then(() => setView('home'))} className="mt-8 text-red-500 font-bold block w-full text-center hover:underline">Uitloggen</button>}
+                                <div className="bg-white p-12 rounded-[3.5rem] shadow-2xl border border-slate-50 text-center text-left">
+                                    <h2 className="text-4xl font-black uppercase tracking-tighter mb-4 text-center">Chef Account</h2>
+                                    <p className="text-slate-400 text-center mb-10 font-bold text-center">Jouw gegevens veilig in de cloud.</p>
+                                    <div className="space-y-6 text-left">
+                                        <input className="w-full bg-slate-50 p-5 rounded-2xl font-bold outline-none border-0 text-slate-900 text-left" placeholder="Naam..." value={userProfile?.name} onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (db && user) db.doc(`artifacts/${appId}/users/${user.uid}/profile/data`).set({ name: val }, { merge: true });
+                                            else setUserProfile({...userProfile, name: val});
+                                        }} />
+                                        <button onClick={() => setView('home')} className="w-full bg-orange-500 text-white font-black py-6 rounded-2xl shadow-xl uppercase tracking-widest text-center active:scale-95 transition-all text-center">Starten & Syncen</button>
+                                        {user && !user.isAnonymous && <button onClick={() => auth.signOut().then(() => window.location.reload())} className="w-full text-red-500 font-bold text-sm hover:underline text-center">Uitloggen</button>}
+                                    </div>
                                 </div>
                             </div>
                         )}
                         
-                        {/* Overige views (favorites, admin) blijven conform eerdere logica */}
+                        {/* FAVORITES VIEW */}
+                        {view === 'favorites' && (
+                             <div className="max-w-7xl mx-auto px-6 py-16 animate-fade-in text-left text-left">
+                                <h1 className="text-5xl font-black text-slate-800 uppercase tracking-tighter text-left">Mijn Kookboek</h1>
+                                <p className="text-slate-400 font-bold mt-4 mb-12 text-left">Jouw favoriete haps, altijd bij de hand.</p>
+                                {savedRecipes.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-left text-left">
+                                        {savedRecipes.map(r => (
+                                            <div key={r.id} onClick={() => setSelected(r)} className="group bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover-card transition-all cursor-pointer border border-slate-50 text-left">
+                                                <img src={r.image} alt={r.title} className="h-56 w-full object-cover" />
+                                                <div className="p-8 text-left"><h3 className="font-bold text-xl text-slate-800 uppercase text-left">{r.title}</h3></div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-40 bg-white rounded-[3rem] border-2 border-dashed border-slate-100 max-w-2xl mx-auto text-center text-center">
+                                        <Icon name="heart" size={60} className="mx-auto text-slate-200 mb-6 text-center" />
+                                        <p className="text-slate-400 font-bold uppercase tracking-widest text-center">Je kookboek is leeg.</p>
+                                        <button onClick={() => setView('home')} className="mt-6 text-blue-600 font-black underline uppercase text-sm text-center">Haps zoeken</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </main>
 
                     {/* Footer */}
-                    <footer className="bg-white border-t border-slate-100 py-24 text-left">
-                        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-16 text-left">
-                            <div className="space-y-6 text-left">
-                                <div className="flex items-center gap-3 font-black text-2xl text-slate-800 text-left">
-                                    <div className="logo-container text-left">
-                                        {!logoError ? <img src="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg" alt="Logo De Weekhap" className="logo-img" onError={() => setLogoError(true)} /> : <Icon name="soup" size={24} className="text-blue-600" />}
+                    <footer className="bg-white border-t border-slate-100 py-24 text-left text-left text-left">
+                        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-16 text-left text-left text-left text-left">
+                            <div className="space-y-6 text-left text-left text-left text-left">
+                                <div className="flex items-center gap-3 font-black text-2xl text-slate-800 text-left text-left text-left">
+                                    <div className="logo-container text-left text-left text-left">
+                                        {!logoError ? <img src="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg" alt="Logo De Weekhap" className="logo-img" onError={() => setLogoError(true)} /> : <Icon name="soup" size={24} className="text-blue-600 text-left text-left" />}
                                     </div>
-                                    <span className="uppercase tracking-tighter text-left">De Weekhap</span>
+                                    <span className="uppercase tracking-tighter text-left text-left text-left">De Weekhap</span>
                                 </div>
-                                <p className="text-slate-400 leading-relaxed font-medium text-left text-left">De slimste weekmenu planner voor Nederland. Bespaar op je boodschappen en kook gezonder.</p>
+                                <p className="text-slate-400 leading-relaxed font-medium text-left text-left text-left text-left">Plan je week, kook met plezier. De slimste hulp in je keuken.</p>
                             </div>
-                            <div className="text-left">
-                                <h4 className="font-black text-slate-800 mb-8 tracking-widest uppercase text-xs">Site Map</h4>
-                                <ul className="text-slate-500 space-y-4 font-bold text-sm text-left">
-                                    <li><button onClick={() => setView('home')}>Home Planner</button></li>
-                                    <li><button onClick={() => setView('add')}>Recept Delen</button></li>
-                                    <li><button onClick={() => window.location.href="https://linkpizza.com"}>LinkPizza</button></li>
+                            <div className="text-left text-left text-left text-left text-left text-left">
+                                <h4 className="font-black text-slate-800 mb-8 tracking-widest uppercase text-xs text-left text-left text-left">Support</h4>
+                                <ul className="text-slate-500 space-y-4 font-bold text-sm text-left text-left text-left text-left">
+                                    <li><button onClick={() => setView('home')}>Homepage</button></li>
+                                    <li><button onClick={() => window.location.href="https://linkpizza.com"}>LinkPizza Affiliate</button></li>
                                 </ul>
                             </div>
-                            <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 text-center shadow-sm text-left">
-                                <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest text-left">Status:</p>
-                                <span className={`${rankInfo.color} text-[10px] text-white font-black px-4 py-2 rounded-full shadow-lg block mb-6 uppercase tracking-wider mx-auto text-center`}>{rankInfo.title}</span>
-                                <button onClick={() => setView('add')} className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg mx-auto block text-center transition-transform hover:scale-105">Recept Toevoegen</button>
+                            <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-left text-left text-left text-left text-left text-left">
+                                <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest text-left text-left text-left text-left">Chef Status:</p>
+                                <span className={`${rankInfo.color} text-[10px] text-white font-black px-4 py-2 rounded-full shadow-lg block mb-6 uppercase tracking-wider mx-auto text-center text-left text-left text-left`}>{rankInfo.title}</span>
+                                <button onClick={() => alert('Dashboard wordt geladen...')} className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg mx-auto block text-center transition-transform hover:scale-105 text-center text-center">Mijn Punten</button>
                             </div>
-                        </div>
-                        <div className="max-w-7xl mx-auto px-6 mt-20 pt-8 border-t border-slate-100 text-center text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] text-center">
-                            &copy; 2026 De Weekhap - Eenvoud in de keuken.
                         </div>
                     </footer>
 
                     {/* MODAL RECEPT VIEW */}
                     {selected && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 text-left">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 text-left text-left text-left text-left">
                             <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-md" onClick={() => setSelected(null)}></div>
-                            <div className="relative bg-white rounded-[4rem] w-full max-w-4xl max-h-[90vh] overflow-y-auto p-12 animate-pop text-left">
-                                <div className="flex flex-col md:flex-row gap-12 text-left">
-                                    <div className="md:w-1/2 rounded-[3rem] overflow-hidden shadow-lg h-full text-left">
-                                        <img src={selected.image} alt={selected.title} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="md:w-1/2 space-y-8 text-left">
-                                        <div className="flex justify-between items-start text-left">
-                                            <div className="text-left">
-                                                <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full text-left">{selected.category}</span>
-                                                <h2 className="text-4xl font-black uppercase leading-tight mt-4 text-left">{selected.title}</h2>
+                            <div className="relative bg-white rounded-[4rem] w-full max-w-4xl max-h-[90vh] overflow-y-auto p-12 animate-pop text-left text-left text-left text-left text-left">
+                                <div className="flex flex-col md:flex-row gap-12 text-left text-left text-left text-left text-left text-left">
+                                    <div className="md:w-1/2 rounded-[3rem] overflow-hidden shadow-lg h-full text-left text-left text-left text-left text-left"><img src={selected.image} alt={selected.title} className="w-full h-full object-cover" /></div>
+                                    <div className="md:w-1/2 space-y-8 text-left text-left text-left text-left text-left text-left">
+                                        <div className="flex justify-between items-start text-left text-left text-left text-left text-left text-left">
+                                            <div className="text-left text-left text-left text-left text-left text-left text-left">
+                                                <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full text-left text-left text-left text-left text-left">{selected.category}</span>
+                                                <h2 className="text-4xl font-black uppercase leading-tight mt-4 text-left text-left text-left text-left text-left">{selected.title}</h2>
                                             </div>
                                             <button onClick={() => toggleFavorite(selected)} className={`p-4 rounded-2xl transition-all ${savedRecipes.some(r => r.id === selected.id) ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-300'}`}>
                                                 <Icon name="heart" fill={savedRecipes.some(r => r.id === selected.id) ? "currentColor" : "none"} />
                                             </button>
                                         </div>
-                                        <div className="space-y-4 text-left">
-                                            <h3 className="font-black uppercase text-sm text-slate-800 border-b pb-2 flex items-center gap-2"><Icon name="list" size={18} className="text-blue-500" /> Ingrediënten</h3>
-                                            <ul className="space-y-2 text-left">
-                                                {selected.ingredients && selected.ingredients.map((ing, i) => <li key={i} className="text-slate-600 font-bold flex items-center gap-2 text-left"><Icon name="check-circle" size={14} className="text-green-500" />{ing}</li>)}
+                                        <div className="space-y-4 text-left text-left text-left text-left text-left text-left text-left">
+                                            <h3 className="font-black uppercase text-sm text-slate-800 border-b pb-2 flex items-center gap-2 text-left text-left text-left text-left text-left"><Icon name="list" size={18} className="text-blue-500" /> Ingrediënten</h3>
+                                            <ul className="space-y-2 text-left text-left text-left text-left text-left text-left text-left">
+                                                {selected.ingredients && selected.ingredients.map((ing, i) => <li key={i} className="text-slate-600 font-bold flex items-center gap-2 text-left text-left text-left text-left text-left text-left"><Icon name="check-circle" size={14} className="text-green-500 text-left text-left text-left" />{ing}</li>)}
                                             </ul>
                                         </div>
-                                        <button onClick={() => {alert('Je wordt doorverwezen naar LinkPizza voor ingrediënten!'); setSelected(null);}} className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl uppercase text-sm tracking-widest text-center block active:scale-95 transition-all">Bestel Ingrediënten <Icon name="arrow-right" size={16} /></button>
+                                        <button onClick={() => {alert('Je wordt doorverwezen naar LinkPizza voor ingrediënten!'); setSelected(null);}} className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl uppercase text-sm tracking-widest text-center block active:scale-95 transition-all text-center text-center text-center">Bestel Ingrediënten <Icon name="arrow-right" size={16} /></button>
                                     </div>
                                 </div>
-                                <button onClick={() => setSelected(null)} className="absolute top-8 right-8 text-slate-300 hover:text-slate-900 transition-colors text-center text-center"><Icon name="x" size={32} /></button>
+                                <button onClick={() => setSelected(null)} className="absolute top-8 right-8 text-slate-300 hover:text-slate-900 transition-colors text-center text-center text-center"><Icon name="x" size={32} /></button>
                             </div>
                         </div>
                     )}
@@ -459,8 +417,11 @@
             );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+            const rootEl = document.getElementById('root');
+            if (rootEl) {
+                const root = ReactDOM.createRoot(rootEl);
+                root.render(<App />);
+            }
     </script>
 </body>
 </html>

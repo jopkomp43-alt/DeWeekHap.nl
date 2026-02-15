@@ -10,14 +10,14 @@
     <meta name="keywords" content="weekmenu planner, gratis recepten, kook community, LinkPizza, De Weekhap">
     <meta name="author" content="De Weekhap">
 
-    <!-- OPEN GRAPH -->
+    <!-- FAVICON (Logo bij de zoekbalk/tabblad) -->
+    <link rel="icon" type="image/jpeg" href="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg">
+
+    <!-- OPEN GRAPH (Social Media logo) -->
     <meta property="og:title" content="De Weekhap | De slimste manier om je weekmenu te plannen">
     <meta property="og:description" content="Kies elke dag wat anders en deel je kookervaringen met de community van De Weekhap.">
     <meta property="og:image" content="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg">
     <meta property="og:type" content="website">
-
-    <!-- FAVICON -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🍴</text></svg>">
 
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -45,15 +45,16 @@
         .chef-badge-master { background: linear-gradient(45deg, #f59e0b, #d97706); }
         
         .logo-container {
-            width: 56px;
-            height: 56px;
-            background-color: #f1f5f9;
-            border-radius: 12px;
+            width: 64px;
+            height: 64px;
+            background-color: #ffffff;
+            border-radius: 16px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid #e2e8f0;
+            border: 2px solid #f1f5f9;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
         .logo-img {
             width: 100%;
@@ -68,6 +69,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
+        // --- VEILIGE ICON COMPONENT ---
         const Icon = ({ name, size = 20, className = "", fill = "none" }) => {
             const wrapperRef = useRef(null);
             useEffect(() => {
@@ -86,28 +88,37 @@
             return <span ref={wrapperRef} className="inline-flex items-center justify-center leading-none" style={{ width: size, height: size }}></span>;
         };
 
+        // --- DATABASE ---
         const recipesPool = {
             italian: [
-                { 
-                    id: "it-1", title: "Romige Pesto Penne", category: "Italiaans", 
-                    ingredients: ["200g Penne", "100g Pesto Verde", "250g Kip", "Tomaatjes"], 
-                    instructions: ["Kook de penne volgens verpakking.", "Bak de kip goudbruin in olijfolie.", "Meng de penne en kip met de verse pesto en een scheutje room."],
-                    image: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800&q=80" 
-                },
-                { 
-                    id: "it-2", title: "Gnocchi met Spinazie", category: "Italiaans", 
-                    ingredients: ["500g Gnocchi", "300g Spinazie", "100g Blauwe Kaas"], 
-                    instructions: ["Bak de gnocchi goudbruin in boter.", "Voeg hand voor hand de spinazie toe tot deze slinkt.", "Smelt de kaas eroverheen voor een romige saus."],
-                    image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=800&q=80" 
-                }
+                { id: "it-1", title: "Romige Pesto Penne", category: "Italiaans", ingredients: ["200g Penne", "100g Pesto Verde", "250g Kip", "Cherrytomatjes"], instructions: ["Kook de pasta volgens verpakking.", "Bak de kip goudbruin in olijfolie.", "Meng de pasta en kip met de pesto en een scheutje room."], image: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800" },
+                { id: "it-2", title: "Gnocchi met Spinazie & Blauwe Kaas", category: "Italiaans", ingredients: ["500g Gnocchi", "300g Spinazie", "100g Gorgonzola", "Walnoten"], instructions: ["Bak gnocchi goudbruin in boter.", "Voeg spinazie toe tot deze slinkt.", "Laat de kaas erover smelten."], image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=800" },
+                { id: "it-3", title: "Klassieke Lasagne Bolognese", category: "Italiaans", ingredients: ["Lasagnebladen", "500g Gehakt", "700ml Passata", "Bechamelsaus"], instructions: ["Maak de saus met gehakt en passata.", "Stapel lagen bladen, rode saus en witte saus.", "Bak 35 min in de oven."], image: "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800" },
+                { id: "it-4", title: "Pasta Carbonara Authentiek", category: "Italiaans", ingredients: ["Spaghetti", "Pancetta", "3 Eieren", "Pecorino"], instructions: ["Kook pasta.", "Bak pancetta uit.", "Meng ei en kaas, roer door warme pasta buiten het vuur."], image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=800" },
+                { id: "it-5", title: "Risotto met Bospaddenstoelen", category: "Italiaans", ingredients: ["Risottorijst", "Bouillon", "Champignons", "Parmesan"], instructions: ["Bak champignons.", "Voeg rijst toe en schep bouillon beetje bij beetje bij.", "Roer kaas erdoor."], image: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800" },
+                { id: "it-6", title: "Pizza Margherita Home-made", category: "Italiaans", ingredients: ["Pizzadeeg", "Mozzarella", "Tomatensaus", "Basilicum"], instructions: ["Rol deeg uit.", "Beleg met saus en kaas.", "Bak op hoogste stand krokant."], image: "https://images.unsplash.com/photo-1574071318508-1cdbad80ad38?w=800" }
             ],
             asian: [
-                { 
-                    id: "as-1", title: "Teriyaki Wok", category: "Aziatisch", 
-                    ingredients: ["200g Rijst", "400g Wokgroenten", "250g Biefstukreepjes"], 
-                    instructions: ["Kook de rijst droog.", "Wok het vlees op hoog vuur en voeg de groenten toe.", "Blus af met teriyaki saus en serveer direct."],
-                    image: "https://images.unsplash.com/photo-1512058560566-d8b437a1d7f8?w=800&q=80" 
-                }
+                { id: "as-1", title: "Snelle Teriyaki Wok", category: "Aziatisch", ingredients: ["200g Rijst", "Wokgroenten", "Biefstukreepjes", "Saus"], instructions: ["Kook rijst.", "Wok vlees kort.", "Voeg groente en saus toe."], image: "https://images.unsplash.com/photo-1512058560566-d8b437a1d7f8?w=800" },
+                { id: "as-2", title: "Pad Thai met Garnalen", category: "Aziatisch", ingredients: ["Rijstnoodles", "Garnalen", "Taugé", "Pinda's"], instructions: ["Wel de noodles.", "Bak garnalen en ei.", "Meng met saus en taugé."], image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800" },
+                { id: "as-3", title: "Gele Curry met Bloemkool", category: "Aziatisch", ingredients: ["Kokosmelk", "Gele curry", "Tofu", "Bloemkool"], instructions: ["Bak currypasta.", "Voeg kokosmelk toe.", "Sudder groente gaar."], image: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800" },
+                { id: "as-4", title: "Poke Bowl met Verse Zalm", category: "Aziatisch", ingredients: ["Sushirijst", "Zalm", "Avocado", "Edamame", "Mango"], instructions: ["Kook rijst en laat afkoelen.", "Snijd vis en fruit.", "Serveer met sojasaus."], image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+                { id: "as-5", title: "Kip Katsu met Rijst", category: "Aziatisch", ingredients: ["Kipfilet", "Panko", "Rijst", "Katsu saus"], instructions: ["Paneer de kip.", "Bak goudbruin.", "Serveer met saus en witte rijst."], image: "https://images.unsplash.com/photo-1598514983318-29141915b9d0?w=800" },
+                { id: "as-6", title: "Bami Goreng Speciaal", category: "Aziatisch", ingredients: ["Mie", "Hamreepjes", "Ei", "Prei", "Satésaus"], instructions: ["Kook mie.", "Bak groente en vlees.", "Meng alles en serveer met sate."], image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800" }
+            ],
+            mexican: [
+                { id: "mx-1", title: "Crunchy Taco's met Gehakt", category: "Mexicaans", ingredients: ["Tacoschelpen", "Gehakt", "Mais", "Salsa", "Sla"], instructions: ["Bak gehakt.", "Verwarm schelpen.", "Vul de schelpen."], image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800" },
+                { id: "mx-2", title: "Gevulde Burrito's", category: "Mexicaans", ingredients: ["Wraps", "Bonen", "Rijst", "Guacamole"], instructions: ["Verwarm vulling.", "Leg op wrap.", "Rol strak op."], image: "https://images.unsplash.com/photo-1626700051175-656a433b1140?w=800" },
+                { id: "mx-3", title: "Kip Fajita's uit de Pan", category: "Mexicaans", ingredients: ["Kip", "Paprika", "Ui", "Tortilla's"], instructions: ["Bak kip met kruiden.", "Wok paprika mee.", "Serveer in warme wrap."], image: "https://images.unsplash.com/photo-1534353473418-4cfa6c56fd38?w=800" },
+                { id: "mx-4", title: "Kaas Quesadilla's", category: "Mexicaans", ingredients: ["Wraps", "Kaas", "Chili", "Zure room"], instructions: ["Beleg wrap met kaas.", "Bak in droge pan.", "Keer om tot kaas smelt."], image: "https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?w=800" },
+                { id: "mx-5", title: "Enchilada's uit de Oven", category: "Mexicaans", ingredients: ["Wraps", "Kip", "Saus", "Kaas"], instructions: ["Vul wraps.", "Leg in schaal met saus.", "Gratineer in de oven."], image: "https://images.unsplash.com/photo-1533777324565-a040eb52fa65?w=800" }
+            ],
+            dutch: [
+                { id: "du-1", title: "Boerenkool met Worst", category: "Hollands", ingredients: ["Aardappels", "Boerenkool", "Worst", "Spek"], instructions: ["Kook aardappels/kool.", "Stamp.", "Serveer met worst."], image: "https://images.unsplash.com/photo-1590779033100-9f60a05a013d?w=800" },
+                { id: "du-2", title: "Verse Erwtensoep (Snert)", category: "Hollands", ingredients: ["Erwten", "Knolselderij", "Spek", "Rookworst"], instructions: ["Kook erwten gaar.", "Voeg groente toe.", "Laat sudderen."], image: "https://images.unsplash.com/photo-1603569283847-aa295f0d016a?w=800" },
+                { id: "du-3", title: "Pannenkoeken Buffet", category: "Hollands", ingredients: ["Meel", "Melk", "Ei", "Stroop"], instructions: ["Maak beslag.", "Bak dunne koeken.", "Versier naar wens."], image: "https://images.unsplash.com/photo-1506084868730-3c2393fb953e?w=800" },
+                { id: "du-4", title: "Draadjesvlees met Puree", category: "Hollands", ingredients: ["Sudderlapjes", "Aardappels", "Rode kool", "Boter"], instructions: ["Braad vlees.", "Sudder 3 uur.", "Stamp puree."], image: "https://images.unsplash.com/photo-1529692236671-f1f6e9460272?w=800" },
+                { id: "du-5", title: "Kibbeling met Ravigotte", category: "Hollands", ingredients: ["Vis", "Beslag", "Friet", "Saus"], instructions: ["Frituur de vis.", "Bak friet.", "Serveer met saus."], image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800" }
             ]
         };
 
@@ -128,21 +139,11 @@
 
             useEffect(() => {
                 const baseTitle = "De Weekhap";
-                const pageTitles = {
-                    home: "Gratis Weekplanning",
-                    about: "De Bedoeling",
-                    favorites: "Mijn Kookboek",
-                    share: "Recept Delen"
-                };
+                const pageTitles = { home: "Gratis Weekplanning", about: "Bedoeling", favorites: "Mijn Kookboek", share: "Recept Delen" };
                 document.title = `${pageTitles[view] || "Plan"} | ${baseTitle}`;
             }, [view]);
 
-            useEffect(() => { localStorage.setItem('uw_user', JSON.stringify(user)); }, [user]);
-            useEffect(() => { localStorage.setItem('uw_gen', JSON.stringify(generated)); }, [generated]);
-            useEffect(() => { localStorage.setItem('uw_fav', JSON.stringify(saved)); }, [saved]);
-            useEffect(() => { localStorage.setItem('uw_comm', JSON.stringify(community)); }, [community]);
-            useEffect(() => { localStorage.setItem('uw_points', points.toString()); }, [points]);
-            useEffect(() => { localStorage.setItem('uw_comments', JSON.stringify(comments)); }, [comments]);
+            useEffect(() => { localStorage.setItem('uw_user', JSON.stringify(user)); localStorage.setItem('uw_gen', JSON.stringify(generated)); localStorage.setItem('uw_fav', JSON.stringify(saved)); localStorage.setItem('uw_comm', JSON.stringify(community)); localStorage.setItem('uw_points', points.toString()); localStorage.setItem('uw_comments', JSON.stringify(comments)); }, [user, generated, saved, community, points, comments]);
 
             const rankInfo = useMemo(() => {
                 if (points >= 500) return { title: "Master Chef", color: "chef-badge-master" };
@@ -157,83 +158,51 @@
                 setTimeout(() => {
                     const allAvailable = [...Object.values(recipesPool).flat(), ...community];
                     const shuffled = [...allAvailable].sort(() => 0.5 - Math.random());
-                    const results = shuffled.slice(0, 7).map((r) => ({
-                        ...r, id: r.id || Math.random().toString(36).substr(2, 9), time: "20-30 min", price: (Math.random() * 4 + 3).toFixed(2), likes: r.likes || 0
-                    }));
+                    const results = shuffled.slice(0, 7).map((r) => ({ ...r, id: r.id || Math.random().toString(36).substr(2, 9), time: "20-40 min", price: (Math.random() * 4 + 3).toFixed(2), likes: r.likes || 0 }));
                     setGenerated(results);
                     setLoading(false);
                     setTimeout(() => document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
                 }, 1000);
             };
 
-            const toggleFav = (r) => {
-                if (saved.find(s => s.id === r.id)) setSaved(saved.filter(s => s.id !== r.id));
-                else setSaved([...saved, r]);
-            };
-
-            const handleLike = (id, e) => {
-                if (e) e.stopPropagation();
-                setCommunity(prev => prev.map(r => r.id === id ? { ...r, likes: (r.likes || 0) + 1 } : r));
-            };
-
-            const handleComment = (e) => {
-                e.preventDefault();
-                if (!commentInput.trim() || !selected) return;
-                const newComment = { name: user ? user.name : "Gast", text: commentInput, date: new Date().toLocaleDateString('nl-NL') };
-                setComments(prev => ({ ...prev, [selected.id]: [...(prev[selected.id] || []), newComment] }));
-                setCommentInput("");
-            };
-
-            const handleShare = (e) => {
-                e.preventDefault();
-                if (!formData.confirmOwnership) { alert("Bevestig a.u.b. dat de foto jouw eigendom is."); return; }
-                const newId = Math.random().toString(36).substr(2, 9);
-                const newRecipe = {
-                    ...formData, id: newId, ingredients: formData.ingredients.split(',').map(i => i.trim()),
-                    instructions: formData.instructions.split('\n').map(i => i.trim()),
-                    image: formData.image || "https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80",
-                    isCommunity: true, author: user ? user.name : "Gast", time: "30 min", price: "4.50", likes: 0
-                };
-                setCommunity([newRecipe, ...community]);
-                setPoints(prev => prev + 50);
-                setFormData({ title: '', category: 'italian', ingredients: '', instructions: '', image: '', confirmOwnership: false });
-                setView('home');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            };
+            const toggleFav = (r) => { if (saved.find(s => s.id === r.id)) setSaved(saved.filter(s => s.id !== r.id)); else setSaved([...saved, r]); };
+            const handleLike = (id, e) => { if (e) e.stopPropagation(); setCommunity(prev => prev.map(r => r.id === id ? { ...r, likes: (r.likes || 0) + 1 } : r)); };
+            const handleComment = (e) => { e.preventDefault(); if (!commentInput.trim() || !selected) return; const newComment = { name: user ? user.name : "Gast", text: commentInput, date: new Date().toLocaleDateString('nl-NL') }; setComments(prev => ({ ...prev, [selected.id]: [...(prev[selected.id] || []), newComment] })); setCommentInput(""); };
+            const handleShare = (e) => { e.preventDefault(); if (!formData.confirmOwnership) { alert("Bevestig ownership!"); return; } const newId = Math.random().toString(36).substr(2, 9); const newRecipe = { ...formData, id: newId, ingredients: formData.ingredients.split(','), instructions: formData.instructions.split('\n'), isCommunity: true, author: user ? user.name : "Gast", time: "30 min", price: "4.50", likes: 0 }; setCommunity([newRecipe, ...community]); setPoints(prev => prev + 50); setFormData({ title: '', category: 'italian', ingredients: '', instructions: '', image: '', confirmOwnership: false }); setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
             return (
                 <div className="min-h-screen flex flex-col w-full">
-                    {/* Header met Logo Fix */}
+                    {/* Header */}
                     <header className="bg-white border-b border-slate-100 sticky top-0 z-40 w-full backdrop-blur-md bg-white/90">
-                        <div className="max-w-7xl mx-auto px-6 h-24 flex justify-between items-center text-left">
-                            <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setView('home')}>
+                        <div className="max-w-7xl mx-auto px-6 h-28 flex justify-between items-center text-left">
+                            <div className="flex items-center gap-5 cursor-pointer group" onClick={() => setView('home')}>
                                 <div className="logo-container">
                                     {!logoError ? (
                                         <img 
                                             src="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg" 
-                                            alt="Logo" 
+                                            alt="De Weekhap Logo" 
                                             className="logo-img" 
                                             onError={() => setLogoError(true)} 
                                         />
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center bg-blue-100 text-blue-600 w-full h-full">
-                                            <Icon name="soup" size={24} />
+                                        <div className="flex flex-col items-center justify-center bg-blue-100 text-blue-600 w-full h-full font-black text-xs uppercase tracking-tighter">
+                                            Hap
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="font-black text-2xl tracking-tighter text-slate-900 leading-none">DE WEEKHAP</span>
+                                <div className="flex flex-col text-left">
+                                    <span className="font-black text-3xl tracking-tighter text-slate-900 leading-none uppercase">De Weekhap</span>
                                     <span className="text-[10px] font-bold text-blue-600 tracking-widest uppercase mt-1">Samen lekker simpel</span>
                                 </div>
                             </div>
-                            <nav className="hidden md:flex items-center gap-10">
+                            <nav className="hidden lg:flex items-center gap-10">
                                 <button onClick={() => setView('home')} className={`font-bold text-sm ${view === 'home' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'}`}>Ontdekken</button>
                                 <button onClick={() => setView('about')} className={`font-bold text-sm ${view === 'about' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'}`}>De Bedoeling</button>
                                 <button onClick={() => setView('favorites')} className={`font-bold text-sm ${view === 'favorites' ? 'text-red-500' : 'text-slate-500 hover:text-slate-800'}`}>Mijn Kookboek</button>
-                                <button onClick={() => setView('share')} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition-all active:scale-95">Recept Delen</button>
+                                <button onClick={() => setView('share')} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-md active:scale-95 transition-all">Recept Delen</button>
                             </nav>
                             <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm cursor-pointer" onClick={() => setView('login')}>
+                                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm cursor-pointer hover:border-orange-200 transition-colors" onClick={() => setView('login')}>
                                     <Icon name="award" size={16} className="text-orange-500" fill="currentColor" />
                                     <span className="text-xs font-bold text-slate-700">{points} Punten</span>
                                 </div>
@@ -244,14 +213,14 @@
                     <main className="flex-1 w-full overflow-x-hidden text-left">
                         {view === 'home' && (
                             <div className="animate-fade-in space-y-16">
-                                {/* Beta Warning Banner */}
+                                {/* Beta Warning */}
                                 <div className="max-w-7xl mx-auto px-6 mt-6">
-                                    <div className="bg-amber-50 border-2 border-dashed border-amber-200 p-6 rounded-[2rem] flex items-center gap-6 text-amber-800">
+                                    <div className="bg-amber-50 border-2 border-dashed border-amber-200 p-6 rounded-[2rem] flex items-center gap-6 text-amber-800 shadow-sm">
                                         <div className="bg-amber-200 p-3 rounded-2xl flex-shrink-0"><Icon name="alert-triangle" size={24}/></div>
                                         <div>
                                             <h4 className="font-black uppercase text-[10px] tracking-widest mb-1">Bèta Versie</h4>
                                             <p className="text-xs md:text-sm font-bold leading-relaxed">
-                                                Let op: De Weekhap is nog in testfase. Gegevens kunnen door updates verloren gaan.
+                                                Let op: De Weekhap is in testfase. Deel je eigen creaties om ons te helpen groeien naar 100+ recepten!
                                             </p>
                                         </div>
                                     </div>
@@ -260,19 +229,16 @@
                                 {/* Hero */}
                                 <section className="w-full px-6">
                                     <div className="max-w-7xl mx-auto relative h-[450px] md:h-[600px] rounded-[4rem] overflow-hidden shadow-2xl">
-                                        <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=1600&q=80" alt="Heerlijk eten maaltijdplanning" className="w-full h-full object-cover" />
+                                        <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=1600&q=80" alt="Heerlijk eten planning" className="w-full h-full object-cover" />
                                         <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/40 to-transparent flex flex-col justify-center px-10 md:px-20 text-left">
-                                            <div className="max-w-2xl space-y-8 text-left text-left">
-                                                <h1 className="text-5xl md:text-8xl font-black text-white leading-tight">Zeven dagen <br/> echte smaak.</h1>
+                                            <div className="max-w-2xl space-y-8 text-left">
+                                                <h1 className="text-5xl md:text-8xl font-black text-white leading-tight uppercase">Smaakvol <br/> Gepland.</h1>
                                                 <p className="text-xl text-slate-200 leading-relaxed max-w-lg">
-                                                    Plan je volledige week in één klik met de AI van De Weekhap. Nooit meer nadenken over "wat eten we?".
+                                                    Plan je volledige week in één klik met de AI van De Weekhap. Unieke gerechten met heldere stappenplannen.
                                                 </p>
-                                                <div className="flex flex-wrap gap-6 pt-4">
-                                                    <button onClick={generateMenu} className="bg-blue-600 hover:bg-blue-500 text-white font-black py-5 px-12 rounded-[2rem] shadow-2xl transition-all active:scale-95 flex items-center gap-3 text-lg">
-                                                        <Icon name="zap" fill="currentColor" size={24} />
-                                                        Start Weekplanning
-                                                    </button>
-                                                </div>
+                                                <button onClick={generateMenu} className="bg-blue-600 hover:bg-blue-500 text-white font-black py-5 px-12 rounded-[2rem] shadow-2xl transition-all active:scale-95 flex items-center gap-3 text-lg uppercase tracking-widest">
+                                                    <Icon name="zap" fill="currentColor" size={24} /> Start Weekplanning
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -280,11 +246,11 @@
 
                                 {community.length > 0 && (
                                     <section className="max-w-7xl mx-auto px-6">
-                                        <div className="flex items-center justify-between mb-12 border-b border-slate-100 pb-8">
-                                            <h2 className="text-4xl font-black text-slate-800">Community Recepten</h2>
-                                            <button onClick={() => setView('share')} className="text-blue-600 font-bold hover:translate-x-2 transition-transform underline">Deel & Verdien Punten →</button>
+                                        <div className="flex items-center justify-between mb-12 border-b border-slate-100 pb-8 text-left">
+                                            <h2 className="text-4xl font-black text-slate-800 uppercase tracking-tighter">Chef's Picks</h2>
+                                            <button onClick={() => setView('share')} className="text-blue-600 font-bold hover:translate-x-2 transition-transform underline uppercase text-sm tracking-widest">Deel recept →</button>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 text-left">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
                                             {community.map(r => (
                                                 <div key={r.id} onClick={() => setSelected(r)} className="group bg-white rounded-[3rem] overflow-hidden shadow-sm hover-card transition-all cursor-pointer border border-slate-50 flex flex-col h-full text-left">
                                                     <div className="h-56 overflow-hidden relative">
@@ -293,11 +259,10 @@
                                                             <button onClick={(e) => handleLike(r.id, e)} className="text-red-500 hover:scale-110 transition-transform"><Icon name="heart" size={16} fill={r.likes > 0 ? "currentColor" : "none"} /></button>
                                                             <span className="text-xs font-black text-slate-800">{r.likes || 0}</span>
                                                         </div>
-                                                        <div className="absolute top-4 left-4 bg-blue-600 text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase">Community</div>
                                                     </div>
                                                     <div className="p-8 flex-1 flex flex-col">
                                                         <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 block">{r.category}</span>
-                                                        <h3 className="font-extrabold text-xl text-slate-800 line-clamp-1">{r.title}</h3>
+                                                        <h3 className="font-extrabold text-xl text-slate-800 line-clamp-1 uppercase">{r.title}</h3>
                                                         <p className="text-[10px] text-slate-400 mt-4 italic">Chef {r.author}</p>
                                                     </div>
                                                 </div>
@@ -311,12 +276,11 @@
                                         <div className="space-y-12">
                                             <div className="flex items-end justify-between">
                                                 <div className="space-y-2">
-                                                    <h2 className="text-4xl md:text-5xl font-black text-slate-800">Jouw Weekmenu</h2>
-                                                    <p className="text-slate-400 font-medium italic">Klik op een gerecht voor het volledige stappenplan.</p>
+                                                    <h2 className="text-4xl md:text-5xl font-black text-slate-800 text-left uppercase tracking-tighter">Jouw Weekmenu</h2>
+                                                    <p className="text-slate-400 font-medium italic">Gevarieerde gerechten met duidelijke instructies.</p>
                                                 </div>
                                                 <button onClick={generateMenu} className="flex items-center gap-3 text-blue-600 font-black text-sm bg-blue-50 px-6 py-3 rounded-2xl border border-blue-100 hover:bg-blue-100 transition-all text-right">
-                                                    <Icon name="refresh-cw" size={18} className={loading ? "animate-spin" : ""} />
-                                                    Nieuwe Variatie
+                                                    <Icon name="refresh-cw" size={18} className={loading ? "animate-spin" : ""} /> Nieuwe Variatie
                                                 </button>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -324,182 +288,146 @@
                                                     <div key={r.id} onClick={() => setSelected(r)} className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover-card transition-all border border-slate-50 cursor-pointer flex flex-col group text-left">
                                                         <div className="h-60 relative overflow-hidden">
                                                             <img src={r.image} alt={r.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                                                            <div className="absolute top-4 left-4 bg-slate-900 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg">
-                                                                Dag {index + 1}
-                                                            </div>
-                                                            <button onClick={(e) => { e.stopPropagation(); toggleFav(r); }} className="absolute top-4 right-4 bg-white/90 backdrop-blur p-2.5 rounded-full shadow-lg hover:scale-110 transition-transform">
-                                                                <Icon name="heart" size={18} className={saved.find(s => s.id === r.id) ? "text-red-500 fill-red-500" : "text-slate-300"} />
-                                                            </button>
+                                                            <div className="absolute top-4 left-4 bg-slate-900 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase">Dag {index + 1}</div>
+                                                            <button onClick={(e) => { e.stopPropagation(); toggleFav(r); }} className="absolute top-4 right-4 bg-white/90 backdrop-blur p-2.5 rounded-full shadow-lg hover:scale-110 transition-transform"><Icon name="heart" size={18} className={saved.find(s => s.id === r.id) ? "text-red-500 fill-red-500" : "text-slate-300"} /></button>
                                                         </div>
                                                         <div className="p-8">
                                                             <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 block">{r.category}</span>
-                                                            <h3 className="text-lg font-black text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">{r.title}</h3>
-                                                            <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase">
-                                                                <Icon name="book-open" size={12}/> Bekijk Recept
-                                                            </div>
+                                                            <h3 className="text-lg font-black text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2 uppercase">{r.title}</h3>
+                                                            <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase"><Icon name="book-open" size={12}/> Bekijk Recept</div>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-center py-20 bg-white rounded-[4rem] border-2 border-dashed border-slate-100 max-w-4xl mx-auto shadow-sm text-center text-center">
+                                        <div className="text-center py-20 bg-white rounded-[4rem] border-2 border-dashed border-slate-100 max-w-4xl mx-auto shadow-sm">
                                             <Icon name="calendar" size={48} className="mx-auto text-slate-200 mb-6" />
-                                            <h3 className="text-2xl font-black text-slate-800 mb-10 text-center">Klaar voor een gevarieerde week?</h3>
-                                            <button onClick={generateMenu} className="bg-slate-900 text-white font-black py-5 px-12 rounded-[2rem] shadow-xl active:scale-95 transition-all text-lg mx-auto block text-center">Genereer Planning</button>
+                                            <h3 className="text-2xl font-black text-slate-800 mb-10 text-center uppercase tracking-tighter">Klaar voor variatie?</h3>
+                                            <button onClick={generateMenu} className="bg-slate-900 text-white font-black py-5 px-12 rounded-[2rem] shadow-xl active:scale-95 transition-all text-lg mx-auto block uppercase tracking-widest">Plan mijn week</button>
                                         </div>
                                     )}
                                 </section>
                             </div>
                         )}
-
-                        {view === 'about' && (
-                            <div className="animate-fade-in max-w-7xl mx-auto px-6 py-16 space-y-16 text-left">
-                                <section className="max-w-4xl space-y-8 text-left">
-                                    <h1 className="text-5xl md:text-7xl font-black text-slate-800 leading-tight text-left">Lekker koken, <br/> Samen plannen.</h1>
-                                    <p className="text-xl md:text-2xl text-slate-500 leading-relaxed max-w-2xl italic text-left">
-                                        "De Weekhap is een initiatief om maaltijdplanning leuker en makkelijker te maken, terwijl we auteursrechten respecteren door alleen eigen foto's te gebruiken."
-                                    </p>
-                                </section>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-left">
-                                    <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-6 text-left">
-                                        <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center"><Icon name="list-checks" size={24} /></div>
-                                        <h3 className="font-black text-2xl">Stap voor stap</h3>
-                                        <p className="text-slate-500 text-sm">Elk gerecht op De Weekhap is voorzien van een duidelijke bereidingswijze. Zo sta je nooit voor verrassingen in de keuken.</p>
-                                    </div>
-                                    <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-6 text-left">
-                                        <div className="bg-orange-100 text-orange-600 w-12 h-12 rounded-2xl flex items-center justify-center"><Icon name="award" size={24} /></div>
-                                        <h3 className="font-black text-2xl">Chef Community</h3>
-                                        <p className="text-slate-500 text-sm">Verdien 50 punten per gedeeld recept met eigen foto. Word een gewaardeerde Chef in onze groeiende community.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Overige views... */}
+                        
+                        {/* Andere views... (About, Share, Favorites, Login) */}
                     </main>
 
-                    {/* Footer met Logo Fix */}
+                    {/* Footer */}
                     <footer className="bg-white border-t border-slate-100 py-20 mt-20 text-left">
                         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-16 text-left">
                             <div className="space-y-6 text-left">
-                                <div className="flex items-center gap-3 font-black text-2xl text-slate-800 text-left">
-                                    <div className="logo-container w-10 h-10 rounded-lg">
-                                        {!logoError ? (
-                                            <img src="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg" alt="Logo" className="logo-img" onError={() => setLogoError(true)} />
-                                        ) : (
-                                            <Icon name="soup" size={20} className="text-blue-600" />
-                                        )}
+                                <div className="flex items-center gap-3 font-black text-2xl text-slate-800">
+                                    <div className="logo-container w-12 h-12 rounded-xl">
+                                        {!logoError ? <img src="Gemini_Generated_Image_qzhj3qqzhj3qqzhj.jpg" alt="Logo" className="logo-img" onError={() => setLogoError(true)} /> : <Icon name="soup" size={24} className="text-blue-600" />}
                                     </div>
-                                    <span>De Weekhap</span>
+                                    <span className="uppercase tracking-tighter text-3xl">De Weekhap</span>
                                 </div>
-                                <p className="text-slate-400 leading-relaxed font-medium text-left">De meest complete maaltijdplanning voor echte Chefs. Gratis, simpel en gevarieerd.</p>
+                                <p className="text-slate-400 leading-relaxed font-medium text-left">De community-planner voor iedereen. Van 40 naar 100+ recepten!</p>
                             </div>
-                            <div className="text-left text-left text-left">
+                            <div className="text-left">
                                 <h4 className="font-black text-slate-800 mb-8 tracking-widest uppercase text-xs">Navigatie</h4>
-                                <ul className="text-slate-500 space-y-4 font-bold text-left">
-                                    <li><button onClick={() => setView('home')}>Ontdekken</button></li>
-                                    <li><button onClick={() => setView('about')}>Bedoeling</button></li>
-                                    <li><button onClick={() => setView('share')}>Deel Recept</button></li>
+                                <ul className="text-slate-500 space-y-4 font-bold text-left text-sm">
+                                    <li><button onClick={() => setView('home')} className="hover:text-blue-600 transition-colors">Ontdekken</button></li>
+                                    <li><button onClick={() => setView('about')} className="hover:text-blue-600 transition-colors">Bedoeling</button></li>
+                                    <li><button onClick={() => setView('share')} className="hover:text-blue-600 transition-colors">Deel Recept</button></li>
                                 </ul>
                             </div>
                             <div className="text-left text-left">
-                                <h4 className="font-black text-slate-800 mb-8 tracking-widest uppercase text-xs">Support</h4>
-                                <ul className="text-slate-500 space-y-4 font-bold text-left">
-                                    <li>LinkPizza</li>
+                                <h4 className="font-black text-slate-800 mb-8 tracking-widest uppercase text-xs text-sm">Samenwerking</h4>
+                                <ul className="text-slate-500 space-y-4 font-bold text-left text-sm">
+                                    <li><button onClick={() => alert('Meld je aan bij LinkPizza!')} className="hover:text-blue-600 transition-colors">LinkPizza</button></li>
                                     <li>Affiliate Marketing</li>
                                 </ul>
                             </div>
-                            <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 text-center shadow-sm text-left">
-                                <p className="text-xs font-bold text-slate-400 mb-6 text-center text-center">Huidige status:</p>
+                            <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 text-center shadow-sm">
+                                <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">Jouw Status:</p>
                                 <span className={`${rankInfo.color} text-[10px] text-white font-black px-4 py-2 rounded-full shadow-lg block mb-6 uppercase tracking-wider mx-auto text-center`}>{rankInfo.title}</span>
-                                <button onClick={() => setView('share')} className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg mx-auto block text-center">Punten Verdienen</button>
+                                <button onClick={() => setView('share')} className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg mx-auto block transition-transform hover:scale-105">Punten Verdienen</button>
                             </div>
                         </div>
                     </footer>
 
-                    {/* MODAL RECEPT VIEW */}
+                    {/* MODAL VIEW */}
                     {selected && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 text-left">
                             <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-lg" onClick={() => setSelected(null)}></div>
                             <div className="bg-white rounded-[4rem] w-full max-w-6xl relative overflow-hidden animate-pop max-h-[90vh] flex flex-col lg:flex-row shadow-2xl">
                                 <div className="lg:w-1/2 relative h-80 lg:h-auto overflow-hidden">
                                     <img src={selected.image} alt={selected.title} className="w-full h-full object-cover shadow-inner" />
-                                    <div className="absolute top-10 left-10 bg-white/20 backdrop-blur-xl px-6 py-3 rounded-3xl flex items-center gap-3 text-white border border-white/20 shadow-2xl text-left text-left">
+                                    <div className="absolute top-10 left-10 bg-white/20 backdrop-blur-xl px-6 py-3 rounded-3xl flex items-center gap-3 text-white border border-white/20 shadow-2xl text-left">
                                         <button onClick={() => handleLike(selected.id)} className="hover:scale-150 transition-transform text-red-500 drop-shadow-lg"><Icon name="heart" size={24} fill={selected.likes > 0 ? "currentColor" : "none"} /></button>
                                         <span className="font-black text-xl text-white">{selected.likes || 0}</span>
                                     </div>
                                     <button onClick={() => setSelected(null)} className="absolute top-10 right-10 bg-black/30 backdrop-blur-md text-white p-3 rounded-full lg:hidden"><Icon name="x" size={24} /></button>
                                 </div>
-                                <div className="lg:w-1/2 p-10 md:p-20 overflow-y-auto no-scrollbar bg-white flex flex-col text-left text-left text-left text-left text-left text-left">
+                                <div className="lg:w-1/2 p-10 md:p-20 overflow-y-auto no-scrollbar bg-white flex flex-col text-left">
                                     <div className="mb-12">
                                         <span className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-1.5 rounded-full shadow-sm">
                                             {selected.category}
                                         </span>
-                                        <h2 className="text-4xl md:text-5xl font-black text-slate-800 leading-tight mt-6 text-left">{selected.title}</h2>
-                                        {selected.isCommunity && <p className="mt-2 text-slate-400 font-bold italic">Recept door Chef {selected.author}</p>}
+                                        <h2 className="text-4xl md:text-5xl font-black text-slate-800 leading-tight mt-6 text-left uppercase tracking-tighter">{selected.title}</h2>
+                                        {selected.isCommunity && <p className="mt-2 text-slate-400 font-bold italic text-left tracking-wide">Authentiek recept door Chef {selected.author}</p>}
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-10 mb-12 border-b pb-12 border-slate-50 text-left">
-                                        <div className="flex flex-col gap-2 text-left text-left">
-                                            <span className="text-xs font-black text-slate-300 uppercase tracking-widest text-left">Kosten p.p.</span>
+                                        <div className="flex flex-col gap-2">
+                                            <span className="text-xs font-black text-slate-300 uppercase tracking-widest text-left uppercase">Kosten p.p.</span>
                                             <span className="text-3xl font-black text-green-600 text-left text-left text-left">€{selected.price}</span>
                                         </div>
-                                        <div className="flex flex-col gap-2 text-left text-left">
-                                            <span className="text-xs font-black text-slate-300 uppercase tracking-widest text-left text-left">Bereiding</span>
+                                        <div className="flex flex-col gap-2 text-left">
+                                            <span className="text-xs font-black text-slate-300 uppercase tracking-widest text-left text-left text-left">Bereiding</span>
                                             <span className="text-3xl font-black text-slate-700 text-left text-left text-left text-left">{selected.time}</span>
                                         </div>
                                     </div>
 
                                     <div className="space-y-16">
                                         <div className="text-left">
-                                            <h3 className="font-black text-slate-800 mb-8 text-2xl flex items-center gap-3"><Icon name="list" className="text-blue-500" /> Ingrediënten</h3>
-                                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <h3 className="font-black text-slate-800 mb-8 text-2xl flex items-center gap-3 uppercase tracking-tighter"><Icon name="list" className="text-blue-500" /> Ingrediënten</h3>
+                                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                                                 {selected.ingredients.map((ing, i) => (
-                                                    <li key={i} className="flex items-center gap-4 text-slate-600 font-bold bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm transition-all hover:bg-white hover:border-blue-100 text-left">
-                                                        <Icon name="check-circle" size={18} className="text-green-500" />
-                                                        {ing}
+                                                    <li key={i} className="flex items-center gap-4 text-slate-600 font-bold bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm transition-all hover:bg-white hover:border-blue-100 text-left text-sm uppercase">
+                                                        <Icon name="check-circle" size={18} className="text-green-500" /> {ing}
                                                     </li>
                                                 ))}
                                             </ul>
                                         </div>
 
                                         <div className="text-left text-left">
-                                            <h3 className="font-black text-slate-800 mb-8 text-2xl flex items-center gap-3"><Icon name="chef-hat" className="text-blue-500" /> Bereidingswijze</h3>
+                                            <h3 className="font-black text-slate-800 mb-8 text-2xl flex items-center gap-3 uppercase tracking-tighter"><Icon name="chef-hat" className="text-blue-500" /> Bereidingswijze</h3>
                                             <div className="space-y-8">
                                                 {selected.instructions && selected.instructions.map((step, i) => (
                                                     <div key={i} className="flex gap-6 text-left">
                                                         <span className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-black shadow-lg text-center text-center">{i + 1}</span>
-                                                        <p className="text-slate-600 font-medium leading-relaxed pt-1 text-left text-left">{step}</p>
+                                                        <p className="text-slate-600 font-medium leading-relaxed pt-1 text-left text-sm">{step}</p>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
 
                                         <div className="text-left pt-10 border-t border-slate-100 text-left text-left">
-                                            <h3 className="font-black text-slate-800 mb-8 text-2xl flex items-center gap-3"><Icon name="message-square" className="text-blue-500" /> Reacties ({comments[selected.id]?.length || 0})</h3>
+                                            <h3 className="font-black text-slate-800 mb-8 text-2xl flex items-center gap-3 uppercase tracking-tighter"><Icon name="message-square" className="text-blue-500" /> Reacties ({comments[selected.id]?.length || 0})</h3>
                                             <div className="space-y-6 mb-10 text-left">
                                                 {comments[selected.id]?.map((c, i) => (
                                                     <div key={i} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left">
                                                         <div className="flex justify-between items-center mb-2">
-                                                            <span className="font-black text-slate-800 text-sm">{c.name}</span>
+                                                            <span className="font-black text-slate-800 text-sm text-left uppercase tracking-tighter">{c.name}</span>
                                                             <span className="text-[10px] font-bold text-slate-400 text-left">{c.date}</span>
                                                         </div>
-                                                        <p className="text-slate-600 text-sm leading-relaxed text-left">{c.text}</p>
+                                                        <p className="text-slate-600 text-sm leading-relaxed text-left font-medium">{c.text}</p>
                                                     </div>
                                                 ))}
-                                                {(!comments[selected.id] || comments[selected.id].length === 0) && (
-                                                    <p className="text-slate-400 italic text-sm text-left">Nog geen reacties. Deel als eerste je ervaring!</p>
-                                                )}
+                                                {(!comments[selected.id] || comments[selected.id].length === 0) && <p className="text-slate-400 italic text-sm text-left">Deel als eerste je ervaring!</p>}
                                             </div>
-                                            <form onSubmit={handleComment} className="space-y-4 text-left text-left">
-                                                <textarea value={commentInput} onChange={(e) => setCommentInput(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-5 text-sm outline-none focus:bg-white focus:border-blue-500 shadow-sm resize-none" placeholder="Vond je het lekker? Heb je tips?" rows="3"></textarea>
-                                                <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-black py-3 px-8 rounded-2xl shadow-lg transition-all active:scale-95 text-sm text-center">Plaats Reactie</button>
+                                            <form onSubmit={handleComment} className="space-y-4 text-left">
+                                                <textarea value={commentInput} onChange={(e) => setCommentInput(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-5 text-sm outline-none focus:bg-white focus:border-blue-500 shadow-sm resize-none font-medium" placeholder="Lekker gegeten?" rows="3"></textarea>
+                                                <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-black py-3 px-8 rounded-2xl shadow-lg transition-all active:scale-95 text-sm text-center uppercase tracking-widest">Plaats Reactie</button>
                                             </form>
                                         </div>
 
-                                        <div className="pt-10 text-center text-center">
-                                            <button onClick={() => { alert('Je wordt doorverwezen naar LinkPizza voor de boodschappen!'); setSelected(null); }} className="w-full bg-slate-900 text-white font-black py-8 rounded-[2.5rem] flex items-center justify-center gap-4 shadow-2xl hover:bg-slate-800 transition-all active:scale-95 text-xl mx-auto block text-center">Boodschappen Bestellen <Icon name="arrow-right" size={24}/></button>
+                                        <div className="pt-10 text-center text-center text-center">
+                                            <button onClick={() => { alert('Je wordt doorverwezen naar LinkPizza voor de boodschappen!'); setSelected(null); }} className="w-full bg-slate-900 text-white font-black py-8 rounded-[2.5rem] flex items-center justify-center gap-4 shadow-2xl hover:bg-slate-800 transition-all active:scale-95 text-xl mx-auto block text-center uppercase tracking-widest">Boodschappen Bestellen <Icon name="arrow-right" size={24}/></button>
                                         </div>
                                     </div>
                                 </div>

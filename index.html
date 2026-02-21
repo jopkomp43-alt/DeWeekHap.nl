@@ -1,96 +1,44 @@
-const baseRecipes = [
-  // Pasta
-  {
-    id: 'b1',
-    title: 'Romige Pasta Pesto',
-    image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800',
-    category: 'Pasta',
-    ingredients: '200g Penne\n2 el Pesto\n200g Kipblokjes\n100g Cherrytomaatjes\n50ml Kookroom',
-    instructions: 'Kook pasta; bak kip gaar; meng pesto en room erdoor; voeg tomaatjes toe en serveer direct.'
-  },
-  {
-    id: 'b2',
-    title: 'Spaghetti Bolognese',
-    image: 'https://images.unsplash.com/photo-1473093226795-af9932fe5856?w=800',
-    category: 'Pasta',
-    ingredients: '200g Spaghetti\n250g Rundergehakt\n400g Tomatensaus\n1 Ui\n1 Wortel\n1 el Olijfolie',
-    instructions: 'Fruit ui en wortel; bak gehakt; voeg tomatensaus toe en laat pruttelen; kook spaghetti en meng alles door elkaar.'
-  },
-  {
-    id: 'b3',
-    title: 'Pasta Carbonara',
-    image: 'https://images.unsplash.com/photo-1606890658317-7d14490b76fd?w=800',
-    category: 'Pasta',
-    ingredients: '200g Spaghetti\n100g Pancetta\n2 Eidooiers\n50g Parmezaan\n100ml Room',
-    instructions: 'Bak pancetta knapperig; kook spaghetti; meng eidooiers, room en kaas; roer door hete pasta met pancetta.'
-  },
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- SEO Fundamentals -->
+  <title>De Weekhap - Slim weekmenu plannen met gezonde recepten</title>
+  <meta name="description" content="Gratis maaltijdplanner met weekmenu's, boodschappenlijsten en gezonde recepten. Bewaar favorieten en deel met community.">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="De Weekhap - Weekmenu Planner">
+  <meta property="og:description" content="Automatisch gezonde weekmenu's genereren.">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200">
+  <meta property="og:url" content="https://jouwusername.github.io/weekhap/">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
 
-  // Mexicaans
-  {
-    id: 'b4',
-    title: 'Mexicaanse Tacos',
-    image: 'https://images.unsplash.com/photo-1608038509085-9d2b01c0a5a1?w=800',
-    category: 'Mexicaans',
-    ingredients: '4 Taco schelpen\n250g Gehakt\n1 Zakje Taco kruiden\n50g Geraspte kaas\n50g Sla\n50g Maïs',
-    instructions: 'Bak gehakt met taco kruiden; vul tacoschelpen met sla, maïs, gehakt en kaas; vouw dicht en eet direct.'
-  },
-  {
-    id: 'b5',
-    title: 'Burrito Bowl',
-    image: 'https://images.unsplash.com/photo-1579586140626-0ba84ff4b9e3?w=800',
-    category: 'Mexicaans',
-    ingredients: '150g Rijst\n100g Zwarte bonen\n50g Maïs\n1 Avocado\n50g Salsa\n1 el Limoensap',
-    instructions: 'Kook rijst; spoel bonen en maïs; snijd avocado; bouw de bowl met rijst als basis en besprenkel met limoensap.'
-  },
+  <!-- GOOGLE ANALYTICS 4 (PLAK HIER JOUW G-XXXXXXX ID) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_MEASUREMENT_ID"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YOUR_MEASUREMENT_ID', {
+      page_path: window.location.pathname,
+      transport_type: 'beacon'  // Betere performance
+    });
+  </script>
 
-  // Aziatisch
-  {
-    id: 'b6',
-    title: 'Thaise Groene Curry',
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
-    category: 'Aziatisch',
-    ingredients: '400ml Kokosmelk\n2 el Currypasta\n200g Kip\n1 Paprika\n100g Sperziebonen\n150g Rijst',
-    instructions: 'Bak currypasta; voeg kip en groente toe; blus met kokosmelk; kook rijst apart en serveer samen.'
-  },
-  {
-    id: 'b7',
-    title: 'Teriyaki Kip Noedels',
-    image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800',
-    category: 'Aziatisch',
-    ingredients: '150g Noedels\n250g Kipfilet\n3 el Teriyakisaus\n1 Paprika\n1 Wortel\n1 el Sesamolie',
-    instructions: 'Kook noedels; snijd kip en groente; roerbak kip en groente in sesamolie; blus met teriyakisaus en meng noedels erdoor.'
-  },
-  {
-    id: 'b8',
-    title: 'Chinese Fried Rice',
-    image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800',
-    category: 'Aziatisch',
-    ingredients: '200g Rijst\n2 Eieren\n100g Doperwten\n100g Wortel\n2 el Sojasaus\n2 Bosui',
-    instructions: 'Kook rijst; bak eieren los; voeg doperwten en wortel toe; meng rijst en sojasaus erdoor; garneer met bosui.'
-  },
+  <!-- Preload critical CSS/JS -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900"></noscript>
+  
+  <!-- Tailwind, React, Babel, Lucide -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-  // Hollands/Nederlands
-  {
-    id: 'b9',
-    title: 'Stamppot Hutspot',
-    image: 'https://images.unsplash.com/photo-1604909052743-94e838986d0d?w=800',
-    category: 'Hollands',
-    ingredients: '500g Aardappelen\n300g Wortels\n200g Uien\n1 Rookworst\n25g Boter\n50ml Melk',
-    instructions: 'Kook aardappelen, wortels en uien; verwarm rookworst; stamp tot hutspot met boter en melk.'
-  },
-  {
-    id: 'b10',
-    title: 'Hachee met Aardappelen',
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=800',
-    category: 'Hollands',
-    ingredients: '400g Rundvlees\n2 Uien\n2 el Bloem\n500ml Runderbouillon\n4 Aardappelen\n1 el Azijn',
-    instructions: 'Bestrooi vlees met bloem; braad aan met ui; blus met bouillon en azijn; laat 1,5 uur sudderen; kook aardappelen apart.'
-  },
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght
 
-  // Vis
-  {
-    id: 'b11',
-    title: 'Zalm Ovenpakketje',
-    image: 'https://images.unsplash.com/photo-146700390958
-
-
+    

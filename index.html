@@ -1,413 +1,400 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>De Weekhap | Slimme Weekplanning</title>
-    <meta name="description" content="Plan je weekmenu, genereer boodschappenlijstjes en deel tips.">
+import React, { useState, useEffect, useRef } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, addDoc } from 'firebase/firestore';
+import { 
+  ChefHat, 
+  Zap, 
+  Heart, 
+  X, 
+  User, 
+  Camera, 
+  ShoppingCart, 
+  List, 
+  ClipboardList, 
+  ExternalLink, 
+  RefreshCw, 
+  SearchX,
+  Users,
+  Utensils
+} from 'lucide-react';
+
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'de-weekhap-v3';
+
+export default function App() {
+  const [view, setView] = useState('home');
+  const [user, setUser] = useState(null);
+  const [communityRecipes, setCommunityRecipes] = useState([]);
+  const [savedRecipes, setSavedRecipes] = useState([]);
+  const [generatedMenu, setGeneratedMenu] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [preferences, setPreferences] = useState("");
+  const [servings, setServings] = useState(2);
+  const [noResultsError, setNoResultsError] = useState(false);
+  
+  // Recept formulier
+  const [formData, setFormData] = useState({ title: '', category: 'Diner', ingredients: '', instructions: '' });
+  const [uploadedImage, setUploadedImage] = useState(null);
+
+  // 1. Auth Init
+  useEffect(() => {
+    const initAuth = async () => {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Data Sync
+  useEffect(() => {
+    if (!user) return;
+    const unsubPublic = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'recipes'), (s) => {
+      setCommunityRecipes(s.docs.map(d => ({ ...d.data(), id: d.id })));
+    }, (err) => console.error(err));
+
+    const unsubSaved = onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'saved'), (s) => {
+      setSavedRecipes(s.docs.map(d => ({ ...d.data(), id: d.id })));
+    }, (err) => console.error(err));
+
+    return () => { unsubPublic(); unsubSaved(); };
+  }, [user]);
+
+  // Helper om ingrediënten te parsen naar hoeveelheden (mock parser)
+  const parseIngredient = (ingStr, factor) => {
+    // Simpele parser die zoekt naar getallen aan het begin van een string
+    const match = ingStr.match(/^(\d+[\.,]?\d*)\s*(.*)$/);
+    if (match) {
+      const num = parseFloat(match[1].replace(',', '.'));
+      const unitAndName = match[2];
+      const scaled = (num * factor).toLocaleString('nl-NL', { maximumFractionDigits: 1 });
+      return `${scaled} ${unitAndName}`;
+    }
+    return ingStr; // Geen getal gevonden, geef origineel terug
+  };
+
+  const generateWeekMenu = () => {
+    setLoading(true);
+    setNoResultsError(false);
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    setTimeout(() => {
+      const baseRecipes = [
+        { id: '1', title: 'Romige Pasta Pesto', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800', category: 'Pasta', ingredients: '200g Penne\n2 el Pesto\n200g Kipstukjes\n100g Cherrytomaatjes\n20g Pijnboompitten', instructions: '1. Kook de pasta volgens verpakking.\n2. Bak de kip goudbruin in een pan.\n3. Voeg de tomaatjes toe en bak kort mee.\n4. Meng de pasta, pesto en kip door elkaar.\n5. Garneer met pijnboompitten.' },
+        { id: '2', title: 'Mexicaanse Taco Party', image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800', category: 'Mexicaans', ingredients: '4 Taco schelpen\n250g Gehakt\n100g Ijsbergsla\n1 blikje Mais\n50g Kaas\n100ml Zure room', instructions: '1. Rul het gehakt in een pan met taco-kruiden.\n2. Verwarm de taco schelpen kort in de oven.\n3. Snijd de sla en zet alle toppings klaar.\n4. Laat iedereen zijn eigen taco vullen.\n5. Serveer met een klodder zure room.' },
+        { id: '3', title: 'Gezonde Buddha Bowl', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800', category: 'Salade', ingredients: '150g Quinoa\n1 blikje Kikkererwten\n100g Spinazie\n1 Avocado\n200g Zoete aardappel', instructions: '1. Rooster de zoete aardappel blokjes in de oven op 200 graden (20 min).\n2. Kook de quinoa gaar.\n3. Verdeel de spinazie over kommen.\n4. Voeg de quinoa, kikkererwten en aardappel toe.\n5. Maak af met plakjes avocado en een dressing naar keuze.' },
+        { id: '4', title: 'Ovenheerlijke Lasagne', image: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800', category: 'Italiaans', ingredients: '250g Lasagnebladen\n300g Gehakt\n500ml Tomatensaus\n250ml Bechamel\n100g Geraspte kaas', instructions: '1. Maak een rode saus met gehakt en groenten.\n2. Bouw de lasagne op in lagen: saus, bladen, bechamel.\n3. Eindig met een dikke laag kaas.\n4. Bak 35-40 minuten in de oven op 180 graden.' },
+        { id: '5', title: 'Thaise Groene Curry', image: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800', category: 'Aziatisch', ingredients: '2 el Curry pasta\n400ml Kokosmelk\n1 Paprika\n100g Bimi\n150g Rijst', instructions: '1. Bak de curry pasta kort in een diepe pan.\n2. Voeg kokosmelk toe en roer glad.\n3. Doe de gesneden groenten erbij en laat 10 min sudderen.\n4. Kook ondertussen de rijst.\n5. Serveer de curry over de rijst.' },
+        { id: '6', title: 'Klassieke Hollandse Stamppot', image: 'https://images.unsplash.com/photo-1582576163090-6c9147d8e48b?w=800', category: 'Hollands', ingredients: '500g Aardappelen\n300g Boerenkool\n1 Rookworst\n100g Spekjes\n100ml Jus', instructions: '1. Kook aardappelen en boerenkool samen gaar (20 min).\n2. Bak de spekjes krokant.\n3. Stamp alles fijn met een scheutje melk en boter.\n4. Serveer met de rookworst en een flinke kuil jus.' },
+        { id: '7', title: 'Crispy Falafel Wrap', image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?w=800', category: 'Vega', ingredients: '2 Wraps\n6 Falafel\n2 el Hummus\n100g Komkommer\n1 Rode ui', instructions: '1. Bak de falafel balletjes tot ze krokant zijn.\n2. Besmeer de wraps met een dikke laag hummus.\n3. Beleg met komkommer en rode ui ringen.\n4. Leg de falafel erop en rol de wrap strak op.' },
+        { id: '8', title: 'Zalm uit de Oven', image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800', category: 'Vis', ingredients: '2 Zalmfilets\n1 Citroen\n1 el Dille\n200g Asperges', instructions: '1. Leg de zalm op een bakplaat.\n2. Besprenkel met citroensap en dille.\n3. Leg de asperges ernaast.\n4. Bak 12-15 minuten op 180 graden in de oven.' }
+      ];
 
-    <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel voor JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+      const allPossible = [...baseRecipes, ...communityRecipes];
+      const dislikes = preferences.toLowerCase().split(/[,\s]+/).filter(w => w.length > 2);
+      const filtered = allPossible.filter(r => {
+        const text = `${r.title} ${r.ingredients} ${r.category}`.toLowerCase();
+        return !dislikes.some(bad => text.includes(bad));
+      });
 
-    <!-- Google Font -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
-    </style>
-</head>
-<body class="bg-white text-slate-900">
-    <div id="root"></div>
+      if (filtered.length < 7) {
+        setNoResultsError(true);
+        setGeneratedMenu([]);
+      } else {
+        const shuffled = [...filtered].sort(() => 0.5 - Math.random());
+        setGeneratedMenu(shuffled.slice(0, 7));
+      }
+      setLoading(false);
+    }, 800);
+  };
 
-    <script type="text/babel" data-type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
-            addDoc, 
-            updateDoc, 
-            deleteDoc, 
-            onSnapshot, 
-            query, 
-            limit 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { 
-            getAuth, 
-            signInAnonymously, 
-            signInWithCustomToken,
-            onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size < 1000000) {
+      const reader = new FileReader();
+      reader.onloadend = () => setUploadedImage(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
 
-        // --- ICON COMPONENT (Lucide Wrapper) ---
-        const Icon = ({ name, size = 20, className = "", fill = "none" }) => {
-            const iconRef = React.useRef(null);
-            React.useEffect(() => {
-                if (window.lucide && iconRef.current) {
-                    const iconElement = document.createElement('i');
-                    iconElement.setAttribute('data-lucide', name);
-                    iconElement.setAttribute('class', className);
-                    iconElement.style.width = `${size}px`;
-                    iconElement.style.height = `${size}px`;
-                    
-                    // Clear and append
-                    iconRef.current.innerHTML = '';
-                    iconRef.current.appendChild(iconElement);
-                    
-                    window.lucide.createIcons({
-                        attrs: { 
-                            class: className, 
-                            strokeWidth: 2, 
-                            fill: fill 
-                        },
-                        nameAttr: 'data-lucide',
-                        root: iconRef.current
-                    });
-                }
-            }, [name, size, className, fill]);
+  const submitRecipe = async (e) => {
+    e.preventDefault();
+    if (!uploadedImage || !user) return;
+    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'recipes'), {
+      ...formData,
+      image: uploadedImage,
+      author: user.uid,
+      date: Date.now()
+    });
+    setView('home');
+    setFormData({ title: '', category: 'Diner', ingredients: '', instructions: '' });
+    setUploadedImage(null);
+  };
 
-            return <span ref={iconRef} style={{ display: 'inline-flex' }} />;
-        };
+  const toggleSave = async (recipe) => {
+    if (!user) return;
+    const ref = doc(db, 'artifacts', appId, 'users', user.uid, 'saved', recipe.id);
+    const exists = savedRecipes.find(r => r.id === recipe.id);
+    if (exists) await deleteDoc(ref);
+    else await setDoc(ref, recipe);
+  };
 
-        // --- CONFIGURATIE ---
-        // Haal config uit environment of gebruik een lege placeholder (die foutmeldingen geeft als hij leeg is, maar de app niet laat crashen bij start)
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'de-weekhap-prod';
-        const ADMIN_EMAIL = 'jouw@email.nl'; 
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50/50">
+      {/* Header */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100 px-6 h-20 flex items-center justify-between">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('home')}>
+          <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-black italic shadow-lg shadow-orange-200">W</div>
+          <span className="font-black text-xl tracking-tighter uppercase">De Weekhap</span>
+        </div>
+        <div className="hidden md:flex gap-10 font-bold text-sm uppercase tracking-widest text-slate-400">
+          <button onClick={() => setView('home')} className={view === 'home' ? 'text-orange-500' : 'hover:text-slate-600'}>Generator</button>
+          <button onClick={() => setView('add')} className={view === 'add' ? 'text-orange-500' : 'hover:text-slate-600'}>Deel Hap</button>
+          <button onClick={() => setView('saved')} className={view === 'saved' ? 'text-orange-500' : 'hover:text-slate-600'}>Kookboek</button>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+          <User size={18} className="text-slate-400" />
+        </div>
+      </nav>
 
-        // Initialiseer Firebase alleen als er een config is
-        let app, db, auth;
-        try {
-            if (Object.keys(firebaseConfig).length > 0) {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-            }
-        } catch (e) {
-            console.error("Firebase init error:", e);
-        }
+      {/* Main Content */}
+      <main className="flex-1">
+        {view === 'home' && (
+          <div className="animate-pop p-6 max-w-7xl mx-auto space-y-12">
+            {/* Hero & Settings */}
+            <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-[3rem] p-8 md:p-16 border border-amber-200 shadow-sm relative overflow-hidden">
+              <div className="relative z-10 max-w-2xl">
+                <h1 className="text-5xl md:text-7xl font-black text-slate-900 leading-[1] uppercase tracking-tighter mb-8">
+                  Jouw <span className="text-orange-500">Porties</span>, Jouw Keuze.
+                </h1>
 
-        function App() {
-            const [user, setUser] = React.useState(null);
-            const [generatedMenu, setGeneratedMenu] = React.useState([]);
-            const [communityTips, setCommunityTips] = React.useState([]);
-            const [showShoppingList, setShowShoppingList] = React.useState(false);
-            const [loading, setLoading] = React.useState(false);
-            const [copyStatus, setCopyStatus] = React.useState(false);
-            const [authError, setAuthError] = React.useState(null);
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="bg-white/80 backdrop-blur p-6 rounded-3xl border border-white">
+                    <label className="text-[10px] font-black uppercase text-orange-600 tracking-widest mb-3 block">Voor hoeveel personen?</label>
+                    <div className="flex items-center gap-6">
+                      <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-colors">-</button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-black text-slate-900">{servings}</span>
+                        <Users size={16} className="text-slate-400" />
+                      </div>
+                      <button onClick={() => setServings(servings + 1)} className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-colors">+</button>
+                    </div>
+                  </div>
 
-            // 1. AUTHENTICATIE EFFECT
-            React.useEffect(() => {
-                if (!auth) {
-                    setAuthError("Firebase configuratie ontbreekt.");
-                    return;
-                }
-
-                const initAuth = async () => {
-                    try {
-                        // Check voor custom token (vanuit environment) of log anoniem in
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (err) {
-                        console.error("Auth Error:", err);
-                        setAuthError("Kon niet inloggen bij de database.");
-                    }
-                };
-
-                initAuth();
-                const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
-                return () => unsubscribe();
-            }, []);
-
-            // 2. DATA SYNC EFFECT (Veilige modus)
-            React.useEffect(() => {
-                // STOP als er geen gebruiker is of geen db connectie
-                if (!user || !db) return;
-
-                // FIX: Gebruik het verplichte pad structuur
-                const tipsRef = collection(db, 'artifacts', appId, 'public', 'data', 'tips');
-                
-                // FIX: Verwijder 'orderBy' uit de query om index-fouten te voorkomen
-                // We sorteren later in JavaScript (client-side)
-                const q = query(tipsRef, limit(50));
-                
-                const unsubTips = onSnapshot(q, (snapshot) => {
-                    const tipsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    
-                    // Client-side sorteren op datum (nieuwste eerst)
-                    const sortedTips = tipsData.sort((a, b) => (b.date || 0) - (a.date || 0));
-                    
-                    setCommunityTips(sortedTips);
-                }, (err) => {
-                    console.error("Firestore Permission Error:", err);
-                    // Stil falen of UI update (optioneel)
-                });
-
-                return () => unsubTips();
-            }, [user]); // Dit effect runt PAS als 'user' gevuld is
-
-            // 3. Boodschappenlijst Logica
-            const shoppingList = React.useMemo(() => {
-                const allIngredients = generatedMenu.flatMap(recipe => recipe.ingredients || []);
-                return [...new Set(allIngredients.map(i => i.trim().toLowerCase()))]
-                    .map(i => i.charAt(0).toUpperCase() + i.slice(1));
-            }, [generatedMenu]);
-
-            // 4. Acties
-            const generateNewMenu = () => {
-                setLoading(true);
-                const mockRecipes = [
-                    { title: "Pasta Carbonara met Verse Peterselie", ingredients: ["Pasta", "Ei", "Spek", "Kaas", "Peterselie"] },
-                    { title: "Gezonde Wok met Kip en Broccoli", ingredients: ["Kip", "Broccoli", "Sojasaus", "Rijst", "Knoflook"] },
-                    { title: "Vegetarische Lasagne", ingredients: ["Lasagnebladen", "Spinazie", "Ricotta", "Tomatensaus"] },
-                    { title: "Zalm uit de oven met Asperges", ingredients: ["Zalm", "Asperges", "Citroen", "Dille"] },
-                    { title: "Mexicaanse Taco's", ingredients: ["Taco schelpen", "Gehakt", "Sla", "Maïs", "Salsa"] },
-                    { title: "Gevulde Paprika met Quinoa", ingredients: ["Paprika", "Quinoa", "Feta", "Pijnboompitten"] },
-                    { title: "Romige Champignon Risotto", ingredients: ["Risottorijst", "Champignons", "Bouillon", "Ui"] }
-                ];
-                
-                setTimeout(() => {
-                    setGeneratedMenu(mockRecipes);
-                    setLoading(false);
-                    const el = document.getElementById('results');
-                    if(el) el.scrollIntoView({ behavior: 'smooth' });
-                }, 800);
-            };
-
-            const copyToClipboard = () => {
-                const text = `Boodschappenlijst De Weekhap:\n- ${shoppingList.join('\n- ')}`;
-                // Fallback voor iframes/beperkte omgevingen
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    setCopyStatus(true);
-                    setTimeout(() => setCopyStatus(false), 2000);
-                } catch (err) {
-                    console.error('Copy failed', err);
-                }
-                document.body.removeChild(textArea);
-            };
-
-            const addCommunityTip = async () => {
-                if (!user) return alert("Wacht even tot je bent ingelogd...");
-                const text = prompt("Wat is jouw ultieme keukengeheim?");
-                if (text && text.length > 5) {
-                    try {
-                        const tipsRef = collection(db, 'artifacts', appId, 'public', 'data', 'tips');
-                        await addDoc(tipsRef, {
-                            text,
-                            author: user.isAnonymous ? 'Gast Chef' : (user.displayName || 'Chef'),
-                            userId: user.uid,
-                            date: Date.now(),
-                            likes: []
-                        });
-                    } catch (e) {
-                        alert("Kon tip niet plaatsen. Probeer het later opnieuw.");
-                    }
-                }
-            };
-
-            const toggleLike = async (tip) => {
-                if (!user) return;
-                const tipRef = doc(db, 'artifacts', appId, 'public', 'data', 'tips', tip.id);
-                const likes = tip.likes || [];
-                const newLikes = likes.includes(user.uid) 
-                    ? likes.filter(id => id !== user.uid) 
-                    : [...likes, user.uid];
-                await updateDoc(tipRef, { likes: newLikes });
-            };
-
-            const removeTip = async (id) => {
-                if (window.confirm("Wil je deze tip definitief verwijderen?")) {
-                    const tipRef = doc(db, 'artifacts', appId, 'public', 'data', 'tips', id);
-                    await deleteDoc(tipRef);
-                }
-            };
-
-            // RENDER
-            return (
-                <div className="min-h-screen bg-white text-slate-900 selection:bg-orange-100 font-sans">
-                    {/* NAVBAR */}
-                    <nav className="fixed w-full z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4">
-                        <div className="max-w-7xl mx-auto flex justify-between items-center">
-                            <div className="flex items-center gap-2 group cursor-pointer">
-                                <div className="bg-orange-500 p-2 rounded-xl group-hover:rotate-12 transition-transform">
-                                    <Icon name="utensils" className="text-white" size={20} />
-                                </div>
-                                <span className="text-xl font-black uppercase tracking-tighter">De Weekhap</span>
-                            </div>
-                            <div className="hidden md:flex gap-8 text-xs font-black uppercase tracking-widest text-slate-400">
-                                <a href="#planner" className="hover:text-orange-500 transition-colors">Planner</a>
-                                <a href="#blog" className="hover:text-orange-500 transition-colors">Blog</a>
-                            </div>
-                        </div>
-                    </nav>
-
-                    {/* HERO */}
-                    <section id="planner" className="pt-32 pb-20 px-6 text-center animate-fade-in">
-                        <div className="max-w-4xl mx-auto">
-                            <span className="inline-block bg-orange-50 text-orange-600 px-4 py-1 rounded-full text-[10px] font-black uppercase mb-6 tracking-widest">Bespaar tijd & geld</span>
-                            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-8">Wat eten we <span className="text-orange-500">vandaag?</span></h1>
-                            <p className="text-lg text-slate-500 mb-12 max-w-xl mx-auto">Genereer in één klik een gezond weekmenu inclusief een automatische boodschappenlijst.</p>
-                            
-                            {authError && (
-                                <div className="bg-red-50 text-red-500 p-4 rounded-xl mb-6 text-sm font-bold">
-                                    {authError}
-                                </div>
-                            )}
-
-                            <button onClick={generateNewMenu} disabled={loading} className="bg-slate-900 text-white font-black px-10 py-6 rounded-[2rem] hover:bg-orange-500 transition-all shadow-2xl disabled:opacity-50 flex items-center gap-3 mx-auto uppercase tracking-widest text-sm active:scale-95">
-                                {loading ? <Icon name="loader" className="animate-spin" /> : <Icon name="plus" />}
-                                {loading ? 'Happen verzamelen...' : 'Genereer Weekmenu'}
-                            </button>
-                        </div>
-                    </section>
-
-                    {/* RESULTS */}
-                    {generatedMenu.length > 0 && (
-                        <section id="results" className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-50 animate-fade-in">
-                            <header className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-                                <div className="text-left">
-                                    <h2 className="text-4xl font-black uppercase tracking-tighter">Jouw Menu 🍎</h2>
-                                    <p className="text-slate-400 font-bold mt-2">Zeven verse suggesties voor de hele week.</p>
-                                </div>
-                                <div className="flex gap-3 flex-wrap">
-                                    <button onClick={() => setShowShoppingList(true)} className="bg-blue-600 text-white font-black px-6 py-4 rounded-2xl flex items-center gap-2 uppercase text-[10px] tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-colors">
-                                        <Icon name="shopping-cart" size={16} /> Lijstje
-                                    </button>
-                                    <button onClick={() => window.open(`https://wa.me/?text=Check ons weekmenu!`)} className="bg-green-500 text-white font-black px-6 py-4 rounded-2xl flex items-center gap-2 uppercase text-[10px] tracking-widest shadow-lg shadow-green-100 hover:bg-green-600 transition-colors">
-                                        <Icon name="message-circle" size={16} /> WhatsApp
-                                    </button>
-                                </div>
-                            </header>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {generatedMenu.map((recipe, i) => (
-                                    <div key={i} className="bg-white border border-slate-100 p-8 rounded-[2.5rem] hover:border-orange-200 transition-all hover:shadow-xl text-left group">
-                                        <span className="bg-slate-50 text-slate-400 text-[10px] font-black px-3 py-1 rounded-full uppercase">Dag {i+1}</span>
-                                        <h3 className="text-xl font-black mt-4 mb-4 group-hover:text-orange-600 transition-colors">{recipe.title}</h3>
-                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{recipe.ingredients.length} Ingrediënten</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* BLOG */}
-                    <section id="blog" className="bg-slate-900 py-24 px-6 overflow-hidden text-left">
-                        <div className="max-w-7xl mx-auto">
-                            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-                                <div>
-                                    <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.4em] mb-4 block">Deel je kennis</span>
-                                    <h2 className="text-5xl font-black text-white uppercase tracking-tighter">Keukengeheimen</h2>
-                                </div>
-                                <button onClick={addCommunityTip} className="bg-white text-slate-900 font-black px-8 py-4 rounded-2xl uppercase text-[10px] tracking-widest hover:scale-105 transition-transform">Tip delen +</button>
-                            </div>
-                            
-                            <div className="flex gap-6 overflow-x-auto pb-10 no-scrollbar">
-                                {communityTips.length > 0 ? communityTips.map(tip => (
-                                    <article key={tip.id} className="min-w-[320px] md:min-w-[400px] bg-slate-800 p-10 rounded-[3rem] border border-slate-700/50 flex flex-col justify-between">
-                                        <div>
-                                            <Icon name="quote" className="text-orange-500/20 mb-6" size={40} />
-                                            <p className="text-lg font-bold text-slate-200 italic mb-8">"{tip.text}"</p>
-                                        </div>
-                                        <div className="flex items-center justify-between pt-8 border-t border-slate-700/50">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-black text-[10px]">
-                                                    {tip.author?.charAt(0) || 'G'}
-                                                </div>
-                                                <span className="font-black uppercase text-[10px] tracking-widest text-slate-500">{tip.author}</span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => toggleLike(tip)} className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${tip.likes?.includes(user?.uid) ? 'bg-orange-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
-                                                    <Icon name="heart" size={14} fill={tip.likes?.includes(user?.uid) ? "white" : "none"} />
-                                                    <span className="font-black text-xs">{tip.likes?.length || 0}</span>
-                                                </button>
-                                                {(user?.email === ADMIN_EMAIL || user?.uid === tip.userId) && (
-                                                    <button onClick={() => removeTip(tip.id)} className="p-2 text-slate-600 hover:text-red-400 transition-colors">
-                                                        <Icon name="trash-2" size={16} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </article>
-                                )) : (
-                                    <div className="text-slate-500 font-bold italic py-10 w-full text-center bg-slate-800/50 rounded-[2rem]">
-                                        {user ? "Nog geen tips. Wees de eerste!" : "Verbinden met community database..."}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* SHOPPING LIST MODAL */}
-                    {showShoppingList && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in">
-                            <div className="bg-white w-full max-w-lg rounded-[3.5rem] p-10 relative text-left shadow-2xl">
-                                <button onClick={() => setShowShoppingList(false)} className="absolute top-8 right-8 p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
-                                    <Icon name="x" size={20} />
-                                </button>
-                                <h2 className="text-3xl font-black uppercase mb-8">Boodschappen</h2>
-                                <div className="max-h-[50vh] overflow-y-auto space-y-3 mb-10 no-scrollbar">
-                                    {shoppingList.length > 0 ? shoppingList.map((item, i) => (
-                                        <div key={i} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-                                            <div className="w-5 h-5 border-2 border-slate-200 rounded-md flex items-center justify-center">
-                                                <Icon name="check" size={12} className="text-slate-200" />
-                                            </div>
-                                            <span className="font-bold text-slate-700">{item}</span>
-                                        </div>
-                                    )) : <p className="text-slate-400 italic">Genereer eerst een menu.</p>}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button onClick={copyToClipboard} className="bg-slate-900 text-white font-black py-5 rounded-2xl uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors">
-                                        {copyStatus ? <Icon name="check" size={18} /> : <Icon name="copy" size={18} />}
-                                        {copyStatus ? 'Klaar!' : 'Kopieer'}
-                                    </button>
-                                    <button onClick={() => window.print()} className="border-2 border-slate-900 text-slate-900 font-black py-5 rounded-2xl uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
-                                        <Icon name="printer" size={18} /> Print
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* FOOTER */}
-                    <footer className="bg-slate-50 py-12 px-6 text-center border-t border-slate-100">
-                        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                            <div className="flex items-center gap-2">
-                                <Icon name="utensils" className="text-orange-500" size={16} />
-                                <span className="text-sm font-black uppercase tracking-tighter">De Weekhap &copy; 2026</span>
-                            </div>
-                            <div className="flex gap-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <a href="#" className="hover:text-slate-900">Privacy</a>
-                                <a href="#" className="hover:text-slate-900">LinkPizza Partners</a>
-                            </div>
-                        </div>
-                    </footer>
+                  <div className="bg-white/80 backdrop-blur p-6 rounded-3xl border border-white">
+                    <label className="text-[10px] font-black uppercase text-orange-600 tracking-widest mb-3 block italic">Wat lust je niet?</label>
+                    <input 
+                      type="text" 
+                      value={preferences}
+                      onChange={(e) => setPreferences(e.target.value)}
+                      placeholder="Vb: geen vis, uien..."
+                      className="w-full bg-white p-3 rounded-xl border-none outline-none font-bold text-slate-700 shadow-inner text-sm"
+                    />
+                  </div>
                 </div>
-            );
-        }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                <button 
+                  onClick={generateWeekMenu}
+                  className="bg-slate-900 hover:bg-black text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest flex items-center gap-3 transition-all active:scale-95 shadow-xl shadow-slate-200"
+                >
+                  {loading ? <RefreshCw className="animate-spin" /> : <ChefHat fill="currentColor" />}
+                  Plan 7 Dagen
+                </button>
+              </div>
+              <Utensils className="absolute right-[-5%] bottom-[-5%] opacity-5 text-slate-900" size={400} />
+            </div>
+
+            {/* Menu Results */}
+            {noResultsError ? (
+              <div className="text-center py-20 bg-red-50 rounded-[3rem] border-2 border-dashed border-red-200">
+                <SearchX size={48} className="text-red-300 mx-auto mb-4" />
+                <h3 className="text-2xl font-black text-red-900 uppercase">Te kieskeurig!</h3>
+                <p className="text-red-600 font-medium">Verwijder wat filters om een menu te genereren.</p>
+              </div>
+            ) : generatedMenu.length > 0 && (
+              <div className="space-y-8">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-black uppercase tracking-tighter">Jouw Persoonlijke Weekhap</h2>
+                  <span className="bg-orange-100 text-orange-600 px-4 py-2 rounded-full font-black text-[10px] uppercase">Berekend voor {servings} pers.</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {generatedMenu.map((r, i) => (
+                    <div key={i} onClick={() => setSelectedRecipe(r)} className="group bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:translate-y-[-8px] transition-all duration-300 border border-slate-100 cursor-pointer">
+                      <div className="h-48 relative overflow-hidden">
+                        <img src={r.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={r.title} />
+                        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white px-4 py-1 rounded-full text-[10px] font-black uppercase">Dag {i+1}</div>
+                      </div>
+                      <div className="p-6">
+                        <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">{r.category}</p>
+                        <h3 className="font-bold text-lg text-slate-800 uppercase line-clamp-1">{r.title}</h3>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {view === 'add' && (
+          <section className="max-w-3xl mx-auto py-16 px-6 animate-pop">
+            <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter mb-8">Deel je geheim</h2>
+            <form onSubmit={submitRecipe} className="bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gerecht foto</label>
+                <div onClick={() => document.getElementById('img-up').click()} className="w-full h-64 border-4 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden relative">
+                  {uploadedImage ? <img src={uploadedImage} className="w-full h-full object-cover" /> : <Camera size={32} className="text-slate-300" />}
+                </div>
+                <input type="file" id="img-up" hidden accept="image/*" onChange={handleImage} />
+              </div>
+              <input required placeholder="Titel (Vb: Oma's Gehaktballen)" className="w-full bg-slate-50 p-5 rounded-2xl font-bold outline-none focus:ring-2 ring-orange-400 transition-all" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+              <textarea required placeholder="Ingrediënten voor 1 persoon (per regel)..." className="w-full bg-slate-50 p-5 rounded-2xl font-bold h-32 outline-none focus:ring-2 ring-orange-400" value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} />
+              <textarea required placeholder="Het stappenplan..." className="w-full bg-slate-50 p-5 rounded-2xl font-bold h-48 outline-none focus:ring-2 ring-orange-400" value={formData.instructions} onChange={e => setFormData({...formData, instructions: e.target.value})} />
+              <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100">
+                <p className="text-xs font-bold text-slate-600 mb-2">💡 Verdien extra als influencer? Gebruik <strong>LinkPizza</strong> om partnerlinks in je recepten te plaatsen.</p>
+                <a href="https://linkpizza.com" target="_blank" className="text-[10px] font-black uppercase text-orange-500 hover:underline">Aanmelden bij LinkPizza</a>
+              </div>
+              <button className="w-full bg-orange-500 text-white font-black py-5 rounded-2xl uppercase tracking-widest shadow-lg shadow-orange-100 active:scale-95 transition-all">Hap Toevoegen</button>
+            </form>
+          </section>
+        )}
+
+        {view === 'saved' && (
+          <section className="max-w-7xl mx-auto px-6 py-16 animate-pop">
+            <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter mb-12">Mijn Kookboek 📖</h2>
+            {savedRecipes.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {savedRecipes.map((r, i) => (
+                  <div key={i} onClick={() => setSelectedRecipe(r)} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-100 cursor-pointer hover:shadow-md transition-all">
+                    <img src={r.image} className="h-48 w-full object-cover" />
+                    <div className="p-6">
+                      <h3 className="font-bold text-lg text-slate-800 uppercase">{r.title}</h3>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-slate-100 rounded-[3rem]">
+                <p className="font-bold text-slate-400 uppercase tracking-widest italic text-sm">Nog geen opgeslagen haps...</p>
+              </div>
+            )}
+          </section>
+        )}
+      </main>
+
+      {/* Recipe Modal */}
+      {selectedRecipe && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-pop">
+          <div className="bg-white rounded-[3rem] max-w-4xl w-full max-h-[90vh] overflow-y-auto relative p-6 md:p-12 shadow-2xl">
+            <button onClick={() => setSelectedRecipe(null)} className="absolute top-8 right-8 p-2 hover:bg-slate-100 rounded-full transition-colors z-10">
+              <X size={24} />
+            </button>
+
+            <div className="space-y-10">
+              <div className="relative h-72 md:h-96 rounded-[2.5rem] overflow-hidden">
+                <img src={selectedRecipe.image} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-8 md:p-12">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">{selectedRecipe.category}</span>
+                    <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{servings} Personen</span>
+                  </div>
+                  <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none">{selectedRecipe.title}</h2>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <button 
+                  onClick={() => toggleSave(selectedRecipe)}
+                  className={`flex-1 py-4 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 transition-all ${savedRecipes.find(r => r.id === selectedRecipe.id) ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                >
+                  <Heart fill={savedRecipes.find(r => r.id === selectedRecipe.id) ? 'currentColor' : 'none'} size={16} /> 
+                  Opgeslagen
+                </button>
+                <a 
+                  href={`https://linkpizza.com/click?url=https://www.ah.nl/zoeken?query=${encodeURIComponent(selectedRecipe.title)}`} 
+                  target="_blank"
+                  className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 shadow-xl shadow-slate-200"
+                >
+                  Boodschappen Lijst <ShoppingCart size={16} />
+                </a>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+                <div className="md:col-span-5 space-y-6">
+                  <div className="bg-slate-50 p-8 rounded-[2rem]">
+                    <h4 className="font-black text-orange-500 uppercase text-[10px] tracking-widest mb-6 flex items-center gap-2">
+                      <List size={14} /> Boodschappenlijst ({servings} pers.)
+                    </h4>
+                    <ul className="space-y-4">
+                      {selectedRecipe.ingredients.split('\n').map((ing, i) => (
+                        <li key={i} className="text-sm font-bold text-slate-700 flex items-start gap-3">
+                          <span className="w-1.5 h-1.5 bg-orange-400 rounded-full mt-1.5 flex-shrink-0" />
+                          <span>{parseIngredient(ing, servings)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-8 pt-6 border-t border-slate-200">
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-2 italic">Pro-Tip van LinkPizza:</p>
+                      <p className="text-xs font-medium text-slate-500 leading-relaxed italic">Mis je iets? Bestel direct via onze partners en verdien punten!</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="md:col-span-7 space-y-6">
+                  <h4 className="font-black text-orange-500 uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2">
+                    <ClipboardList size={16} /> Stappenplan
+                  </h4>
+                  <div className="space-y-8">
+                    {selectedRecipe.instructions.split('\n').map((step, i) => (
+                      <div key={i} className="flex gap-5 group">
+                        <div className="flex-shrink-0 w-10 h-10 bg-slate-900 text-white rounded-2xl flex items-center justify-center text-xs font-black shadow-lg shadow-slate-200 group-hover:scale-110 transition-transform">
+                          {i + 1}
+                        </div>
+                        <p className="text-slate-700 font-medium leading-relaxed pt-2">
+                          {step.replace(/^\d+\.\s*/, '')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-8 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 border border-blue-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-blue-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                    <ExternalLink size={24} />
+                  </div>
+                  <div>
+                    <p className="font-black text-blue-900 uppercase text-xs tracking-widest">Maak van koken je werk</p>
+                    <p className="text-blue-700 text-sm font-medium">Deel je eigen kookboek via LinkPizza en verdien geld met elke verkoop.</p>
+                  </div>
+                </div>
+                <a href="https://linkpizza.com" target="_blank" className="bg-white text-blue-600 px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                  Start Nu
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="py-12 px-6 border-t border-slate-100 text-center flex flex-col items-center gap-4">
+        <div className="flex gap-8 text-[10px] font-black uppercase text-slate-300 tracking-[0.2em]">
+          <a href="https://linkpizza.com" target="_blank" className="hover:text-orange-500">Adverteer via LinkPizza</a>
+          <a href="#">Privacy</a>
+          <a href="#">Contact</a>
+        </div>
+        <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">De Weekhap &copy; 2024 • De slimste weg naar je maaltijd</p>
+      </footer>
+    </div>
+  );
+}

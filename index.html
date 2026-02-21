@@ -1,59 +1,428 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Icon } from './components/Icons'; // Zorg dat je een Icon component hebt
-import db, { auth } from './firebase'; // Je Firebase config
+import { 
+  Utensils, 
+  ShoppingCart, 
+  MessageCircle, 
+  RefreshCw, 
+  Heart, 
+  Trash2, 
+  Plus, 
+  Copy, 
+  Printer, 
+  X,
+  ChevronRight,
+  Quote,
+  Check
+} from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  limit 
+} from 'firebase/firestore';
+import { 
+  getAuth, 
+  signInAnonymously, 
+  signInWithCustomToken,
+  onAuthStateChanged 
+} from 'firebase/auth';
 
-// VERVANG DIT DOOR JOUW EMAIL VOOR ADMIN RECHTEN
-const ADMIN_EMAIL = 'jouw@email.nl';
-const APP_ID = 'de-weekhap-prod';
+// --- CONFIGURATIE ---
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'de-weekhap-prod';
+const ADMIN_EMAIL = 'jouw@email.nl'; 
+
+// Initialisatie buiten de component om her-initialisatie te voorkomen
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [generated, setGenerated] = useState([]);
+  const [generatedMenu, setGeneratedMenu] = useState([]);
   const [communityTips, setCommunityTips] = useState([]);
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [copyStatus, setCopyStatus] = useState(false);
 
-  // 1. Auth & Data Sync
+  // 1. Authenticatie Effect (Stap 1: Eerst inloggen)
   useEffect(() => {
-    const unsubAuth = auth.onAuthStateChanged(u => setUser(u));
-    
-    const unsubTips = db.collection(`artifacts/${APP_ID}/public/data/tips`)
-      .orderBy('date', 'desc')
-      .onSnapshot(s => {
-        setCommunityTips(s.docs.map(d => ({ id: d.id, ...d.data() })));
-      });
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) {
+        console.error("Authenticatie fout:", err);
+      }
+    };
 
-    return () => { unsubAuth(); unsubTips(); };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  // 2. Boodschappenlijst Logica
-  const shoppingList = useMemo(() => {
-    const all = generated.flatMap(r => r.ingredients || []);
-    return [...new Set(all.map(i => i.trim().toLowerCase()))]
-      .map(i => i.charAt(0).toUpperCase() + i.slice(1));
-  }, [generated]);
+  // 2. Data Sync Effect (Stap 2: Pas data ophalen NA authenticatie)
+  useEffect(() => {
+    if (!user) return; // Belangrijk: Wacht op de user om permissie fouten te voorkomen
 
-  // 3. Functies
-  const generateMenu = async () => {
+    // Gebruik het verplichte pad: /artifacts/{appId}/public/data/{collectionName}
+    const tipsRef = collection(db, 'artifacts', appId, 'public', 'data', 'tips');
+    
+    // Simpele query zonder complexe filters om index-fouten te voorkomen
+    const q = query(tipsRef, limit(50));
+    
+    const unsubTips = onSnapshot(q, (snapshot) => {
+      const tipsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sorteer in het geheugen in plaats van via Firestore query om index-vereisten te vermijden
+      const sortedTips = tipsData.sort((a, b) => (b.date || 0) - (a.date || 0));
+      setCommunityTips(sortedTips);
+    }, (err) => {
+      console.error("Firestore permissie of query fout:", err);
+    });
+
+    return () => unsubTips();
+  }, [user]);
+
+  // 3. Boodschappenlijst Logica
+  const shoppingList = useMemo(() => {
+    const allIngredients = generatedMenu.flatMap(recipe => recipe.ingredients || []);
+    return [...new Set(allIngredients.map(i => i.trim().toLowerCase()))]
+      .map(i => i.charAt(0).toUpperCase() + i.slice(1));
+  }, [generatedMenu]);
+
+  // 4. Acties
+  const generateNewMenu = () => {
     setLoading(true);
-    // Hier komt je API call of database fetch voor 7 recepten
-    // Voor nu een simpele trigger:
-    setTimeout(() => { setLoading(false); }, 1000);
+    const mockRecipes = [
+      { title: "Pasta Carbonara met Verse Peterselie", ingredients: ["Pasta", "Ei", "Spek", "Kaas", "Peterselie"] },
+      { title: "Gezonde Wok met Kip en Broccoli", ingredients: ["Kip", "Broccoli", "Sojasaus", "Rijst", "Knoflook"] },
+      { title: "Vegetarische Lasagne", ingredients: ["Lasagnebladen", "Spinazie", "Ricotta", "Tomatensaus"] },
+      { title: "Zalm uit de oven met Asperges", ingredients: ["Zalm", "Asperges", "Citroen", "Dille"] },
+      { title: "Mexicaanse Taco's", ingredients: ["Taco schelpen", "Gehakt", "Sla", "Maïs", "Salsa"] },
+      { title: "Gevulde Paprika met Quinoa", ingredients: ["Paprika", "Quinoa", "Feta", "Pijnboompitten"] },
+      { title: "Romige Champignon Risotto", ingredients: ["Risottorijst", "Champignons", "Bouillon", "Ui"] }
+    ];
+    
+    setTimeout(() => {
+      setGeneratedMenu(mockRecipes);
+      setLoading(false);
+      const resultsEl = document.getElementById('results');
+      if (resultsEl) {
+        window.scrollTo({ top: resultsEl.offsetTop - 100, behavior: 'smooth' });
+      }
+    }, 800);
   };
 
   const shareToWhatsApp = () => {
-    const menuText = generated.map((r, i) => `Dag ${i+1}: ${r.title}`).join('%0A');
-    const text = `Check ons menu van De Weekhap:%0A%0A${menuText}`;
+    const menuText = generatedMenu.map((r, i) => `Dag ${i+1}: ${r.title}`).join('%0A');
+    const text = `Hoi! 👋 Ons menu van De Weekhap is klaar:%0A%0A${menuText}%0A%0ACheck de lijst op deweekhap.nl! 🍎`;
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
-  const copyShoppingList = () => {
+  const copyToClipboard = () => {
     const text = `Boodschappenlijst De Weekhap:\n- ${shoppingList.join('\n- ')}`;
-    navigator.clipboard.writeText(text);
-    alert("Gekopieerd! 📋");
+    // Fallback voor clipboard
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      setCopyStatus(true);
+      setTimeout(() => setCopyStatus(false), 2000);
+    } catch (err) {
+      console.error('Kopiëren mislukt', err);
+    }
+    document.body.removeChild(textArea);
   };
 
-  const handleLike = async (tip) => {
-    if (!user) return alert("Log in om te liken!");
-    const tipRef = db.collection(`artifacts/${APP_ID}/public/data/tips`).doc(tip.id);
-    const likes = tip
+  const addCommunityTip = async () => {
+    if (!user) return;
+    const text = prompt("Wat is jouw ultieme keukengeheim?");
+    if (text && text.length > 5) {
+      try {
+        const tipsRef = collection(db, 'artifacts', appId, 'public', 'data', 'tips');
+        await addDoc(tipsRef, {
+          text,
+          author: user.isAnonymous ? 'Gast Chef' : (user.displayName || 'Chef'),
+          userId: user.uid,
+          date: Date.now(),
+          likes: []
+        });
+      } catch (err) {
+        console.error("Fout bij toevoegen tip:", err);
+      }
+    }
+  };
+
+  const toggleLike = async (tip) => {
+    if (!user) return;
+    try {
+      const tipRef = doc(db, 'artifacts', appId, 'public', 'data', 'tips', tip.id);
+      const likes = tip.likes || [];
+      const newLikes = likes.includes(user.uid) 
+        ? likes.filter(id => id !== user.uid) 
+        : [...likes, user.uid];
+      await updateDoc(tipRef, { likes: newLikes });
+    } catch (err) {
+      console.error("Fout bij liken:", err);
+    }
+  };
+
+  const removeTip = async (id) => {
+    if (window.confirm("Wil je deze tip definitief verwijderen?")) {
+      try {
+        const tipRef = doc(db, 'artifacts', appId, 'public', 'data', 'tips', id);
+        await deleteDoc(tipRef);
+      } catch (err) {
+        console.error("Fout bij verwijderen:", err);
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white text-slate-900 selection:bg-orange-100">
+      {/* NAVBAR */}
+      <nav className="fixed w-full z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2 group cursor-pointer">
+            <div className="bg-orange-500 p-2 rounded-xl group-hover:rotate-12 transition-transform">
+              <Utensils className="text-white" size={20} />
+            </div>
+            <span className="text-xl font-black uppercase tracking-tighter">De Weekhap</span>
+          </div>
+          <div className="hidden md:flex gap-8 text-xs font-black uppercase tracking-widest text-slate-400">
+            <a href="#planner" className="hover:text-orange-500 transition-colors">Planner</a>
+            <a href="#blog" className="hover:text-orange-500 transition-colors">Blog</a>
+            <a href="#seo" className="hover:text-orange-500 transition-colors">Over Ons</a>
+          </div>
+        </div>
+      </nav>
+
+      {/* HERO SECTION */}
+      <section id="planner" className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <span className="inline-block bg-orange-50 text-orange-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 animate-bounce">
+            Bespaar tijd & geld
+          </span>
+          <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-8">
+            Wat eten we <span className="text-orange-500 underline decoration-4 underline-offset-8">vandaag?</span>
+          </h1>
+          <p className="text-lg text-slate-500 mb-12 max-w-xl mx-auto leading-relaxed">
+            Stop met piekeren. Genereer in één klik een gezond weekmenu inclusief een automatische boodschappenlijst.
+          </p>
+          <button 
+            onClick={generateNewMenu}
+            disabled={loading}
+            className="group relative bg-slate-900 text-white font-black px-10 py-6 rounded-[2rem] hover:bg-orange-500 transition-all shadow-2xl shadow-slate-200 active:scale-95 disabled:opacity-50"
+          >
+            <span className="flex items-center gap-3 uppercase tracking-widest text-sm">
+              {loading ? <RefreshCw className="animate-spin" /> : <Plus />}
+              {loading ? 'Happen verzamelen...' : 'Genereer Weekmenu'}
+            </span>
+          </button>
+        </div>
+      </section>
+
+      {/* RESULTS GRID */}
+      {generatedMenu.length > 0 && (
+        <section id="results" className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-50">
+          <header className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6 text-left">
+            <div>
+              <h2 className="text-4xl font-black uppercase tracking-tighter">Jouw Menu 🍎</h2>
+              <p className="text-slate-400 font-bold mt-2">Zeven verse suggesties voor de hele week.</p>
+            </div>
+            <div className="flex flex-wrap gap-3 w-full md:w-auto">
+              <button 
+                onClick={() => setShowShoppingList(true)}
+                className="flex-1 md:flex-none bg-blue-600 text-white font-black px-6 py-4 rounded-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100"
+              >
+                <ShoppingCart size={16} /> Lijstje
+              </button>
+              <button 
+                onClick={shareToWhatsApp}
+                className="flex-1 md:flex-none bg-green-500 text-white font-black px-6 py-4 rounded-2xl hover:bg-green-600 transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest shadow-lg shadow-green-100"
+              >
+                <MessageCircle size={16} /> Deel via WA
+              </button>
+              <button onClick={generateNewMenu} className="flex-1 md:flex-none bg-slate-100 text-slate-600 font-black px-6 py-4 rounded-2xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 text-[10px] uppercase">
+                <RefreshCw size={16} /> Nieuw
+              </button>
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {generatedMenu.map((recipe, i) => (
+              <div key={i} className="group bg-white border border-slate-100 p-8 rounded-[2.5rem] hover:border-orange-200 transition-all hover:shadow-xl hover:shadow-orange-50 cursor-pointer text-left">
+                <div className="flex justify-between items-start mb-6">
+                  <span className="bg-slate-50 text-slate-400 text-[10px] font-black px-3 py-1 rounded-full uppercase">Dag {i+1}</span>
+                  <ChevronRight size={16} className="text-slate-200 group-hover:text-orange-500 transition-colors" />
+                </div>
+                <h3 className="text-xl font-black leading-tight mb-4 group-hover:text-orange-600 transition-colors">{recipe.title}</h3>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{recipe.ingredients.length} Ingrediënten</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* COMMUNITY BLOG SECTION */}
+      <section id="blog" className="bg-slate-900 py-24 px-6 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <header className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6 text-left">
+            <div>
+              <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.4em] mb-4 block">Deel je kennis</span>
+              <h2 className="text-5xl font-black text-white uppercase tracking-tighter">Keukengeheimen</h2>
+            </div>
+            <button 
+              onClick={addCommunityTip}
+              className="bg-white text-slate-900 font-black px-8 py-4 rounded-2xl hover:scale-105 transition-all uppercase text-[10px] tracking-widest"
+            >
+              Schrijf een tip +
+            </button>
+          </header>
+
+          <div className="flex gap-6 overflow-x-auto pb-10 no-scrollbar">
+            {communityTips.length > 0 ? communityTips.map(tip => (
+              <article key={tip.id} className="min-w-[320px] md:min-w-[400px] bg-slate-800 p-10 rounded-[3rem] border border-slate-700/50 flex flex-col justify-between text-left">
+                <div>
+                  <Quote className="text-orange-500/20 mb-6" size={40} />
+                  <p className="text-lg font-bold text-slate-200 leading-relaxed italic mb-8">"{tip.text}"</p>
+                </div>
+                <div className="flex items-center justify-between pt-8 border-t border-slate-700/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-black text-[10px]">
+                      {tip.author?.charAt(0)}
+                    </div>
+                    <span className="font-black uppercase text-[10px] tracking-widest text-slate-500">{tip.author}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => toggleLike(tip)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${tip.likes?.includes(user?.uid) ? 'bg-orange-500 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                    >
+                      <Heart size={14} fill={tip.likes?.includes(user?.uid) ? "white" : "none"} />
+                      <span className="font-black text-xs">{tip.likes?.length || 0}</span>
+                    </button>
+                    {(user?.email === ADMIN_EMAIL || user?.uid === tip.userId) && (
+                      <button onClick={() => removeTip(tip.id)} className="p-2 text-slate-600 hover:text-red-400">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </article>
+            )) : (
+              <p className="text-slate-500 font-bold italic py-10">Laden van keukengeheimen...</p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* SEO CONTENT HUB */}
+      <section id="seo" className="py-24 px-6 bg-white border-t border-slate-50">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 text-left">
+          <div>
+            <h2 className="text-4xl font-black uppercase tracking-tighter mb-8">Smarter plannen,<br/><span className="text-orange-500">Beter eten.</span></h2>
+            <div className="space-y-6 text-slate-500 leading-relaxed font-medium">
+              <p>Elke dag de vraag <strong>"Wat eten we vandaag?"</strong> beantwoorden is verleden tijd. Met De Weekhap gebruik je de kracht van de community om snel en gezond te koken.</p>
+              <p>Door gebruik te maken van onze <em>automatische boodschappenlijst</em> en <em>weekmenu planner</em>, bespaar je gemiddeld 15% op je wekelijkse uitgaven en verminder je voedselverspilling aanzienlijk.</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <h3 className="font-black uppercase tracking-widest text-xs text-slate-400 mb-6">Veelgestelde vragen</h3>
+            {[
+              { q: "Is De Weekhap gratis?", a: "Ja, onze planner en community blog zijn volledig gratis te gebruiken voor iedereen." },
+              { q: "Hoe werkt de boodschappenlijst?", a: "Zodra je een menu genereert, verzamelen we alle ingrediënten, ontdubbelen ze en zetten ze in een handig overzicht." },
+              { q: "Kan ik recepten toevoegen?", a: "Momenteel kun je tips delen in de Keukengeheimen blog; volledige recepten komen in de volgende update!" }
+            ].map((faq, i) => (
+              <div key={i} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                <h4 className="font-bold text-slate-900 mb-2">{faq.q}</h4>
+                <p className="text-sm text-slate-500">{faq.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SHOPPING LIST MODAL */}
+      {showShoppingList && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setShowShoppingList(false)}></div>
+          <div className="bg-white w-full max-w-lg rounded-[3.5rem] overflow-hidden relative z-10 p-10 shadow-2xl animate-in zoom-in-95 duration-200">
+            <button onClick={() => setShowShoppingList(false)} className="absolute top-8 right-8 p-2 bg-slate-100 rounded-full hover:bg-slate-200">
+              <X size={20} />
+            </button>
+            
+            <h2 className="text-3xl font-black uppercase tracking-tighter mb-8 text-left">Boodschappen</h2>
+            
+            <div className="max-h-[50vh] overflow-y-auto no-scrollbar space-y-3 mb-10 text-left">
+              {shoppingList.length > 0 ? shoppingList.map((item, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl group cursor-pointer hover:bg-orange-50 transition-colors">
+                  <div className="w-6 h-6 border-2 border-slate-200 rounded-lg flex items-center justify-center group-hover:border-orange-400 bg-white">
+                    <Check size={14} className="text-orange-500 opacity-0 group-hover:opacity-100" />
+                  </div>
+                  <span className="font-bold text-slate-700">{item}</span>
+                </div>
+              )) : <p className="text-slate-400 italic">Genereer eerst een menu om een lijst te zien.</p>}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button 
+                onClick={copyToClipboard}
+                className="bg-slate-900 text-white font-black py-5 rounded-2xl uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-slate-800 transition-all"
+              >
+                {copyStatus ? <Check size={18} /> : <Copy size={18} />}
+                {copyStatus ? 'Gekopieerd!' : 'Lijst Kopiëren'}
+              </button>
+              <button 
+                onClick={() => window.print()}
+                className="border-2 border-slate-900 text-slate-900 font-black py-5 rounded-2xl uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
+              >
+                <Printer size={18} /> Print / PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FOOTER */}
+      <footer className="bg-slate-50 py-12 px-6 border-t border-slate-100">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-2">
+            <Utensils className="text-orange-500" size={16} />
+            <span className="text-sm font-black uppercase tracking-tighter">De Weekhap &copy; 2024</span>
+          </div>
+          <div className="flex gap-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <a href="#" className="hover:text-slate-900">Privacy</a>
+            <a href="#" className="hover:text-slate-900">Voorwaarden</a>
+            <a href="#" className="hover:text-slate-900">Contact</a>
+          </div>
+        </div>
+      </footer>
+
+      {/* CUSTOM CSS FOR SCROLLBARS */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @media print {
+          nav, button, footer, #blog, #seo { display: none !important; }
+          #results { display: block !important; margin: 0; padding: 0; }
+        }
+      `}} />
+    </div>
+  );
+}

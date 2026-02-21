@@ -84,4 +84,431 @@
       return <i ref={ref} data-lucide={name} className={className} style={{ width: size, height: size, display: 'inline-block', fill: fill === 'currentColor' ? 'currentColor' : 'none' }}></i>;
     };
 
-    const baseRecipes 
+    const baseRecipes = [
+      {
+        id: 'b1', title: 'Romige Pasta Pesto', category: 'Pasta', calories: 650,
+        image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800',
+        ingredients: '200g Penne\n2 el Pesto\n200g Kipblokjes\n100g Cherrytomaatjes\n50ml Kookroom',
+        instructions: 'Kook pasta gaar.\nBak kipblokjes goudbruin in olijfolie.\nVoeg pesto en kookroom toe aan de kip.\nMeng de pasta erdoor.\nVoeg cherrytomaatjes toe en serveer direct.'
+      },
+      {
+        id: 'b2', title: 'Mexicaanse Tacos', category: 'Mexicaans', calories: 580,
+        image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800',
+        ingredients: '4 Taco schelpen\n250g Rundergehakt\n1 Zakje Taco kruiden\n50g Geraspte kaas\n50g IJsbergsla\n50g Mais',
+        instructions: 'Bak gehakt bruin in koekenpan.\nVoeg taco kruiden en scheutje water toe.\nLaat 5 min pruttelen.\nVerwarm taco schelpen in oven op 180C.\nVul met sla, gehakt, mais en kaas.'
+      },
+      {
+        id: 'b3', title: 'Gezonde Buddha Bowl', category: 'Vega', calories: 520,
+        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800',
+        ingredients: '150g Quinoa\n1 Avocado\n100g Spinazie\n100g Kikkererwten\n1 el Olijfolie\n1 el Citroensap',
+        instructions: 'Kook quinoa 15 min in dubbele hoeveelheid water.\nSpoel kikkererwten af.\nSnijd avocado in blokjes.\nVerdeel quinoa in kom.\nLeg spinazie, avocado en kikkererwten erop.\nBesprenkel met olie en citroen.'
+      },
+      {
+        id: 'b4', title: 'Thaise Groene Curry', category: 'Aziatisch', calories: 680,
+        image: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800',
+        ingredients: '400ml Kokosmelk\n2 el Groene currypasta\n200g Kipblokjes\n1 Rode paprika\n100g Sperziebonen\n150g Rijst',
+        instructions: 'Kook rijst apart.\nBak currypasta 1 min in droge pan.\nVoeg kipblokjes toe en bak aan.\nVoeg paprika en sperziebonen toe.\nGiet kokosmelk erbij.\nLaat 15 min zachtjes koken.\nServeer over rijst.'
+      },
+      {
+        id: 'b5', title: 'Zalm uit de Oven', category: 'Vis', calories: 450,
+        image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800',
+        ingredients: '2 Zalmfilets\n200g Groene asperges\n1 Citroen\n1 el Olijfolie\nZout en peper',
+        instructions: 'Verwarm oven op 200C.\nLeg zalm en asperges op bakplaat.\nBesprenkel met olijfolie en citroensap.\nBestrooi met zout en peper.\nBak 15 min tot zalm gaar is.\nServeer direct.'
+      },
+      {
+        id: 'b6', title: 'Stamppot Boerenkool', category: 'Hollands', calories: 620,
+        image: 'https://images.unsplash.com/photo-1582576163090-6c9147d8e48b?w=800',
+        ingredients: '500g Aardappelen\n300g Boerenkool\n1 Rookworst\n50ml Melk\n25g Boter\nZout en peper',
+        instructions: 'Schil en kook aardappelen 20 min.\nKook boerenkool 10 min mee.\nVerwarm rookworst in heet water.\nGiet aardappelen en kool af.\nStamp met melk en boter.\nSnijd rookworst in plakken en serveer.'
+      },
+      {
+        id: 'b7', title: 'Falafel Wrap', category: 'Vega', calories: 480,
+        image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?w=800',
+        ingredients: '2 Wraps\n6 Falafel balletjes\n50g Gemengde sla\n50g Komkommer\n2 el Griekse yoghurt\n1 tl Knoflookpoeder',
+        instructions: 'Bak of verwarm falafel balletjes.\nMeng yoghurt met knoflookpoeder.\nSnijd komkommer in plakjes.\nBeleg wraps met sla en komkommer.\nVoeg falafel toe en sprenkel saus erop.\nRol strak op en serveer.'
+      },
+      {
+        id: 'b8', title: 'Lasagne Tradizionale', category: 'Oven', calories: 720,
+        image: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800',
+        ingredients: '250g Lasagnebladen\n300g Rundergehakt\n400g Tomatensaus\n1 Ui\n100g Geraspte kaas\n250ml Bechamelsaus',
+        instructions: 'Verwarm oven op 180C.\nFruit ui en bak gehakt bruin.\nVoeg tomatensaus toe.\nMaak laagjes: saus, bladen, bechamel.\nHerhaal tot schaal vol is.\nBestrooi met kaas.\nBak 35-40 min goudbruin.'
+      },
+      {
+        id: 'b9', title: 'Kikkererwten Curry', category: 'Vega', calories: 540,
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
+        ingredients: '150g Rijst\n1 Blik kikkererwten\n400ml Kokosmelk\n2 el Rode currypasta\n100g Spinazie\n1 Ui',
+        instructions: 'Kook rijst apart.\nFruit ui in olie.\nVoeg currypasta toe en bak 1 min.\nVoeg kikkererwten en kokosmelk toe.\nLaat 10 min pruttelen.\nRoer spinazie erdoor.\nServeer over rijst.'
+      },
+      {
+        id: 'b10', title: 'Teriyaki Kip Noedels', category: 'Aziatisch', calories: 590,
+        image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800',
+        ingredients: '150g Noedels\n250g Kipfilet\n3 el Teriyakisaus\n1 Paprika\n1 Wortel\n1 el Sesamolie',
+        instructions: 'Kook noedels per pakje.\nSnijd kip, paprika en wortel.\nBak kip gaar in sesamolie.\nVoeg paprika en wortel toe.\nGiet teriyakisaus erbij.\nMeng noedels erdoor.\nServeer direct.'
+      },
+      {
+        id: 'b11', title: 'Chinese Gebakken Rijst', category: 'Aziatisch', calories: 560,
+        image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800',
+        ingredients: '200g Rijst\n2 Eieren\n100g Doperwten\n100g Wortel\n2 el Sojasaus\n2 Bosui',
+        instructions: 'Kook rijst en laat afkoelen.\nBak eieren los in wok.\nVoeg wortel en doperwten toe.\nVoeg koude rijst toe.\nRoer sojasaus erdoor.\nGarneer met gesneden bosui.'
+      },
+      {
+        id: 'b12', title: 'Vegan Burrito Bowl', category: 'Mexicaans', calories: 500,
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
+        ingredients: '150g Rijst\n100g Zwarte bonen\n50g Mais\n1 Avocado\n50g Sla\n2 el Salsa',
+        instructions: 'Kook rijst.\nSpoel zwarte bonen en mais af.\nSnijd avocado in blokjes.\nVerdeel rijst in kom.\nVoeg sla, bonen, mais en avocado toe.\nMaak af met salsa.'
+      },
+      {
+        id: 'b13', title: 'Spaghetti Bolognese', category: 'Pasta', calories: 700,
+        image: 'https://images.unsplash.com/photo-1473093226795-af9932fe5856?w=800',
+        ingredients: '200g Spaghetti\n250g Rundergehakt\n400g Tomatensaus\n1 Ui\n1 Wortel\n1 el Olijfolie',
+        instructions: 'Fruit ui en wortel in olijfolie.\nVoeg gehakt toe en bak bruin.\nVoeg tomatensaus toe.\nLaat 20 min pruttelen op laag vuur.\nKook spaghetti al dente.\nServeer saus over pasta met Parmezaan.'
+      },
+      {
+        id: 'b14', title: 'Griekse Salade met Kip', category: 'Salade', calories: 420,
+        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800',
+        ingredients: '200g Kipfilet\n100g Feta\n150g Cherrytomaatjes\n1 Komkommer\n50g Olijven\n2 el Olijfolie',
+        instructions: 'Grill kipfilet 6 min per kant.\nSnijd komkommer en tomaatjes.\nVerkruimel feta.\nMeng groenten in schaal.\nLeg kip erop in plakjes.\nBesprenkel met olijfolie en oregano.'
+      },
+      {
+        id: 'b15', title: 'Hachee met Stamppot', category: 'Hollands', calories: 680,
+        image: 'https://images.unsplash.com/photo-1604909052743-94e838986d0d?w=800',
+        ingredients: '400g Rundvlees\n2 Uien\n500ml Runderbouillon\n4 Aardappelen\n300g Wortels\n1 el Azijn',
+        instructions: 'Bestrooi vlees met bloem en bak aan.\nFruit uien mee.\nVoeg bouillon en azijn toe.\nLaat 1,5 uur sudderen op laag vuur.\nKook aardappelen en wortels gaar.\nStamp tot hutspot.\nServeer hachee erover.'
+      },
+      {
+        id: 'b16', title: 'Shakshuka', category: 'Mediterraan', calories: 380,
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800',
+        ingredients: '4 Eieren\n400g Tomatenblokjes\n1 Paprika\n1 Ui\n2 tl Komijn\n1 tl Paprikapoeder',
+        instructions: 'Fruit ui en paprika in olijfolie.\nVoeg kruiden toe en bak 1 min.\nGiet tomatenblokjes erbij.\nLaat 10 min pruttelen.\nMaak kuiltjes en breek eieren erin.\nDek af en laat 8 min stollen.\nServeer met brood.'
+      },
+      {
+        id: 'b17', title: 'Pasta Carbonara', category: 'Pasta', calories: 750,
+        image: 'https://images.unsplash.com/photo-1606890658317-7d14490b76fd?w=800',
+        ingredients: '200g Spaghetti\n100g Pancetta\n2 Eidooiers\n50g Parmezaan\n100ml Kookroom\nZwarte peper',
+        instructions: 'Kook spaghetti al dente.\nBak pancetta knapperig.\nMeng eidooiers met room en kaas.\nGiet pasta af, bewaar wat kookwater.\nMeng pasta met pancetta.\nVoeg ei-mengsel toe van het vuur.\nRoer snel door met scheutje kookwater.'
+      },
+      {
+        id: 'b18', title: 'Miso Zalm Noedels', category: 'Japans', calories: 580,
+        image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800',
+        ingredients: '2 Zalmfilets\n150g Ramen noedels\n2 el Miso pasta\n1 el Sojasaus\n1 Paprika\n2 Bosui',
+        instructions: 'Meng miso en soja tot marinade.\nBestrijk zalm en laat 10 min marineren.\nBak of grill zalm 4 min per kant.\nKook noedels gaar.\nRoerbak paprika.\nMeng noedels met paprika.\nServeer met zalm en bosui.'
+      },
+      {
+        id: 'b19', title: 'Indiase Butter Chicken', category: 'Indiaas', calories: 640,
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
+        ingredients: '400g Kip in blokjes\n400ml Tomatensaus\n200ml Slagroom\n2 el Butter chicken kruiden\n150g Rijst\n1 Ui',
+        instructions: 'Bak ui glazig.\nVoeg kruiden toe en bak 2 min.\nVoeg kip toe en bak aan.\nGiet tomatensaus erbij.\nLaat 15 min pruttelen.\nRoer room erdoor.\nKook rijst.\nServeer curry over rijst met naan.'
+      },
+      {
+        id: 'b20', title: 'Zeevruchten Paella', category: 'Spaans', calories: 610,
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800',
+        ingredients: '300g Paella rijst\n200g Zeevruchten mix\n1 Paprika\n1 Ui\n500ml Visbouillon\n1 tl Saffraan',
+        instructions: 'Fruit ui en paprika in olijfolie.\nVoeg rijst toe en bak 2 min glazig.\nVoeg saffraan en bouillon toe.\nLaat 15 min koken zonder roeren.\nVoeg zeevruchten toe bovenop.\nDek af en laat 5 min stomen.\nServeer direct in de pan.'
+      }
+    ];
+
+    function App() {
+      const [view, setView] = useState('home');
+      const [savedRecipes, setSavedRecipes] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('weekhap_saved') || '[]'); } catch { return []; }
+      });
+      const [communityRecipes, setCommunityRecipes] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('weekhap_community') || '[]'); } catch { return []; }
+      });
+      const [generatedMenu, setGeneratedMenu] = useState([]);
+      const [loading, setLoading] = useState(false);
+      const [selectedRecipe, setSelectedRecipe] = useState(null);
+      const [preferences, setPreferences] = useState('');
+      const [servings, setServings] = useState(2);
+      const [noResultsError, setNoResultsError] = useState(false);
+      const [formData, setFormData] = useState({ title: '', category: 'Diner', ingredients: '', instructions: '' });
+      const [uploadedImage, setUploadedImage] = useState(null);
+      const [showEmailPopup, setShowEmailPopup] = useState(false);
+      const [email, setEmail] = useState('');
+
+      useEffect(() => {
+        try { localStorage.setItem('weekhap_saved', JSON.stringify(savedRecipes)); } catch(e) {}
+      }, [savedRecipes]);
+
+      useEffect(() => {
+        try { localStorage.setItem('weekhap_community', JSON.stringify(communityRecipes)); } catch(e) {}
+      }, [communityRecipes]);
+
+      useEffect(() => {
+        document.title = selectedRecipe ? `${selectedRecipe.title} - De Weekhap` : 'De Weekhap | Jouw Slimme Maaltijdplanner';
+      }, [selectedRecipe]);
+
+      useEffect(() => {
+        const timer = setTimeout(() => setShowEmailPopup(true), 45000);
+        return () => clearTimeout(timer);
+      }, []);
+
+      const parseIngredient = (ingStr, factor) => {
+        const match = ingStr.match(/^(\d+[\.,]?\d*)\s*(.*)$/);
+        if (match) {
+          const num = parseFloat(match[1].replace(',', '.'));
+          const scaled = (num * factor).toLocaleString('nl-NL', { maximumFractionDigits: 1 });
+          return `${scaled} ${match[2]}`;
+        }
+        return ingStr;
+      };
+
+      const generateWeekMenu = () => {
+        setLoading(true);
+        setNoResultsError(false);
+        if (window.gtag) window.gtag('event', 'generate_menu', { event_category: 'engagement' });
+
+        setTimeout(() => {
+          const allPossible = [...baseRecipes, ...communityRecipes];
+          const stopwords = ['geen', 'zonder', 'extra', 'meer', 'minder'];
+          const dislikes = preferences.toLowerCase().split(/[,\s]+/).filter(w => w.length > 2 && !stopwords.includes(w));
+
+          const filtered = allPossible.filter(r => {
+            const text = `${r.title} ${r.ingredients} ${r.category}`.toLowerCase();
+            return !dislikes.some(bad => text.includes(bad));
+          });
+
+          if (filtered.length < 7) {
+            setNoResultsError(true);
+            setGeneratedMenu([]);
+          } else {
+            const shuffled = [...filtered].sort(() => 0.5 - Math.random());
+            setGeneratedMenu(shuffled.slice(0, 7));
+            setTimeout(() => window.scrollTo({ top: 600, behavior: 'smooth' }), 100);
+          }
+          setLoading(false);
+        }, 600);
+      };
+
+      const handleImage = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => setUploadedImage(reader.result);
+          reader.readAsDataURL(file);
+        }
+      };
+
+      const submitRecipe = (e) => {
+        e.preventDefault();
+        if (!uploadedImage) { alert('Voeg een foto toe!'); return; }
+        const newRecipe = { ...formData, id: 'c_' + Date.now(), image: uploadedImage, calories: 500 };
+        setCommunityRecipes([newRecipe, ...communityRecipes]);
+        setView('home');
+        setFormData({ title: '', category: 'Diner', ingredients: '', instructions: '' });
+        setUploadedImage(null);
+      };
+
+      const toggleSave = (recipe) => {
+        const exists = savedRecipes.find(r => r.id === recipe.id);
+        if (exists) {
+          setSavedRecipes(savedRecipes.filter(r => r.id !== recipe.id));
+        } else {
+          setSavedRecipes([...savedRecipes, recipe]);
+          if (window.gtag) window.gtag('event', 'save_recipe', { event_category: 'engagement', event_label: recipe.title });
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col">
+
+          {/* HEADER */}
+          <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 px-6 h-20 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setView('home'); setSelectedRecipe(null); }}>
+              <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-200 animate-bounce-slow text-xl italic">W</div>
+              <span className="font-black text-2xl tracking-tighter uppercase italic text-slate-900 hidden sm:block">De Weekhap</span>
+            </div>
+
+            <nav className="flex gap-4 md:gap-8">
+              {['home','add','saved'].map(v => (
+                <button key={v} onClick={() => setView(v)} className={`font-black text-[10px] uppercase tracking-[0.2em] transition-all ${view === v ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                  {v === 'home' ? 'Generator' : v === 'add' ? 'Deel Recept' : 'Kookboek'}
+                </button>
+              ))}
+            </nav>
+
+            <div className="flex items-center gap-3">
+              <a href="https://linkpizza.com" target="_blank" rel="noreferrer" className="hidden lg:block bg-orange-600 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase hover:bg-orange-700 transition-all">
+                💰 LinkPizza
+              </a>
+              <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+                <Icon name="user" size={18} className="text-slate-500" />
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 pb-20">
+
+            {/* HOME VIEW */}
+            {view === 'home' && (
+              <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-12 pt-10 fade-in">
+
+                {/* HERO */}
+                <section className="bg-white rounded-[3rem] p-8 md:p-16 border border-slate-200 shadow-xl relative overflow-hidden flex flex-col items-center text-center">
+                  <div className="relative z-10 max-w-3xl">
+                    <span className="bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block">Maaltijdplanner GitHub Editie</span>
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 leading-[0.9] uppercase tracking-tighter mb-8">
+                      Plan Je <span className="text-orange-600 italic">Gezonde</span> Week.
+                    </h1>
+
+                    <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-10 w-full max-w-xl mx-auto">
+                      <div className="bg-slate-50 p-4 rounded-2xl border flex items-center gap-6 w-full md:w-auto">
+                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Personen</span>
+                        <div className="flex items-center gap-4">
+                          <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-10 h-10 bg-white border rounded-lg font-bold hover:bg-orange-50 hover:text-orange-600">-</button>
+                          <span className="text-xl font-black w-4 text-center">{servings}</span>
+                          <button onClick={() => setServings(servings + 1)} className="w-10 h-10 bg-white border rounded-lg font-bold hover:bg-orange-50 hover:text-orange-600">+</button>
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        value={preferences}
+                        onChange={e => setPreferences(e.target.value)}
+                        placeholder="Geen vis, vega, extra pittig..."
+                        className="flex-1 bg-slate-50 p-5 rounded-2xl border-none outline-none font-bold text-slate-700 shadow-inner w-full"
+                      />
+                    </div>
+
+                    <button onClick={generateWeekMenu} disabled={loading} className="bg-slate-900 text-white px-10 md:px-12 py-5 md:py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-2xl w-full md:w-auto disabled:opacity-50 mx-auto">
+                      {loading ? <Icon name="refresh-cw" className="animate-spin" /> : <Icon name="zap" />}
+                      Genereer 7 Dagen
+                    </button>
+                  </div>
+                  <Icon name="utensils" size={300} className="absolute left-[-5%] bottom-[-5%] opacity-[0.03] text-slate-900 rotate-12" />
+                </section>
+
+                {/* NO RESULTS */}
+                {noResultsError && (
+                  <div className="text-center py-20 bg-orange-50 rounded-[3rem] border-2 border-dashed border-orange-200 fade-in">
+                    <div className="flex justify-center mb-4 text-orange-300"><Icon name="search-x" size={48} /></div>
+                    <h3 className="text-2xl font-black text-orange-900 uppercase">Te kieskeurig?</h3>
+                    <p className="text-orange-600 font-bold uppercase text-xs tracking-widest">Pas je filters aan voor meer resultaten.</p>
+                  </div>
+                )}
+
+                {/* WEEK MENU */}
+                {generatedMenu.length > 0 && !noResultsError && (
+                  <section className="space-y-10 fade-in">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-200 pb-6 gap-4">
+                      <h2 className="text-3xl font-black uppercase tracking-tighter italic">Jouw Weekmenu</h2>
+                      <div className="flex gap-4">
+                        <span className="bg-slate-900 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest">7 Recepten</span>
+                        <span className="bg-orange-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest">{servings} Pers.</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                      {generatedMenu.map((r, i) => (
+                        <article key={r.id} onClick={() => setSelectedRecipe(r)} className="group bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl hover:translate-y-[-10px] transition-all duration-500 border border-slate-100 cursor-pointer">
+                          <div className="h-56 relative overflow-hidden">
+                            <img src={r.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={`${r.title} recept`} loading="lazy" />
+                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-slate-900 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">Dag {i+1}</div>
+                            {r.calories && <div className="absolute top-4 right-4 bg-orange-600/90 text-white px-3 py-1 rounded-full text-[10px] font-black">{r.calories} kcal</div>}
+                          </div>
+                          <div className="p-8">
+                            <p className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-2">{r.category}</p>
+                            <h3 className="font-black text-xl text-slate-800 uppercase leading-none mb-4 group-hover:text-orange-600 transition-colors">{r.title}</h3>
+                            <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest">
+                              <Icon name="list" size={12} /> Bekijk Recept
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+
+                    {/* WEEKSHOP CTA */}
+                    <div className="mt-12 p-8 md:p-12 bg-gradient-to-r from-orange-50 to-amber-50 rounded-[3rem] border-2 border-dashed border-orange-200 text-center">
+                      <h3 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-tighter mb-4">Alle boodschappen in één keer?</h3>
+                      <p className="text-slate-600 mb-6 font-bold">Bespaar tijd met de slimme weekshop!</p>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="https://linkpizza.com/click?url=https://www.ah.nl" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-3 bg-slate-900 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all">
+                          🛒 Weekshop bij AH
+                        </a>
+                        <a href="https://linkpizza.com/click?url=https://www.jumbo.com" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-3 bg-orange-600 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-orange-700 transition-all">
+                          🛒 Of bij Jumbo
+                        </a>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-4">Via onze LinkPizza affiliate links</p>
+                    </div>
+                  </section>
+                )}
+              </div>
+            )}
+
+            {/* ADD RECIPE VIEW */}
+            {view === 'add' && (
+              <section className="max-w-3xl mx-auto py-10 md:py-20 px-4 md:px-6 fade-in">
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter mb-4 text-center">Deel Een <span className="text-orange-600">Hap</span>.</h2>
+                <p className="text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-12">Inspireer de community en verdien extra via LinkPizza</p>
+
+                <form onSubmit={submitRecipe} className="bg-white p-6 md:p-16 rounded-[3rem] shadow-2xl border border-slate-100 space-y-8">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Gerecht foto</label>
+                    <div onClick={() => document.getElementById('img-up').click()} className="w-full h-64 bg-slate-50 border-4 border-dashed border-slate-200 rounded-[3rem] flex flex-col items-center justify-center cursor-pointer hover:bg-orange-50 hover:border-orange-200 transition-all overflow-hidden shadow-inner">
+                      {uploadedImage
+                        ? <img src={uploadedImage} className="w-full h-full object-cover" alt="Preview" />
+                        : <div className="text-center flex flex-col items-center">
+                            <Icon name="camera" size={48} className="text-slate-200 mb-4" />
+                            <span className="text-xs font-black text-slate-300 uppercase tracking-widest">Klik om te kiezen</span>
+                          </div>
+                      }
+                    </div>
+                    <input type="file" id="img-up" hidden accept="image/*" onChange={handleImage} />
+                  </div>
+
+                  <input required placeholder="Naam van het gerecht..." className="w-full bg-slate-50 p-6 rounded-3xl font-black text-xl outline-none focus:ring-4 ring-orange-100 border border-slate-100" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <select className="bg-slate-50 p-6 rounded-3xl font-black uppercase text-[10px] tracking-widest outline-none border border-slate-100" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                      <option>Diner</option><option>Lunch</option><option>Ontbijt</option><option>Snack</option><option>Vega</option><option>Pasta</option><option>Aziatisch</option><option>Mexicaans</option>
+                    </select>
+                    <div className="bg-orange-50 p-4 rounded-3xl flex items-center justify-center text-[10px] font-black text-orange-600 uppercase tracking-widest">Recept voor 1 pers.</div>
+                  </div>
+
+                  <textarea required placeholder="Ingrediënten (één per regel, vb: 200g Pasta)..." className="w-full bg-slate-50 p-8 rounded-[2.5rem] font-bold h-40 outline-none focus:ring-4 ring-orange-100 border border-slate-100" value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} />
+                  <textarea required placeholder="Bereidingswijze stap voor stap..." className="w-full bg-slate-50 p-8 rounded-[2.5rem] font-bold h-56 outline-none focus:ring-4 ring-orange-100 border border-slate-100" value={formData.instructions} onChange={e => setFormData({...formData, instructions: e.target.value})} />
+
+                  <div className="bg-blue-50 p-6 rounded-[2.5rem] border border-blue-100 flex flex-col md:flex-row items-start gap-4">
+                    <div className="bg-blue-500 text-white p-3 rounded-2xl shrink-0"><Icon name="external-link" size={20} /></div>
+                    <div>
+                      <h4 className="font-black text-blue-900 uppercase text-xs tracking-widest mb-1">Affiliate Tip</h4>
+                      <p className="text-blue-700 text-xs font-medium leading-relaxed">Verdien geld met je passie! Meld je aan bij <a href="https://linkpizza.com" target="_blank" rel="noreferrer" className="font-black underline">LinkPizza</a> en voeg affiliate links toe als je recepten deelt.</p>
+                    </div>
+                  </div>
+
+                  <button type="submit" className="w-full bg-orange-600 text-white font-black py-6 rounded-[2.5rem] uppercase tracking-[0.3em] shadow-xl shadow-orange-200 hover:bg-orange-700 active:scale-95 transition-all text-sm">Hap Lokaal Opslaan</button>
+                </form>
+              </section>
+            )}
+
+            {/* SAVED VIEW */}
+            {view === 'saved' && (
+              <section className="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-20 fade-in">
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter mb-12">Mijn <span className="text-orange-600">Kookboek</span> 📖</h2>
+                {savedRecipes.length > 0
+                  ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                      {savedRecipes.map(r => (
+                        <article key={r.id} onClick={() => setSelectedRecipe(r)} className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100 cursor-pointer hover:shadow-xl transition-all">
+                          <img src={r.image} className="h-56 w-full object-cover" alt={r.title} loading="lazy" />
+                          <div className="p-8">
+                            <p className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-1">{r.category}</p>
+                            <h3 className="font-black text-lg text-slate-800 uppercase leading-none">{r.title}</h3>
+                            {r.calories && <p className="text-xs text-slate-400 mt-2">{r.calories} kcal p.p.</p>}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  : <div className="text-center py-32 bg-slate-100 rounded-[4rem] border-2 border-dashed border-slate-200">
+                      <p className="font-black text-slate-400 uppercase tracking-[0.3em] italic text-sm">Je kookboek is nog leeg...</p>
+                      <button onClick={() => setView('home')} className="mt-8 text-orange-600 font-black uppercase text-[10px] tracking-widest hover:underline">Ga naar de generator</button>
+                    </div>
+                }
+              </section>
+            )}
+          </main>
+
+          {/* RECIPE MODAL */}
+          {selectedRecipe && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-slate-900/80 backdrop-blur-xl fade-in">
+              <div className="bg-white rounded-[3rem] md:rounded-[4rem] max-w-6xl w-full max-h-full overflow-y-auto relative p-6 md:p-16 shadow-2xl">
+                <button onClick={() => setSelectedRecipe(null)} className="absolute top-6 right-lute top-6 right-

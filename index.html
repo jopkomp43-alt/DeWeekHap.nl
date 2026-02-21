@@ -1,37 +1,50 @@
+<!DOCTYPE html>
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <!-- SEO Fundamentals -->
-  <title>De Weekhap - Slim weekmenu plannen met gezonde recepten</title>
-  <meta name="description" content="Gratis maaltijdplanner met weekmenu's, boodschappenlijsten en gezonde recepten. Bewaar favorieten en deel met community.">
-  
-  <!-- Open Graph -->
+  <title>De Weekhap | Jouw Slimme Maaltijdplanner</title>
+  <meta name="description" content="Gratis weekmenu planner met gezonde recepten, boodschappenlijsten en calorieën. Bewaar favorieten en deel met community.">
+  <meta name="robots" content="index,follow">
+  <meta name="keywords" content="weekmenu, maaltijdplanner, gezonde recepten, boodschappenlijst, meal prep">
+  <meta name="author" content="De Weekhap">
   <meta property="og:title" content="De Weekhap - Weekmenu Planner">
-  <meta property="og:description" content="Automatisch gezonde weekmenu's genereren.">
+  <meta property="og:description" content="Automatisch gezonde weekmenu's genereren met calorieën en boodschappenlijst.">
   <meta property="og:image" content="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200">
   <meta property="og:url" content="https://jouwusername.github.io/weekhap/">
-  
-  <!-- Favicon -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="nl_NL">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="De Weekhap - Weekmenu Planner">
+  <meta name="twitter:description" content="Gratis maaltijdplanner voor gezond eten.">
+  <meta name="twitter:image" content="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200">
+  <link rel="canonical" href="https://jouwusername.github.io/weekhap/">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
 
-  <!-- GOOGLE ANALYTICS 4 (PLAK HIER JOUW G-XXXXXXX ID) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_MEASUREMENT_ID"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "De Weekhap",
+    "url": "https://jouwusername.github.io/weekhap/",
+    "description": "Gratis maaltijdplanner die automatisch weekmenu's genereert met gezonde recepten.",
+    "applicationCategory": "FoodApplication",
+    "operatingSystem": "Web",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+    "inLanguage": "nl-NL"
+  }
+  </script>
+
+  <!-- Google Analytics 4 - Vervang G-YOUR_ID door jouw eigen ID -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_ID"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-YOUR_MEASUREMENT_ID', {
-      page_path: window.location.pathname,
-      transport_type: 'beacon'  // Betere performance
-    });
+    gtag('config', 'G-YOUR_ID');
   </script>
 
-  <!-- Preload critical CSS/JS -->
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900"></noscript>
-  
-  <!-- Tailwind, React, Babel, Lucide -->
+  <!-- Scripts in JUISTE volgorde (anders wit scherm) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -39,4 +52,36 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
+    body { font-family: 'Outfit', sans-serif; scroll-behavior: smooth; }
+    .animate-bounce-slow { animation: bounce 3s infinite; }
+    @keyframes bounce { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 selection:bg-orange-100">
+
+  <!-- Affiliate Disclosure -->
+  <div style="background:#fff7ed;border-bottom:1px solid #fed7aa;padding:8px 24px;">
+    <p style="font-size:11px;color:#9a3412;max-width:1200px;margin:0 auto;">
+      ℹ️ <strong>Affiliate disclosure:</strong> Sommige links zijn affiliate links. Bij aankoop via deze links ontvang ik een kleine commissie (kost jou niks extra).
+    </p>
+  </div>
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const Icon = ({ name, size = 20, className = "", fill = "none" }) => {
+      const ref = useRef(null);
+      useEffect(() => {
+        if (window.lucide && ref.current && ref.current.parentNode) {
+          window.lucide.createIcons({ nameAttr: 'data-lucide', root: ref.current.parentNode });
+        }
+      }, [name]);
+      return <i ref={ref} data-lucide={name} className={className} style={{ width: size, height: size, display: 'inline-block', fill: fill === 'currentColor' ? 'currentColor' : 'none' }}></i>;
+    };
+
+    const baseRecipes 

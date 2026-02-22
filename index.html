@@ -2,12 +2,12 @@
 <html lang="nl" itemscope itemtype="https://schema.org/WebApplication">
 <head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-X82QN2TJXS"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-P5CDT5XWQK"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-X82QN2TJXS');
+  gtag('config', 'G-P5CDT5XWQK');
 </script>
 
 <!-- Essential Meta Tags -->
@@ -210,6 +210,7 @@ function App() {
   const generateWeekMenu = async () => {
     setLoading(true);
     setError(null);
+    console.log('🔥 WeekHap: Start genereren weekmenu...');
 
     try {
       const days = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
@@ -217,6 +218,7 @@ function App() {
       
       for (let i = 0; i < days.length; i++) {
         try {
+          console.log(`📡 Fetching recept voor ${days[i]}...`);
           const response = await fetch(`${MEALDB_API_URL}/random.php`);
           
           if (!response.ok) {
@@ -224,9 +226,10 @@ function App() {
           }
           
           const data = await response.json();
+          console.log(`✅ ${days[i]} data:`, data);
           
           if (!data || !data.meals || !data.meals[0]) {
-            console.error('Invalid API response format', data);
+            console.error('❌ Invalid API response format', data);
             continue;
           }
           
@@ -259,23 +262,27 @@ function App() {
             source: 'api'
           });
           
+          console.log(`✅ Recept toegevoegd: ${meal.strMeal}`);
+          
           // Kleine pauze tussen requests
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 200));
           
         } catch (fetchError) {
-          console.error(`Error fetching recipe for ${days[i]}:`, fetchError);
+          console.error(`❌ Error fetching recipe for ${days[i]}:`, fetchError);
         }
       }
       
+      console.log(`🎉 Totaal ${recipes.length} recepten opgehaald!`);
+      
       if (recipes.length === 0) {
-        throw new Error('Geen recepten opgehaald. Probeer het later opnieuw.');
+        throw new Error('Geen recepten opgehaald. Check je internetverbinding en probeer opnieuw.');
       }
       
       setGeneratedMenu(recipes);
       setTimeout(() => window.scrollTo({ top: 600, behavior: 'smooth' }), 100);
       
     } catch (err) {
-      console.error('API error:', err);
+      console.error('❌ API error:', err);
       setError(err.message || 'Kon geen recepten ophalen. Probeer het opnieuw.');
     } finally {
       setLoading(false);

@@ -137,43 +137,70 @@ function App() {
 
     try {
       const days = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
-      const recipePromises = days.map(async (day) => {
-        const response = await fetch(`${MEALDB_API_URL}/random.php`);
-        const data = await response.json();
-        const meal = data.meals[0];
-        
-        const ingredients = [];
-        for (let i = 1; i <= 20; i++) {
-          const ingredient = meal[`strIngredient${i}`];
-          const measure = meal[`strMeasure${i}`];
-          if (ingredient && ingredient.trim()) {
-            ingredients.push(`${measure} ${ingredient}`.trim());
+      const recipes = [];
+      
+      for (let i = 0; i < days.length; i++) {
+        try {
+          const response = await fetch(`${MEALDB_API_URL}/random.php`);
+          
+          if (!response.ok) {
+            throw new Error(`API responded with status ${response.status}`);
           }
+          
+          const data = await response.json();
+          
+          if (!data || !data.meals || !data.meals[0]) {
+            console.error('Invalid API response format', data);
+            continue;
+          }
+          
+          const meal = data.meals[0];
+          
+          const ingredients = [];
+          for (let j = 1; j <= 20; j++) {
+            const ingredient = meal[`strIngredient${j}`];
+            const measure = meal[`strMeasure${j}`];
+            if (ingredient && ingredient.trim()) {
+              ingredients.push(`${measure} ${ingredient}`.trim());
+            }
+          }
+          
+          const instructions = meal.strInstructions
+            ? meal.strInstructions
+                .split(/\r?\n/)
+                .filter(line => line.trim().length > 0)
+                .map(line => line.trim()).join('\n')
+            : 'Bereidingswijze niet beschikbaar.';
+          
+          recipes.push({
+            id: meal.idMeal,
+            title: meal.strMeal,
+            category: meal.strCategory,
+            ingredients: ingredients.join('\n'),
+            instructions: instructions,
+            image: meal.strMealThumb,
+            day: days[i],
+            source: 'api'
+          });
+          
+          // Kleine pauze tussen requests
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+        } catch (fetchError) {
+          console.error(`Error fetching recipe for ${days[i]}:`, fetchError);
         }
-        
-        const instructions = meal.strInstructions
-          .split(/\r?\n/)
-          .filter(line => line.trim().length > 0)
-          .map(line => line.trim()).join('\n');
-        
-        return {
-          id: meal.idMeal,
-          title: meal.strMeal,
-          category: meal.strCategory,
-          ingredients: ingredients.join('\n'),
-          instructions: instructions,
-          image: meal.strMealThumb,
-          day: day,
-          source: 'api'
-        };
-      });
-
-      const apiRecipes = await Promise.all(recipePromises);
-      setGeneratedMenu(apiRecipes);
+      }
+      
+      if (recipes.length === 0) {
+        throw new Error('Geen recepten opgehaald. Probeer het later opnieuw.');
+      }
+      
+      setGeneratedMenu(recipes);
       setTimeout(() => window.scrollTo({ top: 600, behavior: 'smooth' }), 100);
+      
     } catch (err) {
       console.error('API error:', err);
-      setError('Kon geen recepten ophalen. Probeer het opnieuw.');
+      setError(err.message || 'Kon geen recepten ophalen. Probeer het opnieuw.');
     } finally {
       setLoading(false);
     }

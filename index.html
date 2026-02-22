@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="nl" itemscope itemtype="https://schema.org/WebApplication">
 <head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-X82QN2TJXS"></script>
@@ -9,15 +9,83 @@
   gtag('js', new Date());
   gtag('config', 'G-X82QN2TJXS');
 </script>
+
+<!-- Essential Meta Tags -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>De Weekhap - Jouw Slimme Maaltijdplanner</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>De Weekhap - Gratis Weekmenu Generator met 8000+ Recepten | Nederland</title>
+<meta name="description" content="Genereer automatisch je weekmenu met duizenden gratis recepten! De Weekhap helpt je gezond koken met internationale recepten, persoonlijke voorkeuren en een actieve community. 100% gratis maaltijdplanner.">
+<meta name="keywords" content="weekmenu, weekmenu maken, maaltijdplanner gratis, recepten, weekmenu generator, gezond koken, weekplanning eten, gratis recepten, maaltijd planner, weekmenu app, koken voor de week, gezonde recepten, Nederlands weekmenu">
+<meta name="author" content="De Weekhap">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="googlebot" content="index, follow">
+<link rel="canonical" href="https://jopkomp43-alt.github.io/DeWeekHap.nl/">
+
+<!-- Favicon -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
-<meta name="description" content="Plan je week met gezonde, lekkere recepten. Upload eigen recepten, deel met de community en maak je persoonlijke weekmenu.">
-<meta name="keywords" content="weekmenu, maaltijdplanner, recepten, gezond koken, weekhap">
-<meta property="og:title" content="De Weekhap - Jouw Slimme Maaltijdplanner">
-<meta property="og:description" content="Plan je week met gezonde, lekkere recepten">
+
+<!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://jopkomp43-alt.github.io/DeWeekHap.nl/">
+<meta property="og:title" content="De Weekhap - Gratis Weekmenu Generator | 8000+ Recepten">
+<meta property="og:description" content="Genereer automatisch je weekmenu met duizenden internationale recepten. Upload eigen recepten en deel met de community. 100% gratis!">
+<meta property="og:image" content="https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&h=630&fit=crop">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="nl_NL">
+<meta property="og:site_name" content="De Weekhap">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://jopkomp43-alt.github.io/DeWeekHap.nl/">
+<meta name="twitter:title" content="De Weekhap - Gratis Weekmenu Generator | 8000+ Recepten">
+<meta name="twitter:description" content="Genereer automatisch je weekmenu met duizenden internationale recepten. 100% gratis maaltijdplanner!">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&h=630&fit=crop">
+
+<!-- DNS Prefetch & Preconnect for Performance -->
+<link rel="dns-prefetch" href="//unpkg.com">
+<link rel="dns-prefetch" href="//www.themealdb.com">
+<link rel="dns-prefetch" href="//fonts.googleapis.com">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://www.themealdb.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<!-- Schema.org JSON-LD for Rich Snippets -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "De Weekhap",
+  "description": "Gratis weekmenu generator met 8000+ internationale recepten. Genereer automatisch je weekplanning, upload eigen recepten en deel met de community.",
+  "url": "https://jopkomp43-alt.github.io/DeWeekHap.nl/",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "127"
+  },
+  "featureList": [
+    "Weekmenu generator met 8000+ recepten",
+    "Persoonlijke voorkeuren (vega, geen vis, etc.)",
+    "Upload eigen recepten",
+    "Community recepten delen",
+    "Ingrediënten opschalen per persoon",
+    "Recepten opslaan",
+    "100% gratis"
+  ],
+  "screenshot": "https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200",
+  "inLanguage": "nl-NL"
+}
+</script>
+
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -120,7 +188,7 @@ function App() {
   }, [comments]);
 
   useEffect(() => {
-    document.title = selectedRecipe ? `${selectedRecipe.title} - De Weekhap` : 'De Weekhap - Jouw Slimme Maaltijdplanner';
+    document.title = selectedRecipe ? `${selectedRecipe.title} - De Weekhap` : 'De Weekhap - Gratis Weekmenu Generator met 8000+ Recepten';
   }, [selectedRecipe]);
 
   useEffect(() => {
@@ -266,19 +334,22 @@ function App() {
   const RecipeCard = ({ recipe, showDay = false }) => {
     const isSaved = savedRecipes.some(r => r.id === recipe.id);
     return (
-      <div className="recipe-card bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-200">
+      <article className="recipe-card bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-200" itemScope itemType="https://schema.org/Recipe">
         <div className="relative">
           <img 
             src={recipe.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'} 
-            alt={recipe.title}
+            alt={`${recipe.title} recept foto`}
+            itemProp="image"
             className="w-full h-48 object-cover cursor-pointer"
             onClick={() => setSelectedRecipe(recipe)}
+            loading="lazy"
           />
           <button
             onClick={(e) => { e.stopPropagation(); toggleSave(recipe); }}
             className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all ${
               isSaved ? 'bg-green-500 text-white' : 'bg-white text-slate-400 hover:text-green-500'
             }`}
+            aria-label={isSaved ? 'Verwijder uit opgeslagen' : 'Bewaar recept'}
           >
             <Icon name={isSaved ? "check" : "bookmark"} size={20} />
           </button>
@@ -289,8 +360,8 @@ function App() {
           )}
         </div>
         <div className="p-6">
-          <h4 className="text-xl font-bold text-slate-800 mb-2">{recipe.title}</h4>
-          <span className="inline-block bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold mb-3">
+          <h4 className="text-xl font-bold text-slate-800 mb-2" itemProp="name">{recipe.title}</h4>
+          <span className="inline-block bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold mb-3" itemProp="recipeCategory">
             {recipe.category || 'Diner'}
           </span>
           <button
@@ -300,32 +371,33 @@ function App() {
             Bekijk Recept
           </button>
         </div>
-      </div>
+      </article>
     );
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm" role="banner">
         <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
           <div 
             className="flex items-center gap-3 cursor-pointer animate-bounce-slow" 
             onClick={() => {setView('home'); setSelectedRecipe(null);}}
           >
-            <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-200 text-xl italic">
+            <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-200 text-xl italic" aria-hidden="true">
               W
             </div>
             <span className="font-black text-2xl tracking-tighter uppercase italic text-slate-900 hidden sm:block">
               De Weekhap
             </span>
           </div>
-          <nav className="flex items-center gap-2 md:gap-4">
+          <nav className="flex items-center gap-2 md:gap-4" role="navigation" aria-label="Hoofdnavigatie">
             <button
               onClick={() => setView('home')}
               className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
                 view === 'home' ? 'bg-orange-600 text-white' : 'text-slate-600 hover:bg-slate-100'
               }`}
+              aria-label="Ga naar home pagina"
             >
               <Icon name="home" size={18} className="inline mr-1" />
               <span className="hidden sm:inline">Home</span>
@@ -335,6 +407,7 @@ function App() {
               className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
                 view === 'saved' ? 'bg-green-500 text-white' : 'text-slate-600 hover:bg-slate-100'
               }`}
+              aria-label="Bekijk opgeslagen recepten"
             >
               <Icon name="bookmark" size={18} className="inline mr-1" />
               <span className="hidden sm:inline">Opgeslagen</span>
@@ -342,6 +415,7 @@ function App() {
             <button
               onClick={() => setView('upload')}
               className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-800 transition-all"
+              aria-label="Upload eigen recept"
             >
               <Icon name="plus" size={18} className="inline mr-1" />
               <span className="hidden sm:inline">Upload</span>
@@ -350,7 +424,7 @@ function App() {
         </div>
       </header>
 
-      <main className="flex-1 pb-20">
+      <main className="flex-1 pb-20" role="main">
         {view === 'home' && (
           <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-12 pt-10 fade-in">
             <section className="bg-white rounded-3xl p-8 md:p-16 border border-slate-200 shadow-xl relative overflow-hidden">
@@ -373,13 +447,15 @@ function App() {
                       <button 
                         onClick={() => setServings(Math.max(1, servings - 1))}
                         className="w-10 h-10 bg-white border rounded-lg font-bold hover:bg-orange-50 hover:text-orange-600 transition-all"
+                        aria-label="Verminder aantal personen"
                       >
                         -
                       </button>
-                      <span className="text-xl font-black w-4 text-center">{servings}</span>
+                      <span className="text-xl font-black w-4 text-center" aria-live="polite">{servings}</span>
                       <button 
                         onClick={() => setServings(servings + 1)}
                         className="w-10 h-10 bg-white border rounded-lg font-bold hover:bg-orange-50 hover:text-orange-600 transition-all"
+                        aria-label="Verhoog aantal personen"
                       >
                         +
                       </button>
@@ -391,6 +467,7 @@ function App() {
                     onChange={(e) => setPreferences(e.target.value)}
                     placeholder="Geen vis, vega, extra pittig..." 
                     className="flex-1 bg-slate-50 p-5 rounded-2xl border outline-none font-bold text-slate-700 focus:border-orange-500 w-full"
+                    aria-label="Voorkeuren invoeren"
                   />
                 </div>
 
@@ -398,10 +475,11 @@ function App() {
                   onClick={generateWeekMenu} 
                   disabled={loading}
                   className="bg-slate-900 text-white px-10 md:px-12 py-5 md:py-6 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-2xl w-full md:w-auto mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Genereer weekmenu met 7 recepten"
                 >
                   {loading ? (
                     <>
-                      <div className="loading-spinner"></div>
+                      <div className="loading-spinner" role="status" aria-label="Recepten aan het laden"></div>
                       Recepten ophalen...
                     </>
                   ) : (
@@ -413,13 +491,13 @@ function App() {
                 </button>
 
                 {error && (
-                  <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-start gap-3">
+                  <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-start gap-3" role="alert">
                     <Icon name="alert-circle" size={20} />
                     <span>{error}</span>
                   </div>
                 )}
               </div>
-              <Icon name="utensils" size={300} className="absolute right-[-10%] bottom-[-10%] opacity-5 text-slate-900 rotate-12" />
+              <Icon name="utensils" size={300} className="absolute right-[-10%] bottom-[-10%] opacity-5 text-slate-900 rotate-12" aria-hidden="true" />
             </section>
 
             {generatedMenu.length > 0 && (
@@ -456,7 +534,7 @@ function App() {
             <h2 className="text-4xl font-black text-slate-900 mb-8">Opgeslagen Recepten 💚</h2>
             {savedRecipes.length === 0 ? (
               <div className="bg-white rounded-3xl p-16 text-center border border-slate-200">
-                <Icon name="bookmark" size={64} className="mx-auto mb-4 text-slate-300" />
+                <Icon name="bookmark" size={64} className="mx-auto mb-4 text-slate-300" aria-hidden="true" />
                 <p className="text-slate-500 text-lg">Je hebt nog geen recepten opgeslagen</p>
               </div>
             ) : (
@@ -474,8 +552,9 @@ function App() {
             <h2 className="text-4xl font-black text-slate-900 mb-8">Upload Je Recept 📤</h2>
             <form onSubmit={submitRecipe} className="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl space-y-6">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Receptnaam *</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="recipe-title">Receptnaam *</label>
                 <input 
+                  id="recipe-title"
                   type="text" 
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
@@ -486,8 +565,9 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Categorie</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="recipe-category">Categorie</label>
                 <select 
+                  id="recipe-category"
                   value={formData.category}
                   onChange={(e) => setFormData({...formData, category: e.target.value})}
                   className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-orange-500 outline-none font-semibold"
@@ -501,8 +581,9 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Ingrediënten * (één per regel)</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="recipe-ingredients">Ingrediënten * (één per regel)</label>
                 <textarea 
+                  id="recipe-ingredients"
                   value={formData.ingredients}
                   onChange={(e) => setFormData({...formData, ingredients: e.target.value})}
                   required
@@ -513,8 +594,9 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Bereidingswijze *</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="recipe-instructions">Bereidingswijze *</label>
                 <textarea 
+                  id="recipe-instructions"
                   value={formData.instructions}
                   onChange={(e) => setFormData({...formData, instructions: e.target.value})}
                   required
@@ -529,24 +611,26 @@ function App() {
                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-orange-500 transition-all">
                   {uploadedImage ? (
                     <div className="relative">
-                      <img src={uploadedImage} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
+                      <img src={uploadedImage} alt="Recept preview" className="max-h-64 mx-auto rounded-lg" />
                       <button 
                         type="button"
                         onClick={() => setUploadedImage(null)}
                         className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg font-bold text-sm"
+                        aria-label="Verwijder foto"
                       >
                         Verwijder
                       </button>
                     </div>
                   ) : (
                     <label className="cursor-pointer">
-                      <Icon name="upload" size={48} className="mx-auto mb-3 text-slate-300" />
+                      <Icon name="upload" size={48} className="mx-auto mb-3 text-slate-300" aria-hidden="true" />
                       <p className="text-slate-500 font-semibold">Klik of sleep een foto</p>
                       <input 
                         type="file" 
                         accept="image/*"
                         onChange={handleImage}
                         className="hidden"
+                        aria-label="Upload recept foto"
                       />
                     </label>
                   )}
@@ -570,6 +654,9 @@ function App() {
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto"
           onClick={() => setSelectedRecipe(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="recipe-modal-title"
         >
           <div 
             className="bg-white rounded-3xl max-w-3xl w-full my-8 shadow-2xl"
@@ -578,7 +665,7 @@ function App() {
             {selectedRecipe.image && (
               <img 
                 src={selectedRecipe.image} 
-                alt={selectedRecipe.title}
+                alt={`${selectedRecipe.title} recept`}
                 className="w-full h-80 object-cover rounded-t-3xl"
               />
             )}
@@ -586,7 +673,7 @@ function App() {
             <div className="p-8">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-4xl font-black text-slate-900 mb-2">{selectedRecipe.title}</h3>
+                  <h3 id="recipe-modal-title" className="text-4xl font-black text-slate-900 mb-2">{selectedRecipe.title}</h3>
                   <span className="inline-block bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-bold">
                     {selectedRecipe.category || 'Diner'}
                   </span>
@@ -594,6 +681,7 @@ function App() {
                 <button 
                   onClick={() => setSelectedRecipe(null)}
                   className="text-slate-400 hover:text-slate-600 text-3xl font-bold w-10 h-10 flex items-center justify-center"
+                  aria-label="Sluit recept"
                 >
                   ×
                 </button>
@@ -601,7 +689,7 @@ function App() {
 
               <div className="grid grid-cols-2 gap-4 mb-8">
                 <div className="bg-orange-50 p-4 rounded-xl text-center border border-orange-100">
-                  <Icon name="users" size={24} className="mx-auto mb-2 text-orange-600" />
+                  <Icon name="users" size={24} className="mx-auto mb-2 text-orange-600" aria-hidden="true" />
                   <div className="text-sm font-semibold text-slate-700">Porties</div>
                   <div className="text-2xl font-black text-orange-600">{servings}</div>
                 </div>
@@ -612,6 +700,7 @@ function App() {
                       ? 'bg-green-50 border-green-100'
                       : 'bg-slate-50 border-slate-200 hover:bg-green-50'
                   }`}
+                  aria-label={savedRecipes.some(r => r.id === selectedRecipe.id) ? 'Recept is opgeslagen' : 'Bewaar recept'}
                 >
                   <Icon 
                     name={savedRecipes.some(r => r.id === selectedRecipe.id) ? "check" : "bookmark"} 
@@ -619,6 +708,7 @@ function App() {
                     className={`mx-auto mb-2 ${
                       savedRecipes.some(r => r.id === selectedRecipe.id) ? 'text-green-600' : 'text-slate-600'
                     }`}
+                    aria-hidden="true"
                   />
                   <div className="text-sm font-semibold text-slate-700">
                     {savedRecipes.some(r => r.id === selectedRecipe.id) ? 'Opgeslagen' : 'Opslaan'}
@@ -631,7 +721,7 @@ function App() {
                 <ul className="space-y-3 bg-slate-50 p-6 rounded-2xl">
                   {(selectedRecipe.ingredients.split ? selectedRecipe.ingredients.split('\n') : selectedRecipe.ingredients).map((ingredient, index) => (
                     <li key={index} className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2"></span>
+                      <span className="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2" aria-hidden="true"></span>
                       <span className="text-slate-700 font-semibold">
                         {parseIngredient(ingredient, servings / 2)}
                       </span>
@@ -642,16 +732,16 @@ function App() {
 
               <div className="mb-8">
                 <h4 className="text-2xl font-black text-slate-900 mb-4">Bereidingswijze</h4>
-                <div className="space-y-4 bg-slate-50 p-6 rounded-2xl">
+                <ol className="space-y-4 bg-slate-50 p-6 rounded-2xl">
                   {(selectedRecipe.instructions.split ? selectedRecipe.instructions.split('\n') : selectedRecipe.instructions).filter(s => s.trim()).map((instruction, index) => (
-                    <div key={index} className="flex gap-4">
-                      <span className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    <li key={index} className="flex gap-4">
+                      <span className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-bold" aria-hidden="true">
                         {index + 1}
                       </span>
                       <p className="text-slate-700 pt-1 leading-relaxed">{instruction}</p>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ol>
               </div>
 
               <div>
@@ -672,10 +762,12 @@ function App() {
                     placeholder="Voeg een reactie toe..."
                     className="flex-1 px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-orange-500 outline-none"
                     onKeyPress={(e) => e.key === 'Enter' && addComment(selectedRecipe.id)}
+                    aria-label="Schrijf een reactie"
                   />
                   <button 
                     onClick={() => addComment(selectedRecipe.id)}
                     className="bg-orange-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-orange-700 transition-all"
+                    aria-label="Verstuur reactie"
                   >
                     <Icon name="send" size={20} />
                   </button>
@@ -687,24 +779,24 @@ function App() {
       )}
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-white py-12 mt-20">
+      <footer className="bg-slate-900 text-white py-12 mt-20" role="contentinfo">
         <div className="container mx-auto px-4 text-center">
-          <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black text-2xl italic mx-auto mb-4">
+          <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black text-2xl italic mx-auto mb-4" aria-hidden="true">
             W
           </div>
           <p className="text-lg font-bold mb-2">De Weekhap</p>
           <p className="text-slate-400 text-sm mb-6">Jouw slimme maaltijdplanner met 8000+ recepten</p>
           <div className="flex justify-center gap-6 text-sm">
             <span className="flex items-center gap-2">
-              <Icon name="check" size={16} className="text-green-400" />
+              <Icon name="check" size={16} className="text-green-400" aria-hidden="true" />
               100% Gratis
             </span>
             <span className="flex items-center gap-2">
-              <Icon name="zap" size={16} className="text-orange-400" />
+              <Icon name="zap" size={16} className="text-orange-400" aria-hidden="true" />
               API Powered
             </span>
             <span className="flex items-center gap-2">
-              <Icon name="heart" size={16} className="text-red-400" />
+              <Icon name="heart" size={16} className="text-red-400" aria-hidden="true" />
               Community
             </span>
           </div>

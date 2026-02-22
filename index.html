@@ -4,32 +4,73 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>De Weekhap - Jouw Slimme Maaltijdplanner</title>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+<meta name="description" content="Plan je week met gezonde, lekkere recepten. Upload eigen recepten, deel met de community en maak je persoonlijke weekmenu.">
+<meta name="keywords" content="weekmenu, maaltijdplanner, recepten, gezond koken, weekhap">
+<meta property="og:title" content="De Weekhap - Jouw Slimme Maaltijdplanner">
+<meta property="og:description" content="Plan je week met gezonde, lekkere recepten">
+<meta property="og:type" content="website">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
-<style>@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');body{font-family:'Outfit',sans-serif;scroll-behavior:smooth;}.animate-bounce-slow{animation:bounce 3s infinite;}@keyframes bounce{0%,100%{transform:translateY(-5px);}50%{transform:translateY(0);}}.fade-in{animation:fadeIn 0.5s ease-in-out;}@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
+body { 
+  font-family: 'Outfit', sans-serif; 
+  scroll-behavior: smooth;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+.animate-bounce-slow { animation: bounce 3s infinite; }
+@keyframes bounce { 
+  0%, 100% { transform: translateY(-5px); } 
+  50% { transform: translateY(0); } 
+}
+.recipe-card {
+  transition: all 0.3s ease;
+}
+.recipe-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+.fade-in { animation: fadeIn 0.5s ease-in-out; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.loading-spinner {
+  border: 4px solid rgba(0,0,0,0.1);
+  border-top: 4px solid #ea580c;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
 </head>
 <body class="bg-slate-50 text-slate-900 selection:bg-orange-100">
 <div id="root"></div>
+
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
-// Lucide Icon component
-const Icon = ({ name, size = 20, className = '', fill = 'none' }) => {
+// TheMealDB API configuratie
+const MEALDB_API_URL = 'https://www.themealdb.com/api/json/v1/1';
+
+// Icon component
+const Icon = ({ name, size = 20, className = '' }) => {
   const iconRef = useRef(null);
   useEffect(() => {
     if (window.lucide && iconRef.current) {
-      window.lucide.createIcons({
-        name: window.lucide.icons[name],
-        nameAttr: 'data-lucide',
-        root: iconRef.current.parentNode,
-        ...name
-      });
+      window.lucide.createIcons();
     }
   }, [name]);
-  return <i ref={iconRef} data-lucide={name} className={className} style={{ width: size, height: size, fill: fill === 'currentColor' ? 'currentColor' : 'none' }} />;
+  return <i ref={iconRef} data-lucide={name} className={className} style={{ width: size, height: size }} />;
 };
 
 function App() {
@@ -45,21 +86,40 @@ function App() {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [preferences, setPreferences] = useState('');
   const [servings, setServings] = useState(2);
-  const [noResultsError, setNoResultsError] = useState(false);
-  const [formData, setFormData] = useState({ title: '', category: 'Diner', ingredients: '', instructions: '' });
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({ 
+    title: '', 
+    category: 'Diner', 
+    ingredients: '', 
+    instructions: '' 
+  });
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [comments, setComments] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('weekhap-comments')) || {}; } catch { return {}; }
+  });
+  const [newComment, setNewComment] = useState('');
 
-  // Opslaan in localStorage
   useEffect(() => {
-    try { localStorage.setItem('weekhap-saved', JSON.stringify(savedRecipes)); } catch(e) { console.error('Kon savedRecipes niet opslaan in localStorage', e); }
+    try { localStorage.setItem('weekhap-saved', JSON.stringify(savedRecipes)); } catch(e) {}
   }, [savedRecipes]);
+
   useEffect(() => {
-    try { localStorage.setItem('weekhap-community', JSON.stringify(communityRecipes)); } catch(e) { console.error('Kon communityRecipes niet opslaan in localStorage', e); }
+    try { localStorage.setItem('weekhap-community', JSON.stringify(communityRecipes)); } catch(e) {}
   }, [communityRecipes]);
+
+  useEffect(() => {
+    try { localStorage.setItem('weekhap-comments', JSON.stringify(comments)); } catch(e) {}
+  }, [comments]);
 
   useEffect(() => {
     document.title = selectedRecipe ? `${selectedRecipe.title} - De Weekhap` : 'De Weekhap - Jouw Slimme Maaltijdplanner';
   }, [selectedRecipe]);
+
+  useEffect(() => {
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  }, [view, generatedMenu, selectedRecipe]);
 
   const parseIngredient = (ingStr, factor) => {
     const match = ingStr.match(/^([0-9,.,\s]+)(.*)$/);
@@ -71,42 +131,52 @@ function App() {
     return ingStr;
   };
 
-  // ... (generateWeekMenu etc. komen in deel 3)
-</script>
-<!-- Header Preview -->
-<div class="min-h-screen flex flex-col">
-  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 px-6 h-20 flex items-center justify-between shadow-sm">
-    <div class="flex items-center gap-3 cursor-pointer" onClick={() => {setView('home'); setSelectedRecipe(null);}}>
-      <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-200 animate-bounce-slow text-xl italic">W</div>
-      <span class="font-black text-2xl tracking-tighter uppercase italic text-slate-900 hidden sm:block">De Weekhap</span>
-    </div>
-  </header>
-</div>
-  const generateWeekMenu = () => {
-    setLoading(true); setNoResultsError(false);
-    setTimeout(() => {
-      const baseRecipes = [
-        { id: 'b1', title: 'Romige Pasta Pesto', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800', category: 'Pasta', ingredients: '200g Penne\n2 el Pesto\n200g Kipstukjes\n100g Cherrytomaatjes', instructions: 'Kook pasta. Bak kip. Meng alles met pesto.' },
-        { id: 'b2', title: 'Mexicaanse Taco Party', image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800', category: 'Mexicaans', ingredients: '4 Taco schelpen\n250g Gehakt\n100g Sla', instructions: 'Bak gehakt. Vul de taco schelpen.' },
-        { id: 'b3', title: 'Gezonde Buddha Bowl', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800', category: 'Salade', ingredients: '150g Quinoa\n1 Avocado\n100g Spinazie', instructions: 'Kook quinoa. Snijd avocado. Mix alles.' },
-        // Voeg meer baseRecipes toe zoals in origineel...
-      ];
-      const allPossible = [...baseRecipes, ...communityRecipes];
-      const dislikes = preferences.toLowerCase().split(',').filter(w => w.length > 2 && !['geen', 'zonder', 'extra'].includes(w));
-      const filtered = allPossible.filter(r => {
-        const text = (r.title + r.ingredients + r.category).toLowerCase();
-        return !dislikes.some(bad => text.includes(bad));
+  const generateWeekMenu = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const days = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
+      const recipePromises = days.map(async (day) => {
+        const response = await fetch(`${MEALDB_API_URL}/random.php`);
+        const data = await response.json();
+        const meal = data.meals[0];
+        
+        const ingredients = [];
+        for (let i = 1; i <= 20; i++) {
+          const ingredient = meal[`strIngredient${i}`];
+          const measure = meal[`strMeasure${i}`];
+          if (ingredient && ingredient.trim()) {
+            ingredients.push(`${measure} ${ingredient}`.trim());
+          }
+        }
+        
+        const instructions = meal.strInstructions
+          .split(/\r?\n/)
+          .filter(line => line.trim().length > 0)
+          .map(line => line.trim()).join('\n');
+        
+        return {
+          id: meal.idMeal,
+          title: meal.strMeal,
+          category: meal.strCategory,
+          ingredients: ingredients.join('\n'),
+          instructions: instructions,
+          image: meal.strMealThumb,
+          day: day,
+          source: 'api'
+        };
       });
-      if (filtered.length < 7) {
-        setNoResultsError(true);
-        setGeneratedMenu([]);
-      } else {
-        const shuffled = [...filtered].sort(() => 0.5 - Math.random());
-        setGeneratedMenu(shuffled.slice(0, 7));
-        setTimeout(() => window.scrollTo({ top: 600, behavior: 'smooth' }), 100);
-      }
+
+      const apiRecipes = await Promise.all(recipePromises);
+      setGeneratedMenu(apiRecipes);
+      setTimeout(() => window.scrollTo({ top: 600, behavior: 'smooth' }), 100);
+    } catch (err) {
+      console.error('API error:', err);
+      setError('Kon geen recepten ophalen. Probeer het opnieuw.');
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   const handleImage = (e) => {
@@ -121,11 +191,17 @@ function App() {
   const submitRecipe = (e) => {
     e.preventDefault();
     if (!uploadedImage) { alert('Voeg een foto toe!'); return; }
-    const newRecipe = { ...formData, id: 'c' + Date.now(), image: uploadedImage };
+    const newRecipe = { 
+      ...formData, 
+      id: 'c' + Date.now(), 
+      image: uploadedImage,
+      source: 'community'
+    };
     setCommunityRecipes([newRecipe, ...communityRecipes]);
     setView('home');
     setFormData({ title: '', category: 'Diner', ingredients: '', instructions: '' });
     setUploadedImage(null);
+    alert('Recept toegevoegd! 🎉');
   };
 
   const toggleSave = (recipe) => {
@@ -137,39 +213,477 @@ function App() {
     }
   };
 
-  // Render root
-  const root = ReactDOM.createRoot(document.getElementById('root'));
-  root.render(<App />);
-</script>
-<main class="flex-1 pb-20">
-  <div class="p-4 md:p-6 max-w-7xl mx-auto space-y-12 pt-10 fade-in">
-    <section class="bg-white rounded-3rem p-8 md:p-16 border border-slate-200 shadow-xl relative overflow-hidden flex flex-col items-center text-center">
-      <div class="relative z-10 max-w-3xl">
-        <span class="bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block">Maaltijdplanner GitHub Editie</span>
-        <h1 class="text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 leading-[0.9] uppercase tracking-tighter mb-8">
-          Plan Je <span class="text-orange-600 italic">Gezonde</span> Week.
-        </h1>
+  const addComment = (recipeId) => {
+    if (!newComment.trim()) return;
+    const recipeComments = comments[recipeId] || [];
+    const comment = {
+      id: Date.now(),
+      text: newComment,
+      date: new Date().toLocaleDateString('nl-NL')
+    };
+    setComments({
+      ...comments,
+      [recipeId]: [...recipeComments, comment]
+    });
+    setNewComment('');
+  };
+
+  const RecipeCard = ({ recipe, showDay = false }) => {
+    const isSaved = savedRecipes.some(r => r.id === recipe.id);
+    return (
+      <div className="recipe-card bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-200">
+        <div className="relative">
+          <img 
+            src={recipe.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'} 
+            alt={recipe.title}
+            className="w-full h-48 object-cover cursor-pointer"
+            onClick={() => setSelectedRecipe(recipe)}
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleSave(recipe); }}
+            className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all ${
+              isSaved ? 'bg-green-500 text-white' : 'bg-white text-slate-400 hover:text-green-500'
+            }`}
+          >
+            <Icon name={isSaved ? "check" : "bookmark"} size={20} />
+          </button>
+          {showDay && recipe.day && (
+            <div className="absolute top-3 left-3 bg-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
+              {recipe.day}
+            </div>
+          )}
+        </div>
+        <div className="p-6">
+          <h4 className="text-xl font-bold text-slate-800 mb-2">{recipe.title}</h4>
+          <span className="inline-block bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold mb-3">
+            {recipe.category || 'Diner'}
+          </span>
+          <button
+            onClick={() => setSelectedRecipe(recipe)}
+            className="w-full mt-2 bg-slate-900 text-white py-2 rounded-lg font-bold hover:bg-slate-800 transition-all"
+          >
+            Bekijk Recept
+          </button>
+        </div>
       </div>
-      <!-- Voedingsinstellingen -->
-      <div class="flex flex-col md:flex-row gap-4 justify-center items-center mb-10 w-full max-w-xl mx-auto">
-        <div class="bg-slate-50 p-4 rounded-2xl border flex items-center gap-6 w-full md:w-auto">
-          <span class="text-xs font-black uppercase text-slate-400 tracking-widest">Personen</span>
-          <div class="flex items-center gap-4">
-            <button onClick={() => setServings(Math.max(1, servings - 1))} class="w-10 h-10 bg-white border rounded-lg font-bold hover:bg-orange-50 hover:text-orange-600">-</button>
-            <span class="text-xl font-black w-4 text-center">{servings}</span>
-            <button onClick={() => setServings(servings + 1)} class="w-10 h-10 bg-white border rounded-lg font-bold hover:bg-orange-50 hover:text-orange-600">+</button>
+    );
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+        <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
+          <div 
+            className="flex items-center gap-3 cursor-pointer animate-bounce-slow" 
+            onClick={() => {setView('home'); setSelectedRecipe(null);}}
+          >
+            <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-200 text-xl italic">
+              W
+            </div>
+            <span className="font-black text-2xl tracking-tighter uppercase italic text-slate-900 hidden sm:block">
+              De Weekhap
+            </span>
+          </div>
+          <nav className="flex items-center gap-2 md:gap-4">
+            <button
+              onClick={() => setView('home')}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                view === 'home' ? 'bg-orange-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Icon name="home" size={18} className="inline mr-1" />
+              <span className="hidden sm:inline">Home</span>
+            </button>
+            <button
+              onClick={() => setView('saved')}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                view === 'saved' ? 'bg-green-500 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Icon name="bookmark" size={18} className="inline mr-1" />
+              <span className="hidden sm:inline">Opgeslagen</span>
+            </button>
+            <button
+              onClick={() => setView('upload')}
+              className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-800 transition-all"
+            >
+              <Icon name="plus" size={18} className="inline mr-1" />
+              <span className="hidden sm:inline">Upload</span>
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <main className="flex-1 pb-20">
+        {view === 'home' && (
+          <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-12 pt-10 fade-in">
+            <section className="bg-white rounded-3xl p-8 md:p-16 border border-slate-200 shadow-xl relative overflow-hidden">
+              <div className="relative z-10 max-w-3xl mx-auto text-center">
+                <span className="bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block">
+                  Maaltijdplanner met 8000+ Recepten
+                </span>
+                <h1 className="text-5xl md:text-7xl font-black text-slate-900 leading-tight uppercase tracking-tighter mb-6">
+                  Plan Je <span className="text-orange-600 italic">Gezonde</span> Week.
+                </h1>
+                <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
+                  Genereer automatisch een weekmenu met duizenden internationale recepten uit de TheMealDB database. 
+                  Upload je eigen favorieten en deel ze met de community!
+                </p>
+
+                <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-10 w-full max-w-xl mx-auto">
+                  <div className="bg-slate-50 p-4 rounded-2xl border flex items-center gap-6 w-full md:w-auto">
+                    <span className="text-xs font-black uppercase text-slate-400 tracking-widest">Personen</span>
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => setServings(Math.max(1, servings - 1))}
+                        className="w-10 h-10 bg-white border rounded-lg font-bold hover:bg-orange-50 hover:text-orange-600 transition-all"
+                      >
+                        -
+                      </button>
+                      <span className="text-xl font-black w-4 text-center">{servings}</span>
+                      <button 
+                        onClick={() => setServings(servings + 1)}
+                        className="w-10 h-10 bg-white border rounded-lg font-bold hover:bg-orange-50 hover:text-orange-600 transition-all"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <input 
+                    type="text" 
+                    value={preferences} 
+                    onChange={(e) => setPreferences(e.target.value)}
+                    placeholder="Geen vis, vega, extra pittig..." 
+                    className="flex-1 bg-slate-50 p-5 rounded-2xl border outline-none font-bold text-slate-700 focus:border-orange-500 w-full"
+                  />
+                </div>
+
+                <button 
+                  onClick={generateWeekMenu} 
+                  disabled={loading}
+                  className="bg-slate-900 text-white px-10 md:px-12 py-5 md:py-6 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-2xl w-full md:w-auto mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <div className="loading-spinner"></div>
+                      Recepten ophalen...
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="zap" size={24} />
+                      Genereer 7 Dagen
+                    </>
+                  )}
+                </button>
+
+                {error && (
+                  <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-start gap-3">
+                    <Icon name="alert-circle" size={20} />
+                    <span>{error}</span>
+                  </div>
+                )}
+              </div>
+              <Icon name="utensils" size={300} className="absolute right-[-10%] bottom-[-10%] opacity-5 text-slate-900 rotate-12" />
+            </section>
+
+            {generatedMenu.length > 0 && (
+              <section className="fade-in">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-4xl font-black text-slate-900">Jouw Weekmenu 📅</h2>
+                  <span className="bg-orange-100 text-orange-600 px-4 py-2 rounded-full text-sm font-bold">
+                    {generatedMenu.length} recepten
+                  </span>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {generatedMenu.map(recipe => (
+                    <RecipeCard key={recipe.id} recipe={recipe} showDay={true} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {communityRecipes.length > 0 && (
+              <section className="fade-in">
+                <h2 className="text-4xl font-black text-slate-900 mb-8">Community Recepten 👥</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {communityRecipes.slice(0, 6).map(recipe => (
+                    <RecipeCard key={recipe.id} recipe={recipe} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        )}
+
+        {view === 'saved' && (
+          <div className="p-4 md:p-6 max-w-7xl mx-auto pt-10 fade-in">
+            <h2 className="text-4xl font-black text-slate-900 mb-8">Opgeslagen Recepten 💚</h2>
+            {savedRecipes.length === 0 ? (
+              <div className="bg-white rounded-3xl p-16 text-center border border-slate-200">
+                <Icon name="bookmark" size={64} className="mx-auto mb-4 text-slate-300" />
+                <p className="text-slate-500 text-lg">Je hebt nog geen recepten opgeslagen</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {savedRecipes.map(recipe => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {view === 'upload' && (
+          <div className="p-4 md:p-6 max-w-3xl mx-auto pt-10 fade-in">
+            <h2 className="text-4xl font-black text-slate-900 mb-8">Upload Je Recept 📤</h2>
+            <form onSubmit={submitRecipe} className="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Receptnaam *</label>
+                <input 
+                  type="text" 
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  required
+                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-orange-500 outline-none font-semibold"
+                  placeholder="Bijv. Romige Pasta Carbonara"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Categorie</label>
+                <select 
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-orange-500 outline-none font-semibold"
+                >
+                  <option value="Ontbijt">Ontbijt</option>
+                  <option value="Lunch">Lunch</option>
+                  <option value="Diner">Diner</option>
+                  <option value="Snack">Snack</option>
+                  <option value="Dessert">Dessert</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Ingrediënten * (één per regel)</label>
+                <textarea 
+                  value={formData.ingredients}
+                  onChange={(e) => setFormData({...formData, ingredients: e.target.value})}
+                  required
+                  rows="6"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-orange-500 outline-none font-semibold resize-none"
+                  placeholder="200g pasta&#10;2 eieren&#10;100g spek"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Bereidingswijze *</label>
+                <textarea 
+                  value={formData.instructions}
+                  onChange={(e) => setFormData({...formData, instructions: e.target.value})}
+                  required
+                  rows="8"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-orange-500 outline-none font-semibold resize-none"
+                  placeholder="Stap voor stap instructies..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Foto * (upload of sleep bestand)</label>
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-orange-500 transition-all">
+                  {uploadedImage ? (
+                    <div className="relative">
+                      <img src={uploadedImage} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
+                      <button 
+                        type="button"
+                        onClick={() => setUploadedImage(null)}
+                        className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg font-bold text-sm"
+                      >
+                        Verwijder
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer">
+                      <Icon name="upload" size={48} className="mx-auto mb-3 text-slate-300" />
+                      <p className="text-slate-500 font-semibold">Klik of sleep een foto</p>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleImage}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              <button 
+                type="submit"
+                className="w-full bg-slate-900 text-white py-4 rounded-lg font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+              >
+                <Icon name="check" size={20} className="inline mr-2" />
+                Recept Toevoegen
+              </button>
+            </form>
+          </div>
+        )}
+      </main>
+
+      {/* Recipe Modal */}
+      {selectedRecipe && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={() => setSelectedRecipe(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl max-w-3xl w-full my-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {selectedRecipe.image && (
+              <img 
+                src={selectedRecipe.image} 
+                alt={selectedRecipe.title}
+                className="w-full h-80 object-cover rounded-t-3xl"
+              />
+            )}
+            
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-4xl font-black text-slate-900 mb-2">{selectedRecipe.title}</h3>
+                  <span className="inline-block bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-bold">
+                    {selectedRecipe.category || 'Diner'}
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setSelectedRecipe(null)}
+                  className="text-slate-400 hover:text-slate-600 text-3xl font-bold w-10 h-10 flex items-center justify-center"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-orange-50 p-4 rounded-xl text-center border border-orange-100">
+                  <Icon name="users" size={24} className="mx-auto mb-2 text-orange-600" />
+                  <div className="text-sm font-semibold text-slate-700">Porties</div>
+                  <div className="text-2xl font-black text-orange-600">{servings}</div>
+                </div>
+                <button
+                  onClick={() => toggleSave(selectedRecipe)}
+                  className={`p-4 rounded-xl text-center border transition-all ${
+                    savedRecipes.some(r => r.id === selectedRecipe.id)
+                      ? 'bg-green-50 border-green-100'
+                      : 'bg-slate-50 border-slate-200 hover:bg-green-50'
+                  }`}
+                >
+                  <Icon 
+                    name={savedRecipes.some(r => r.id === selectedRecipe.id) ? "check" : "bookmark"} 
+                    size={24} 
+                    className={`mx-auto mb-2 ${
+                      savedRecipes.some(r => r.id === selectedRecipe.id) ? 'text-green-600' : 'text-slate-600'
+                    }`}
+                  />
+                  <div className="text-sm font-semibold text-slate-700">
+                    {savedRecipes.some(r => r.id === selectedRecipe.id) ? 'Opgeslagen' : 'Opslaan'}
+                  </div>
+                </button>
+              </div>
+
+              <div className="mb-8">
+                <h4 className="text-2xl font-black text-slate-900 mb-4">Ingrediënten</h4>
+                <ul className="space-y-3 bg-slate-50 p-6 rounded-2xl">
+                  {(selectedRecipe.ingredients.split ? selectedRecipe.ingredients.split('\n') : selectedRecipe.ingredients).map((ingredient, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2"></span>
+                      <span className="text-slate-700 font-semibold">
+                        {parseIngredient(ingredient, servings / 2)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="mb-8">
+                <h4 className="text-2xl font-black text-slate-900 mb-4">Bereidingswijze</h4>
+                <div className="space-y-4 bg-slate-50 p-6 rounded-2xl">
+                  {(selectedRecipe.instructions.split ? selectedRecipe.instructions.split('\n') : selectedRecipe.instructions).filter(s => s.trim()).map((instruction, index) => (
+                    <div key={index} className="flex gap-4">
+                      <span className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        {index + 1}
+                      </span>
+                      <p className="text-slate-700 pt-1 leading-relaxed">{instruction}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-2xl font-black text-slate-900 mb-4">Reacties ({(comments[selectedRecipe.id] || []).length})</h4>
+                <div className="space-y-3 mb-4">
+                  {(comments[selectedRecipe.id] || []).map(comment => (
+                    <div key={comment.id} className="bg-slate-50 p-4 rounded-xl">
+                      <p className="text-slate-700 mb-2">{comment.text}</p>
+                      <span className="text-xs text-slate-400 font-semibold">{comment.date}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input 
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Voeg een reactie toe..."
+                    className="flex-1 px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-orange-500 outline-none"
+                    onKeyPress={(e) => e.key === 'Enter' && addComment(selectedRecipe.id)}
+                  />
+                  <button 
+                    onClick={() => addComment(selectedRecipe.id)}
+                    className="bg-orange-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-orange-700 transition-all"
+                  >
+                    <Icon name="send" size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <input type="text" value={preferences} onChange={(e) => setPreferences(e.target.value)}
-          placeholder="Geen vis, vega, extra pittig..." 
-          class="flex-1 bg-slate-50 p-5 rounded-2xl border-none outline-none font-bold text-slate-700 shadow-inner w-full" />
-      </div>
-      <button onClick={generateWeekMenu} disabled={loading}
-        class="bg-slate-900 text-white px-10 md:px-12 py-5 md:py-6 rounded-2rem font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-2xl w-full md:w-auto disabled:opacity-50 mx-auto">
-        {loading ? <Icon name="refresh-cw" className="animate-spin" /> : <Icon name="zap" />}
-        Genereer 7 Dagen
-      </button>
-      <Icon name="utensils" size={300} class="absolute left-[-5%] bottom-[-5%] opacity-3 text-slate-900 rotate-12" />
-    </section>
-  </div>
-</main>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white py-12 mt-20">
+        <div className="container mx-auto px-4 text-center">
+          <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black text-2xl italic mx-auto mb-4">
+            W
+          </div>
+          <p className="text-lg font-bold mb-2">De Weekhap</p>
+          <p className="text-slate-400 text-sm mb-6">Jouw slimme maaltijdplanner met 8000+ recepten</p>
+          <div className="flex justify-center gap-6 text-sm">
+            <span className="flex items-center gap-2">
+              <Icon name="check" size={16} className="text-green-400" />
+              100% Gratis
+            </span>
+            <span className="flex items-center gap-2">
+              <Icon name="zap" size={16} className="text-orange-400" />
+              API Powered
+            </span>
+            <span className="flex items-center gap-2">
+              <Icon name="heart" size={16} className="text-red-400" />
+              Community
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-6">
+            Recepten via TheMealDB API • Gebouwd met React
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

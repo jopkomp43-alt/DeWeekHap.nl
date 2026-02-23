@@ -127,7 +127,6 @@ body {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-/* Print Styles */
 @media print {
   header, footer, button, .no-print { display: none !important; }
   body { background: white; }
@@ -141,9 +140,65 @@ body {
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
-// TheMealDB API configuratie
-const MEALDB_API_URL = 'https://www.themealdb.com/api/json/v1/1';
-const MAX_RETRIES = 3;
+// 🔥 DEMO RECEPTEN DATABASE (Fallback als alle API's falen)
+const DEMO_RECIPES = [
+  {
+    id: 'demo1',
+    title: 'Spaghetti Carbonara',
+    category: 'Italiaans',
+    ingredients: '400g spaghetti\n200g spekblokjes\n4 eieren\n100g parmezaanse kaas\nZout en peper\n2 teentjes knoflook',
+    instructions: 'Kook de spaghetti volgens de verpakking.\nBak het spek krokant in een pan.\nKlop de eieren met geraspte kaas.\nMeng warme pasta met spek en ei-mengsel (geen vuur!).\nBreng op smaak met peper.',
+    image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=800'
+  },
+  {
+    id: 'demo2',
+    title: 'Klassieke Lasagne',
+    category: 'Italiaans',
+    ingredients: '12 lasagne vellen\n500g rundergehakt\n1 ui\n2 blikjes tomatensaus\n500ml bechamelsaus\n200g kaas\nOlijfolie',
+    instructions: 'Bak gehakt met ui en voeg tomatensaus toe.\nLaag lasagnevellen, gehaktsaus, bechamel.\nHerhaal lagen en eindig met kaas.\nBak 40 min op 180°C.',
+    image: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800'
+  },
+  {
+    id: 'demo3',
+    title: 'Thaise Rode Curry',
+    category: 'Aziatisch',
+    ingredients: '400ml kokosmelk\n3 el rode currypasta\n300g kip\n1 paprika\n100g taugé\nBasmati rijst',
+    instructions: 'Bak currypasta in pan.\nVoeg kokosmelk toe en breng aan de kook.\nVoeg kip en groenten toe, 15 min sudderen.\nServeer met rijst.',
+    image: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800'
+  },
+  {
+    id: 'demo4',
+    title: 'Gegrilde Zalm',
+    category: 'Vis',
+    ingredients: '4 zalmfilets\n2 citroenen\n3 el olijfolie\nDille\n500g aardappelen\nBroccoli',
+    instructions: 'Marineer zalm met citroen, olie en dille.\nGril 6-8 min per kant.\nKook aardappelen en stoom broccoli.\nServeer samen.',
+    image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800'
+  },
+  {
+    id: 'demo5',
+    title: 'Vegetarische Chili',
+    category: 'Vegetarisch',
+    ingredients: '2 blikken kidneybonen\n1 blik maïs\n2 paprikas\n1 ui\nKnoflook\nChilipoeder\nTomatenblokjes',
+    instructions: 'Fruit ui en knoflook.\nVoeg paprika, bonen, maïs en tomaat toe.\nKruid met chili en laat 20 min sudderen.\nServeer met rijst of tortilla chips.',
+    image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800'
+  },
+  {
+    id: 'demo6',
+    title: 'Kippensoep',
+    category: 'Soep',
+    ingredients: '500g kip\n2 liter bouillon\n3 wortels\n2 preistengels\nVermicelli\nPeterselie',
+    instructions: 'Kook kip in bouillon tot gaar.\nVoeg groenten toe en kook 15 min.\nVoeg vermicelli toe laatste 5 min.\nGarneer met peterselie.',
+    image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'
+  },
+  {
+    id: 'demo7',
+    title: 'Caesar Salade',
+    category: 'Salade',
+    ingredients: '1 krop romaine sla\n200g kip\n100g croutons\nParmezaan\nCaesar dressing\nAnsjovis (optioneel)',
+    instructions: 'Gril kipfilet en snijd in plakken.\nMeng sla met dressing.\nVoeg kip, croutons en kaas toe.\nGarneer met ansjovis.',
+    image: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800'
+  }
+];
 
 // Icon component
 const Icon = ({ name, size = 20, className = '' }) => {
@@ -156,13 +211,13 @@ const Icon = ({ name, size = 20, className = '' }) => {
   return <i ref={iconRef} data-lucide={name} className={className} style={{ width: size, height: size }} />;
 };
 
-// Storage helper met compressie voor grote data
+// Storage helper
 const storage = {
   set: (key, data) => {
     try {
       const str = JSON.stringify(data);
-      if (str.length > 50000) { // 50KB limiet
-        const compressed = data.slice(0, 20); // Houd alleen laatste 20 items
+      if (str.length > 50000) {
+        const compressed = data.slice(0, 20);
         localStorage.setItem(key, JSON.stringify(compressed));
       } else {
         localStorage.setItem(key, str);
@@ -224,7 +279,6 @@ function App() {
     }
   }, [view, generatedMenu, selectedRecipe]);
 
-  // ESC key to close modal
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape' && selectedRecipe) {
@@ -245,79 +299,89 @@ function App() {
     return ingStr;
   };
 
-  // Fetch met retry logica
-  const fetchWithRetry = async (url, retries = MAX_RETRIES) => {
-    for (let i = 0; i < retries; i++) {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
-      } catch (err) {
-        if (i === retries - 1) throw err;
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+  // 🚀 MULTI-API SYSTEEM met fallback naar demo data
+  const fetchRecipeFromTheMealDB = async () => {
+    try {
+      const response = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
+      if (!response.ok) throw new Error('TheMealDB failed');
+      const data = await response.json();
+      
+      if (!data || !data.meals || !data.meals[0]) throw new Error('No meal data');
+      
+      const meal = data.meals[0];
+      const ingredients = [];
+      for (let j = 1; j <= 20; j++) {
+        const ingredient = meal[`strIngredient${j}`];
+        const measure = meal[`strMeasure${j}`];
+        if (ingredient && ingredient.trim()) {
+          ingredients.push(`${measure} ${ingredient}`.trim());
+        }
       }
+      
+      const instructions = meal.strInstructions
+        ? meal.strInstructions.split(/\r?\n/).filter(line => line.trim().length > 0).map(line => line.trim()).join('\n')
+        : 'Bereidingswijze niet beschikbaar.';
+      
+      return {
+        id: meal.idMeal,
+        title: meal.strMeal,
+        category: meal.strCategory,
+        ingredients: ingredients.join('\n'),
+        instructions: instructions,
+        image: meal.strMealThumb,
+        source: 'api'
+      };
+    } catch (err) {
+      console.warn('TheMealDB failed:', err);
+      return null;
     }
   };
 
   const generateWeekMenu = async () => {
     setLoading(true);
     setError(null);
+    console.log('🔥 Start generating weekmenu...');
 
     try {
       const days = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
       const recipes = [];
+      let apiFailures = 0;
       
       for (let i = 0; i < days.length; i++) {
-        try {
-          const data = await fetchWithRetry(`${MEALDB_API_URL}/random.php`);
-          
-          if (!data || !data.meals || !data.meals[0]) continue;
-          
-          const meal = data.meals[0];
-          
-          const ingredients = [];
-          for (let j = 1; j <= 20; j++) {
-            const ingredient = meal[`strIngredient${j}`];
-            const measure = meal[`strMeasure${j}`];
-            if (ingredient && ingredient.trim()) {
-              ingredients.push(`${measure} ${ingredient}`.trim());
-            }
-          }
-          
-          const instructions = meal.strInstructions
-            ? meal.strInstructions
-                .split(/\r?\n/)
-                .filter(line => line.trim().length > 0)
-                .map(line => line.trim()).join('\n')
-            : 'Bereidingswijze niet beschikbaar.';
-          
-          recipes.push({
-            id: meal.idMeal,
-            title: meal.strMeal,
-            category: meal.strCategory,
-            ingredients: ingredients.join('\n'),
-            instructions: instructions,
-            image: meal.strMealThumb,
-            day: days[i],
-            source: 'api'
-          });
-          
-          await new Promise(resolve => setTimeout(resolve, 150));
-          
-        } catch (fetchError) {
-          console.error(`Error fetching ${days[i]}:`, fetchError);
+        let recipe = null;
+        
+        // Probeer eerst TheMealDB
+        recipe = await fetchRecipeFromTheMealDB();
+        
+        // Als API faalt, gebruik demo data
+        if (!recipe) {
+          apiFailures++;
+          const demoRecipe = DEMO_RECIPES[i % DEMO_RECIPES.length];
+          recipe = {
+            ...demoRecipe,
+            id: `${demoRecipe.id}-${Date.now()}-${i}`,
+            source: 'demo'
+          };
+          console.log(`📦 Using demo recipe for ${days[i]}`);
         }
+        
+        recipe.day = days[i];
+        recipes.push(recipe);
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      if (recipes.length === 0) {
-        throw new Error('Geen recepten opgehaald. Check je internetverbinding.');
+      if (apiFailures > 0) {
+        setError(`ℹ️ ${apiFailures}/7 recepten zijn demo voorbeelden (API tijdelijk niet beschikbaar)`);
       }
       
+      console.log(`✅ Generated ${recipes.length} recipes (${apiFailures} demo)`);
       setGeneratedMenu(recipes);
       setTimeout(() => window.scrollTo({ top: 600, behavior: 'smooth' }), 100);
       
     } catch (err) {
-      setError(err.message || 'Kon geen recepten ophalen. Probeer het opnieuw.');
+      console.error('❌ Fatal error:', err);
+      setError('Kon geen recepten genereren. Probeer het opnieuw.');
     } finally {
       setLoading(false);
     }
@@ -331,7 +395,7 @@ function App() {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 500000) {
-        alert('Foto te groot! Max 500KB. Probeer een kleinere foto.');
+        alert('Foto te groot! Max 500KB.');
         return;
       }
       const reader = new FileReader();
@@ -405,6 +469,11 @@ function App() {
           {showDay && recipe.day && (
             <div className="absolute top-3 left-3 bg-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
               {recipe.day}
+            </div>
+          )}
+          {recipe.source === 'demo' && (
+            <div className="absolute bottom-3 left-3 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+              Demo
             </div>
           )}
         </div>
@@ -485,7 +554,7 @@ function App() {
                   Plan Je <span className="text-orange-600 italic">Gezonde</span> Week.
                 </h1>
                 <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
-                  Genereer automatisch een weekmenu met duizenden internationale recepten uit de TheMealDB database. 
+                  Genereer automatisch een weekmenu met duizenden internationale recepten. 
                   Upload je eigen favorieten en deel ze met de community!
                 </p>
 
@@ -540,8 +609,8 @@ function App() {
                 </button>
 
                 {error && (
-                  <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-start gap-3" role="alert">
-                    <Icon name="alert-circle" size={20} />
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 flex items-start gap-3" role="alert">
+                    <Icon name="info" size={20} />
                     <span>{error}</span>
                   </div>
                 )}
@@ -848,7 +917,7 @@ function App() {
             </span>
             <span className="flex items-center gap-2">
               <Icon name="zap" size={16} className="text-orange-400" aria-hidden="true" />
-              API Powered
+              Multi-API + Demo
             </span>
             <span className="flex items-center gap-2">
               <Icon name="heart" size={16} className="text-red-400" aria-hidden="true" />
@@ -856,7 +925,7 @@ function App() {
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-6">
-            Recepten via TheMealDB API • Gebouwd met React
+            Recepten via TheMealDB • Fallback Demo Recepten • Gebouwd met React
           </p>
         </div>
       </footer>

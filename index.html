@@ -3,137 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>De Weekhap - Instant Weekmenu Generator</title>
-<meta name="description" content="Genereer instant je weekmenu met 7 heerlijke recepten. Werkt altijd, zelfs offline!">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+<title>De Weekhap - Weekmenu Generator</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;900&display=swap');
 body { font-family: 'Outfit', sans-serif; }
-.loading-spinner { border: 4px solid rgba(0,0,0,0.1); border-top: 4px solid #f97316; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+.spinner { border: 4px solid #f3f4f6; border-top: 4px solid #f97316; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-@media print { header, button, .no-print { display: none !important; } body { background: white; } }
 </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-200 min-h-screen">
-<div id="app" class="max-w-6xl mx-auto p-4 py-12"></div>
 
-<script>
-const RECIPES = [
-  {title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti\n200g spek\n4 eieren\n100g parmezaan\nZout en peper',steps:'Kook pasta volgens verpakking.\nBak spek krokant.\nKlop eieren met kaas.\nMeng warme pasta met spek en ei-mengsel (geen vuur).\nBreng op smaak met peper.',cat:'Italiaans'},
-  {title:'Thaise Rode Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk\n3 el rode currypasta\n300g kip\n1 paprika\n100g taugé\nBasmati rijst',steps:'Bak currypasta in pan.\nVoeg kokosmelk toe en breng aan de kook.\nVoeg kip en groenten toe.\nLaat 15 min sudderen.\nServeer met rijst.',cat:'Aziatisch'},
-  {title:'Klassieke Lasagne',img:'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400',ingr:'12 lasagne vellen\n500g rundergehakt\n1 ui\n2 blikjes tomatensaus\n500ml bechamelsaus\n200g kaas\nOlijfolie',steps:'Bak gehakt met ui.\nVoeg tomatensaus toe.\nLaag lasagnevellen, gehaktsaus, bechamel.\nHerhaal lagen en eindig met kaas.\nBak 40 min op 180°C.',cat:'Italiaans'},
-  {title:'Gegrilde Zalm',img:'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400',ingr:'4 zalmfilets\n2 citroenen\n3 el olijfolie\nDille\n500g aardappelen\nBroccoli',steps:'Marineer zalm met citroen, olie en dille.\nGril 6-8 min per kant.\nKook aardappelen.\nStoom broccoli.\nServeer samen.',cat:'Vis'},
-  {title:'Vegetarische Chili',img:'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400',ingr:'2 blikken kidneybonen\n1 blik maïs\n2 paprikas\n1 ui\nKnoflook\nChilipoeder\nTomatenblokjes',steps:'Fruit ui en knoflook.\nVoeg paprika, bonen, maïs en tomaat toe.\nKruid met chili.\nLaat 20 min sudderen.\nServeer met rijst of tortilla chips.',cat:'Vegetarisch'},
-  {title:'Kippensoep',img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',ingr:'500g kip\n2 liter bouillon\n3 wortels\n2 preistengels\nVermicelli\nPeterselie',steps:'Kook kip in bouillon tot gaar.\nVoeg groenten toe en kook 15 min.\nVoeg vermicelli toe laatste 5 min.\nGarneer met peterselie.',cat:'Soep'},
-  {title:'Caesar Salade',img:'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',ingr:'1 krop romaine sla\n200g kip\n100g croutons\nParmezaan\nCaesar dressing\nAnsjovis (optioneel)',steps:'Gril kipfilet en snijd in plakken.\nMeng sla met dressing.\nVoeg kip, croutons en kaas toe.\nGarneer met ansjovis.',cat:'Salade'}
-];
-
-let menu = [];
-let servings = 2;
-
-const parseIngr = (ing, factor) => {
-  const match = ing.match(/^([0-9,.,\s]+)(.*)$/);
-  if (match) {
-    const num = parseFloat(match[1].replace(',','.'));
-    return (num*factor).toFixed(1).replace('.0','') + match[2];
-  }
-  return ing;
-};
-
-const generateMenu = () => {
-  const app = document.getElementById('app');
-  app.innerHTML = '<div class="flex justify-center py-24"><div class="loading-spinner"></div></div>';
-  
-  setTimeout(() => {
-    menu = RECIPES.map((r,i) => ({...r, day: ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'][i]}));
-    renderMenu();
-  }, 800);
-};
-
-const renderMenu = () => {
-  const app = document.getElementById('app');
-  app.innerHTML = `
-    <div class="text-center mb-12">
-      <h1 class="text-5xl font-black text-slate-900 mb-4">Jouw Weekmenu 📅</h1>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 bg-white p-8 rounded-3xl shadow-2xl">
-        <span class="text-lg font-bold">Personen: ${servings}</span>
-        <button onclick="servings=Math.max(1,servings-1);renderMenu()" class="w-14 h-14 bg-orange-100 rounded-2xl font-black text-2xl hover:bg-orange-200 transition-all">−</button>
-        <button onclick="servings++;renderMenu()" class="w-14 h-14 bg-orange-100 rounded-2xl font-black text-2xl hover:bg-orange-200 transition-all">+</button>
-        <button onclick="generateMenu()" class="bg-orange-600 text-white px-8 py-4 rounded-3xl font-black text-lg hover:bg-orange-700 shadow-xl transition-all ml-auto no-print">🔄 Nieuw Menu</button>
-        <button onclick="window.print()" class="bg-blue-600 text-white px-8 py-4 rounded-3xl font-black text-lg hover:bg-blue-700 shadow-xl transition-all no-print">🖨️ Print</button>
-      </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      ${menu.map(r => `
-        <div onclick="showRecipe('${r.title.replace(/'/g,'\\'')}')" class="bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl cursor-pointer transition-all hover:-translate-y-2">
-          <div class="relative mb-4 h-48 rounded-2xl overflow-hidden">
-            <img src="${r.img}" alt="${r.title}" class="w-full h-full object-cover" loading="lazy">
-            <div class="absolute top-3 left-3 bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-bold">${r.day}</div>
-          </div>
-          <h3 class="font-black text-xl mb-2 text-slate-900">${r.title}</h3>
-          <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">${r.cat}</span>
-        </div>
-      `).join('')}
-    </div>
-  `;
-  lucide.createIcons();
-};
-
-const showRecipe = (title) => {
-  const recipe = menu.find(r => r.title === title);
-  document.body.insertAdjacentHTML('beforeend', `
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print" onclick="this.remove()">
-      <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-auto p-8" onclick="event.stopPropagation()">
-        <div class="flex justify-between items-start mb-8">
-          <div>
-            <h2 class="text-4xl font-black mb-2">${recipe.title}</h2>
-            <span class="bg-orange-100 text-orange-800 px-4 py-2 rounded-full font-bold">${recipe.cat}</span>
-          </div>
-          <button onclick="this.closest('div').parentElement.remove()" class="text-4xl font-bold text-slate-400 hover:text-slate-600">&times;</button>
-        </div>
-        <div class="grid md:grid-cols-2 gap-8">
-          <div>
-            <h3 class="text-2xl font-bold mb-4">Ingrediënten (${servings} pers.)</h3>
-            <ul class="bg-slate-50 p-6 rounded-2xl space-y-2">
-              ${recipe.ingr.split('\n').map(i => `<li class="flex gap-2"><span class="text-orange-600">•</span><span>${parseIngr(i, servings/2)}</span></li>`).join('')}
-            </ul>
-          </div>
-          <div>
-            <h3 class="text-2xl font-bold mb-4">Bereiding</h3>
-            <ol class="bg-slate-50 p-6 rounded-2xl space-y-3">
-              ${recipe.steps.split('\n').filter(s=>s.trim()).map((s,i) => `<li class="flex gap-3"><span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">${i+1}</span><span class="pt-1">${s.trim()}</span></li>`).join('')}
-            </ol>
-          </div>
-        </div>
-      </div>
-    </div>
-  `);
-};
-
-// START SCREEN
-document.getElementById('app').innerHTML = `
-  <div class="text-center py-24">
-    <div class="w-28 h-28 bg-gradient-to-r from-orange-500 to-orange-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl text-white text-4xl font-black transform hover:rotate-12 transition-all cursor-pointer" onclick="generateMenu()">W</div>
+<div id="app" class="max-w-6xl mx-auto p-4 py-12">
+  <!-- START SCREEN -->
+  <div id="start" class="text-center py-24">
+    <div class="w-28 h-28 bg-gradient-to-r from-orange-500 to-orange-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl text-white text-4xl font-black">W</div>
     <h1 class="text-6xl font-black text-slate-900 mb-6">De Weekhap</h1>
     <p class="text-2xl text-slate-600 mb-12">Instant weekmenu generator</p>
+    
     <div class="flex flex-col lg:flex-row gap-6 justify-center items-center">
       <div class="bg-white p-8 rounded-3xl shadow-2xl flex items-center gap-6">
         <span class="text-lg font-bold">Personen</span>
         <div class="flex items-center gap-4">
-          <button onclick="servings=Math.max(1,servings-1);document.querySelector('[data-p]').textContent=servings" class="w-16 h-16 bg-slate-200 rounded-2xl font-black text-2xl hover:bg-orange-200 transition-all">−</button>
-          <span data-p class="text-4xl font-black">${servings}</span>
-          <button onclick="servings++;document.querySelector('[data-p]').textContent=servings" class="w-16 h-16 bg-slate-200 rounded-2xl font-black text-2xl hover:bg-orange-200 transition-all">+</button>
+          <button onclick="changeServings(-1)" class="w-16 h-16 bg-slate-200 rounded-2xl font-black text-2xl hover:bg-orange-200 transition-all">&minus;</button>
+          <span id="servings-display" class="text-4xl font-black">2</span>
+          <button onclick="changeServings(1)" class="w-16 h-16 bg-slate-200 rounded-2xl font-black text-2xl hover:bg-orange-200 transition-all">+</button>
         </div>
       </div>
+      
       <button onclick="generateMenu()" class="bg-gradient-to-r from-slate-900 to-slate-800 text-white px-16 py-8 rounded-3xl font-black text-2xl shadow-2xl hover:scale-105 transition-all">
         🍽️ Genereer Weekmenu
       </button>
     </div>
-    <p class="mt-12 text-slate-500 text-xl">Druk de knop → 7 recepten in 1 seconde! 🚀</p>
+    
+    <p class="mt-12 text-slate-500 text-xl">7 recepten in 1 seconde! 🚀</p>
   </div>
-`;
+
+  <!-- LOADING -->
+  <div id="loading" class="hidden py-24 text-center">
+    <div class="spinner mx-auto mb-4"></div>
+    <p class="text-xl font-bold text-slate-700">Recepten laden...</p>
+  </div>
+
+  <!-- MENU -->
+  <div id="menu" class="hidden"></div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onclick="closeModal(event)"></div>
+
+<script>
+const RECIPES = [
+  {title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti||200g spek||4 eieren||100g parmezaan||Zout en peper',steps:'Kook pasta volgens verpakking.||Bak spek krokant.||Klop eieren met kaas.||Meng warme pasta met spek en ei-mengsel.||Breng op smaak met peper.',cat:'Italiaans'},
+  {title:'Thaise Rode Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3 el rode currypasta||300g kip||1 paprika||Basmati rijst',steps:'Bak currypasta in pan.||Voeg kokosmelk toe en breng aan de kook.||Voeg kip en groenten toe.||Laat 15 min sudderen.||Serveer met rijst.',cat:'Aziatisch'},
+  {title:'Klassieke Lasagne',img:'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400',ingr:'12 lasagne vellen||500g rundergehakt||1 ui||2 blikjes tomatensaus||500ml bechamel||200g kaas',steps:'Bak gehakt met ui.||Voeg tomatensaus toe.||Laag lasagnevellen, gehaktsaus, bechamel.||Herhaal lagen en eindig met kaas.||Bak 40 min op 180°C.',cat:'Italiaans'},
+  {title:'Gegrilde Zalm',img:'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400',ingr:'4 zalmfilets||2 citroenen||3 el olijfolie||Dille||500g aardappelen||Broccoli',steps:'Marineer zalm met citroen, olie en dille.||Gril 6-8 min per kant.||Kook aardappelen.||Stoom broccoli.||Serveer samen.',cat:'Vis'},
+  {title:'Vegetarische Chili',img:'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400',ingr:'2 blikken kidneybonen||1 blik mais||2 paprikas||1 ui||Knoflook||Chilipoeder||Tomatenblokjes',steps:'Fruit ui en knoflook.||Voeg paprika, bonen, mais en tomaat toe.||Kruid met chili.||Laat 20 min sudderen.||Serveer met rijst of tortilla chips.',cat:'Vegetarisch'},
+  {title:'Kippensoep',img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',ingr:'500g kip||2 liter bouillon||3 wortels||2 preistengels||Vermicelli||Peterselie',steps:'Kook kip in bouillon tot gaar.||Voeg groenten toe en kook 15 min.||Voeg vermicelli toe laatste 5 min.||Garneer met peterselie.',cat:'Soep'},
+  {title:'Caesar Salade',img:'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',ingr:'1 krop romaine sla||200g kip||100g croutons||Parmezaan||Caesar dressing',steps:'Gril kipfilet en snijd in plakken.||Meng sla met dressing.||Voeg kip, croutons en kaas toe.||Garneer met ansjovis (optioneel).',cat:'Salade'}
+];
+
+let servings = 2;
+let currentMenu = [];
+
+function changeServings(delta) {
+  servings = Math.max(1, servings + delta);
+  document.getElementById('servings-display').textContent = servings;
+  if (currentMenu.length > 0) renderMenu();
+}
+
+function parseIngr(ing, factor) {
+  const match = ing.match(/^([0-9.,\s]+)(.*)$/);
+  if (match) {
+    const num = parseFloat(match[1].replace(',','.'));
+    return (num * factor).toFixed(1).replace('.0','') + match[2];
+  }
+  return ing;
+}
+
+function generateMenu() {
+  document.getElementById('start').classList.add('hidden');
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('loading').classList.remove('hidden');
+  
+  setTimeout(() => {
+    const days = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
+    currentMenu = RECIPES.map((r, i) => ({...r, day: days[i]}));
+    renderMenu();
+    
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('menu').classList.remove('hidden');
+  }, 800);
+}
+
+function renderMenu() {
+  const menuDiv = document.getElementById('menu');
+  
+  let html = `
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-black text-slate-900 mb-4">Jouw Weekmenu 📅</h1>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 bg-white p-8 rounded-3xl shadow-2xl">
+        <span class="text-lg font-bold">Personen: ${servings}</span>
+        <button onclick="changeServings(-1)" class="w-14 h-14 bg-orange-100 rounded-2xl font-black text-2xl hover:bg-orange-200">&minus;</button>
+        <button onclick="changeServings(1)" class="w-14 h-14 bg-orange-100 rounded-2xl font-black text-2xl hover:bg-orange-200">+</button>
+        <button onclick="resetApp()" class="bg-orange-600 text-white px-8 py-4 rounded-3xl font-black hover:bg-orange-700 shadow-xl ml-auto">🔄 Nieuw Menu</button>
+        <button onclick="window.print()" class="bg-blue-600 text-white px-8 py-4 rounded-3xl font-black hover:bg-blue-700 shadow-xl">🖨 Print</button>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+  `;
+  
+  currentMenu.forEach((r, idx) => {
+    html += `
+      <div onclick="showRecipe(${idx})" class="bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl cursor-pointer transition-all hover:-translate-y-2">
+        <div class="relative mb-4 h-48 rounded-2xl overflow-hidden">
+          <img src="${r.img}" alt="${r.title}" class="w-full h-full object-cover" loading="lazy">
+          <div class="absolute top-3 left-3 bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-bold">${r.day}</div>
+        </div>
+        <h3 class="font-black text-xl mb-2">${r.title}</h3>
+        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">${r.cat}</span>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  menuDiv.innerHTML = html;
+}
+
+function showRecipe(idx) {
+  const r = currentMenu[idx];
+  const modal = document.getElementById('modal');
+  
+  const ingredients = r.ingr.split('||').map(i => `<li class="flex gap-2"><span class="text-orange-600">•</span><span>${parseIngr(i, servings/2)}</span></li>`).join('');
+  const steps = r.steps.split('||').map((s, i) => `<li class="flex gap-3"><span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">${i+1}</span><span class="pt-1">${s}</span></li>`).join('');
+  
+  modal.innerHTML = `
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-auto p-8" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-start mb-8">
+        <div>
+          <h2 class="text-4xl font-black mb-2">${r.title}</h2>
+          <span class="bg-orange-100 text-orange-800 px-4 py-2 rounded-full font-bold">${r.cat}</span>
+        </div>
+        <button onclick="closeModal()" class="text-4xl font-bold text-slate-400 hover:text-slate-600">&times;</button>
+      </div>
+      <div class="grid md:grid-cols-2 gap-8">
+        <div>
+          <h3 class="text-2xl font-bold mb-4">Ingrediënten (${servings} pers.)</h3>
+          <ul class="bg-slate-50 p-6 rounded-2xl space-y-2">${ingredients}</ul>
+        </div>
+        <div>
+          <h3 class="text-2xl font-bold mb-4">Bereiding</h3>
+          <ol class="bg-slate-50 p-6 rounded-2xl space-y-3">${steps}</ol>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  modal.classList.remove('hidden');
+}
+
+function closeModal(e) {
+  if (!e || e.target.id === 'modal') {
+    document.getElementById('modal').classList.add('hidden');
+  }
+}
+
+function resetApp() {
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('start').classList.remove('hidden');
+  currentMenu = [];
+}
 </script>
 </body>
 </html>

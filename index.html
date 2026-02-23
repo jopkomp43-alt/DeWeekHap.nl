@@ -8,8 +8,6 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;900&display=swap');
 body { font-family: 'Outfit', sans-serif; }
-.spinner { border: 3px solid #f3f4f6; border-top: 3px solid #f97316; border-radius: 50%; width: 30px; height: 30px; animation: spin 0.8s linear infinite; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-200 min-h-screen">
@@ -18,20 +16,42 @@ body { font-family: 'Outfit', sans-serif; }
 
 <script>
 const RECIPES = [
-  {id:'r1',title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti||200g spek||4 eieren||100g parmezaan',steps:'Kook pasta||Bak spek||Klop eieren met kaas||Meng warme pasta met spek en ei',cat:'Italiaans',author:'admin'},
-  {id:'r2',title:'Thaise Rode Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el currypasta||300g kip||paprika',steps:'Bak currypasta||Voeg kokos toe||Voeg kip+groenten toe||15min sudderen',cat:'Aziatisch',author:'admin'},
-  {id:'r3',title:'Lasagne',img:'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400',ingr:'500g gehakt||Lasagnevellen||Bechamel||Kaas',steps:'Bak gehakt||Laag op||Bak 40min 180°C',cat:'Italiaans',author:'admin'},
-  {id:'r4',title:'Gegrilde Zalm',img:'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400',ingr:'4 zalmfilets||Citroen||Dille||Aardappelen',steps:'Marineer zalm||Grill 8min||Serveer met aardappelen',cat:'Vis',author:'admin'},
-  {id:'r5',title:'Vegetarische Chili',img:'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400',ingr:'Kidneybonen||Paprika||Mais||Tomaten',steps:'Fruit ui||Voeg alles toe||20min sudderen',cat:'Vegetarisch',author:'admin'},
-  {id:'r6',title:'Kippensoep',img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',ingr:'500g kip||Bouillon||Wortel||Prei',steps:'Kook kip||Voeg groenten toe||15min koken',cat:'Soep',author:'admin'},
-  {id:'r7',title:'Caesar Salade',img:'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',ingr:'Sla||Kip||Dressing||Croutons',steps:'Grill kip||Meng met sla||Voeg dressing toe',cat:'Salade',author:'admin'}
+  {id:'r1',title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti||200g spek||4 eieren||100g parmezaan||Zout en peper',steps:'Kook pasta volgens verpakking||Bak spek krokant||Klop eieren met kaas||Meng warme pasta met spek en ei-mengsel||Breng op smaak met peper',cat:'Italiaans',author:'admin'},
+  {id:'r2',title:'Thaise Rode Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el currypasta||300g kip||1 paprika||100g taugé||Basmati rijst',steps:'Bak currypasta in pan||Voeg kokosmelk toe||Breng aan de kook||Voeg kip en groenten toe||Laat 15 min sudderen||Serveer met rijst',cat:'Aziatisch',author:'admin'},
+  {id:'r3',title:'Klassieke Lasagne',img:'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400',ingr:'12 lasagne vellen||500g rundergehakt||1 ui||2 blikjes tomatensaus||500ml bechamel||200g kaas||Olijfolie',steps:'Bak gehakt met ui||Voeg tomatensaus toe||Laag lasagnevellen, gehaktsaus, bechamel||Herhaal lagen||Eindig met kaas||Bak 40 min op 180°C',cat:'Italiaans',author:'admin'},
+  {id:'r4',title:'Gegrilde Zalm',img:'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400',ingr:'4 zalmfilets||2 citroenen||3 el olijfolie||Verse dille||500g aardappelen||Broccoli',steps:'Marineer zalm met citroen, olie en dille||Gril 6-8 min per kant||Kook aardappelen||Stoom broccoli||Serveer samen',cat:'Vis',author:'admin'},
+  {id:'r5',title:'Vegetarische Chili',img:'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400',ingr:'2 blikken kidneybonen||1 blik maïs||2 paprikas||1 ui||3 teentjes knoflook||Chilipoeder||1 blik tomatenblokjes',steps:'Fruit ui en knoflook||Voeg paprika, bonen, maïs toe||Voeg tomaat toe||Kruid met chili||Laat 20 min sudderen||Serveer met rijst',cat:'Vegetarisch',author:'admin'},
+  {id:'r6',title:'Kippensoep',img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',ingr:'500g kip||2 liter bouillon||3 wortels||2 preistengels||Vermicelli||Verse peterselie',steps:'Kook kip in bouillon tot gaar||Voeg gesneden groenten toe||Kook 15 min||Voeg vermicelli toe laatste 5 min||Garneer met peterselie',cat:'Soep',author:'admin'},
+  {id:'r7',title:'Caesar Salade',img:'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',ingr:'1 krop romaine sla||200g kipfilet||100g croutons||50g parmezaan||Caesar dressing||Ansjovis (optioneel)',steps:'Gril kipfilet en snijd in plakken||Was en snijd sla||Meng sla met dressing||Voeg kip, croutons toe||Rasp parmezaan erover||Garneer met ansjovis',cat:'Salade',author:'admin'},
+  {id:'r8',title:'Nasi Goreng',img:'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400',ingr:'400g rijst||2 eieren||200g kip||1 ui||2 teentjes knoflook||Nasi kruiden||Sambal||Atjar',steps:'Kook rijst en laat afkoelen||Bak roerei, haal eruit||Bak kip met ui en knoflook||Voeg rijst en kruiden toe||Meng alles||Serveer met ei en atjar',cat:'Aziatisch',author:'admin'},
+  {id:'r9',title:'Spare Ribs',img:'https://images.unsplash.com/photo-1544025162-d76694265947?w=400',ingr:'1kg spareribs||BBQ saus||Honing||Knoflookpoeder||Paprikapoeder||Zout||Peper',steps:'Marineer ribs in BBQ saus met kruiden||Laat 2 uur marineren||Bak 1.5 uur in oven op 160°C||Bestrijk regelmatig met marinade||Serveer met frites',cat:'BBQ',author:'admin'},
+  {id:'r10',title:'Quiche Lorraine',img:'https://images.unsplash.com/photo-1601001815894-4bb6c81416d7?w=400',ingr:'1 bladerdeeg||200g spek||200ml room||3 eieren||150g kaas||Ui||Peper en zout',steps:'Leg bladerdeeg in vorm||Bak spek en ui||Klop eieren met room||Verdeel spek over deeg||Giet ei-mengsel erover||Strooi kaas||Bak 35 min op 180°C',cat:'Frans',author:'admin'},
+  {id:'r11',title:'Taco\'s',img:'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400',ingr:'8 taco shells||400g rundergehakt||Tacokruiden||Sla||Tomaat||Kaas||Zure room||Salsa',steps:'Bak gehakt met tacokruiden||Verwarm taco shells||Snijd groenten||Vul shells met gehakt||Voeg groenten, kaas, zure room toe||Serveer met salsa',cat:'Mexicaans',author:'admin'},
+  {id:'r12',title:'Risotto',img:'https://images.unsplash.com/photo-1476124369491-f6e5c3d2a3e2?w=400',ingr:'300g risottorijst||1 liter bouillon||1 ui||100ml witte wijn||50g parmezaan||Boter||Champignons',steps:'Fruit ui in boter||Voeg rijst toe, roer 2 min||Blus met wijn||Voeg schepje bouillon toe per keer||Blijf roeren 20 min||Roer kaas erdoor',cat:'Italiaans',author:'admin'},
+  {id:'r13',title:'Biefstuk met Kruidenboter',img:'https://images.unsplash.com/photo-1558030006-450675393462?w=400',ingr:'4 biefstukken||Kruidenboter||Zout en peper||Aardappelen||Sperziebonen||Ui',steps:'Breng biefstuk op kamertemperatuur||Kruid met peper en zout||Gril 3-5 min per kant||Leg kruidenboter erop||Serveer met aardappelen en bonen',cat:'Vlees',author:'admin'},
+  {id:'r14',title:'Pad Thai',img:'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400',ingr:'200g rijstnoedels||200g garnalen||2 eieren||Taugé||Pinda\'s||Limoensap||Fish sauce||Knoflook',steps:'Week noedels in warm water||Bak ei, haal eruit||Bak garnalen met knoflook||Voeg noedels toe||Voeg saus toe||Meng met ei en taugé||Garneer met pinda\'s',cat:'Aziatisch',author:'admin'},
+  {id:'r15',title:'Griekse Moussaka',img:'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400',ingr:'2 aubergines||500g lamsgehakt||1 ui||Tomatenpassata||Bechamel||Kaneel||Feta',steps:'Snijd aubergines, bak ze||Bak gehakt met ui en kaneel||Voeg tomaat toe||Laag aubergine en gehakt||Giet bechamel erover||Strooi feta||Bak 40 min 180°C',cat:'Grieks',author:'admin'},
+  {id:'r16',title:'Tom Yum Soep',img:'https://images.unsplash.com/photo-1569562211093-4ed0d0758f12?w=400',ingr:'1 liter bouillon||200g garnalen||Citroengras||Galangawortel||Limoenblad||Champignons||Tom yum pasta||Chili',steps:'Breng bouillon aan de kook||Voeg citroengras en galanga toe||Voeg tom yum pasta toe||Voeg garnalen en champignons toe||Laat 5 min koken||Garneer met chili',cat:'Aziatisch',author:'admin'},
+  {id:'r17',title:'Shakshuka',img:'https://images.unsplash.com/photo-1595908129746-0f187f3b0b7a?w=400',ingr:'6 eieren||1 blik tomatenblokjes||2 paprikas||1 ui||Knoflook||Komijn||Paprikapoeder||Feta',steps:'Fruit ui, paprika en knoflook||Voeg tomaat en kruiden toe||Laat 10 min sudderen||Maak kuiltjes||Breek eieren in kuiltjes||Dek af, laat stollen||Serveer met feta',cat:'Midden-Oosten',author:'admin'},
+  {id:'r18',title:'Fish and Chips',img:'https://images.unsplash.com/photo-1580217593608-61931cefc821?w=400',ingr:'4 kabeljauwfilets||Bloem||Bier||Aardappelen||Zout||Azijn||Tartaarsaus',steps:'Maak beslag van bloem en bier||Snijd aardappelen in friet||Frituur friet||Haal door beslag||Frituur vis goudbruin||Serveer met tartaar en azijn',cat:'Engels',author:'admin'},
+  {id:'r19',title:'Ramen',img:'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400',ingr:'Ramen noedels||1 liter bouillon||2 eieren||Varkensvlees||Lente-ui||Nori||Sojasaus||Sesamolie',steps:'Breng bouillon aan de kook||Kook eieren 6 min, halveer||Bak varkensvlees||Kook noedels||Verdeel noedels in kom||Giet bouillon erover||Garneer met ei, vlees, ui',cat:'Aziatisch',author:'admin'},
+  {id:'r20',title:'Caprese Salade',img:'https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?w=400',ingr:'4 tomaten||250g mozzarella||Verse basilicum||Olijfolie||Balsamico||Zout||Peper',steps:'Snijd tomaten en mozzarella in plakken||Leg om en om op bord||Leg basilicum ertussen||Druppel olijfolie erover||Druppel balsamico||Kruid met peper en zout',cat:'Italiaans',author:'admin'},
+  {id:'r21',title:'Pulled Pork',img:'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400',ingr:'1.5kg varkensschouder||BBQ rub||BBQ saus||Hamburgerbroodjes||Coleslaw',steps:'Wrijf vlees in met rub||Laat 2 uur marineren||Bak 6 uur op 120°C||Vlees moet uit elkaar vallen||Trek uit elkaar met vorken||Meng met BBQ saus||Serveer op broodje met slaw',cat:'BBQ',author:'admin'},
+  {id:'r22',title:'Gazpacho',img:'https://images.unsplash.com/photo-1541795083-1b160cf4f3d7?w=400',ingr:'6 tomaten||1 komkommer||1 paprika||1 ui||2 teentjes knoflook||Witte wijn azijn||Olijfolie||Brood',steps:'Week brood in water||Snijd groenten grof||Doe alles in blender||Voeg azijn en olie toe||Mix glad||Laat 2 uur koelen||Serveer koud met croutons',cat:'Spaans',author:'admin'},
+  {id:'r23',title:'Boeuf Bourguignon',img:'https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=400',ingr:'1kg rundvlees||200ml rode wijn||Spek||Champignons||Ui||Wortel||Tijm||Laurier',steps:'Snijd vlees in blokjes||Marineer in wijn||Bak spek||Bak vlees bruin||Voeg groenten toe||Blus met wijn||Voeg bouillon en kruiden toe||Stoof 3 uur',cat:'Frans',author:'admin'},
+  {id:'r24',title:'Falafel',img:'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400',ingr:'400g kikkererwten||1 ui||Knoflook||Peterselie||Komijn||Koriander||Bloem||Tahini',steps:'Week kikkererwten overnight||Mix met ui, knoflook, kruiden||Voeg bloem toe tot plakbaar||Vorm balletjes||Frituur goudbruin||Serveer in pita met tahini||Voeg sla en tomaat toe',cat:'Midden-Oosten',author:'admin'},
+  {id:'r25',title:'Paella',img:'https://images.unsplash.com/photo-1534080564583-6be75777b70a?w=400',ingr:'400g paellarijst||500ml bouillon||Kip||Garnalen||Mosselen||Paprika||Tomaat||Saffraan||Citroen',steps:'Bak kip in paellapan||Voeg paprika en tomaat toe||Voeg rijst en saffraan toe||Giet bouillon erbij||Laat 20 min sudderen||Leg garnalen en mosselen erop||Garneer met citroen',cat:'Spaans',author:'admin'}
 ];
 
 const db = {
   get: (key) => JSON.parse(localStorage.getItem(key) || 'null'),
   set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
   users: () => db.get('users') || [],
-  recipes: () => [...RECIPES, ...(db.get('customRecipes') || [])],
+  recipes: () => {
+    const approved = db.get('approvedRecipes') || [];
+    return [...RECIPES, ...approved];
+  },
+  pendingRecipes: () => db.get('pendingRecipes') || [],
   reviews: () => db.get('reviews') || {},
   savedMenus: () => db.get('savedMenus') || {}
 };
@@ -74,6 +94,7 @@ function render() {
   
   else if (view === 'home') {
     const savedMenu = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+    const pendingCount = db.pendingRecipes().length;
     app.innerHTML = `
       <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -82,11 +103,11 @@ function render() {
             <span class="font-black text-xl">De Weekhap</span>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Home</button>
+            <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold bg-orange-600 text-white">Home</button>
             <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">Opgeslagen (${savedMenu.length})</button>
             <button onclick="changeView('community')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">Community</button>
             <button onclick="changeView('upload')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">+ Recept</button>
-            ${currentUser.isAdmin ? '<button onclick="changeView(\'admin\')" class="px-4 py-2 rounded-lg font-bold bg-red-100 text-red-700 hover:bg-red-200">⚙️ Admin</button>' : ''}
+            ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold bg-red-100 text-red-700 hover:bg-red-200 relative">⚙️ Admin${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
             <button onclick="logout()" class="px-4 py-2 rounded-lg font-bold bg-slate-200 hover:bg-slate-300">Uitloggen</button>
           </div>
         </div>
@@ -95,7 +116,8 @@ function render() {
       <div class="max-w-6xl mx-auto p-4 py-12">
         <div class="text-center py-12 bg-white rounded-3xl shadow-xl mb-12">
           <h1 class="text-5xl font-black mb-4">Welkom, ${currentUser.name}! 👋</h1>
-          <p class="text-xl text-slate-600 mb-8">Genereer je weekmenu in 1 klik</p>
+          <p class="text-xl text-slate-600 mb-2">Genereer je weekmenu uit ${db.recipes().length} recepten</p>
+          <p class="text-sm text-slate-400 mb-8">Italiaans, Aziatisch, BBQ, en veel meer!</p>
           
           <div class="flex justify-center items-center gap-4 mb-8">
             <span class="text-lg font-bold">Personen:</span>
@@ -120,7 +142,7 @@ function render() {
       ${renderNav()}
       <div class="max-w-6xl mx-auto p-4 py-12">
         <h1 class="text-4xl font-black mb-8">Jouw Opgeslagen Menu 💚</h1>
-        ${saved.length === 0 ? '<p class="text-xl text-slate-500">Geen opgeslagen recepten</p>' : `
+        ${saved.length === 0 ? '<div class="bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Geen opgeslagen recepten. Genereer een menu en klik "Bewaar Menu"!</p></div>' : `
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             ${saved.map((r,i) => renderRecipeCard(r, i, true)).join('')}
           </div>
@@ -130,14 +152,14 @@ function render() {
   }
   
   else if (view === 'community') {
-    const customRecipes = db.get('customRecipes') || [];
+    const approved = db.get('approvedRecipes') || [];
     app.innerHTML = `
       ${renderNav()}
       <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8">Community Recepten 👥</h1>
+        <h1 class="text-4xl font-black mb-8">Community Recepten 👥 (${approved.length})</h1>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          ${customRecipes.map((r,i) => renderRecipeCard(r, i)).join('')}
-          ${customRecipes.length === 0 ? '<p class="text-xl text-slate-500 col-span-3">Nog geen community recepten</p>' : ''}
+          ${approved.map((r,i) => renderRecipeCard(r, i)).join('')}
+          ${approved.length === 0 ? '<div class="col-span-3 bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Nog geen goedgekeurde recepten</p></div>' : ''}
         </div>
       </div>
     `;
@@ -147,14 +169,15 @@ function render() {
     app.innerHTML = `
       ${renderNav()}
       <div class="max-w-3xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8">Voeg Recept Toe 📤</h1>
+        <h1 class="text-4xl font-black mb-4">Voeg Recept Toe 📤</h1>
+        <p class="text-slate-600 mb-8">Je recept wordt eerst goedgekeurd door admin</p>
         <div class="bg-white rounded-3xl p-8 shadow-xl">
           <input id="title" placeholder="Receptnaam" class="w-full p-4 mb-4 border-2 rounded-xl" />
-          <input id="category" placeholder="Categorie (bijv. Italiaans)" class="w-full p-4 mb-4 border-2 rounded-xl" />
-          <input id="image" placeholder="Foto URL" class="w-full p-4 mb-4 border-2 rounded-xl" />
-          <textarea id="ingredients" placeholder="Ingrediënten (1 per regel)" rows="5" class="w-full p-4 mb-4 border-2 rounded-xl"></textarea>
-          <textarea id="steps" placeholder="Bereidingsstappen (1 per regel)" rows="5" class="w-full p-4 mb-4 border-2 rounded-xl"></textarea>
-          <button onclick="uploadRecipe()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold hover:bg-orange-700">Publiceer Recept</button>
+          <input id="category" placeholder="Categorie (bijv. Italiaans, Aziatisch)" class="w-full p-4 mb-4 border-2 rounded-xl" />
+          <input id="image" placeholder="Foto URL (optioneel)" class="w-full p-4 mb-4 border-2 rounded-xl" />
+          <textarea id="ingredients" placeholder="Ingrediënten (1 per regel)\nBijvoorbeeld:\n400g spaghetti\n200g spek\n4 eieren" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl"></textarea>
+          <textarea id="steps" placeholder="Bereidingsstappen (1 per regel)\nBijvoorbeeld:\nKook de pasta\nBak het spek\nMeng alles" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl"></textarea>
+          <button onclick="uploadRecipe()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold hover:bg-orange-700">Verstuur ter Goedkeuring</button>
         </div>
       </div>
     `;
@@ -162,31 +185,55 @@ function render() {
   
   else if (view === 'admin' && currentUser.isAdmin) {
     const users = db.users();
-    const customRecipes = db.get('customRecipes') || [];
+    const approved = db.get('approvedRecipes') || [];
+    const pending = db.pendingRecipes();
     app.innerHTML = `
       ${renderNav()}
       <div class="max-w-6xl mx-auto p-4 py-12">
         <h1 class="text-4xl font-black mb-8 text-red-600">⚙️ Admin Panel</h1>
         
-        <div class="grid md:grid-cols-3 gap-6 mb-12">
+        <div class="grid md:grid-cols-4 gap-6 mb-12">
           <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
             <div class="text-5xl font-black text-orange-600">${users.length}</div>
             <div class="text-xl font-bold mt-2">Gebruikers</div>
           </div>
           <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-blue-600">${customRecipes.length}</div>
-            <div class="text-xl font-bold mt-2">Community Recepten</div>
-          </div>
-          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-green-600">${RECIPES.length}</div>
+            <div class="text-5xl font-black text-blue-600">${RECIPES.length}</div>
             <div class="text-xl font-bold mt-2">Standaard Recepten</div>
           </div>
+          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-5xl font-black text-green-600">${approved.length}</div>
+            <div class="text-xl font-bold mt-2">Goedgekeurd</div>
+          </div>
+          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-5xl font-black text-yellow-600">${pending.length}</div>
+            <div class="text-xl font-bold mt-2">Te Beoordelen</div>
+          </div>
         </div>
+        
+        ${pending.length > 0 ? `
+          <h2 class="text-3xl font-black mb-4 text-yellow-600">Te Beoordelen Recepten (🔔 ${pending.length})</h2>
+          <div class="grid md:grid-cols-2 gap-6 mb-12">
+            ${pending.map(r => `
+              <div class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-6 shadow-xl">
+                <img src="${r.img}" class="w-full h-40 object-cover rounded-xl mb-4" />
+                <h3 class="font-black text-xl mb-2">${r.title}</h3>
+                <p class="text-sm text-slate-600 mb-1"><strong>Categorie:</strong> ${r.cat}</p>
+                <p class="text-sm text-slate-600 mb-1"><strong>Door:</strong> ${r.author}</p>
+                <p class="text-sm text-slate-600 mb-3"><strong>Ingrediënten:</strong> ${r.ingr.split('||').slice(0,3).join(', ')}...</p>
+                <div class="flex gap-3">
+                  <button onclick="approveRecipe('${r.id}')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">✅ Goedkeuren</button>
+                  <button onclick="rejectRecipe('${r.id}')" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700">❌ Afwijzen</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
         
         <h2 class="text-3xl font-black mb-4">Gebruikers</h2>
         <div class="bg-white rounded-3xl p-6 shadow-xl mb-8">
           ${users.map(u => `
-            <div class="flex items-center justify-between p-4 border-b">
+            <div class="flex items-center justify-between p-4 border-b last:border-b-0">
               <div>
                 <div class="font-bold">${u.name}</div>
                 <div class="text-sm text-slate-500">${u.email}</div>
@@ -196,15 +243,16 @@ function render() {
           `).join('')}
         </div>
         
-        <h2 class="text-3xl font-black mb-4">Community Recepten</h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          ${customRecipes.map(r => `
+        <h2 class="text-3xl font-black mb-4">Goedgekeurde Community Recepten (${approved.length})</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+          ${approved.map(r => `
             <div class="bg-white rounded-2xl p-4 shadow-xl">
               <h3 class="font-bold text-lg mb-2">${r.title}</h3>
               <p class="text-sm text-slate-500 mb-2">Door: ${r.author}</p>
-              <button onclick="deleteRecipe('${r.id}')" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600">Verwijder</button>
+              <button onclick="deleteApprovedRecipe('${r.id}')" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600">Verwijder</button>
             </div>
           `).join('')}
+          ${approved.length === 0 ? '<p class="col-span-3 text-slate-500">Nog geen goedgekeurde recepten</p>' : ''}
         </div>
       </div>
     `;
@@ -213,6 +261,7 @@ function render() {
 
 function renderNav() {
   const savedMenu = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+  const pendingCount = db.pendingRecipes().length;
   return `
     <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -220,12 +269,12 @@ function renderNav() {
           <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black">W</div>
           <span class="font-black text-xl">De Weekhap</span>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">Home</button>
+        <div class="flex items-center gap-2 text-sm">
+          <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Home</button>
           <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Opgeslagen (${savedMenu.length})</button>
           <button onclick="changeView('community')" class="px-4 py-2 rounded-lg font-bold ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Community</button>
           <button onclick="changeView('upload')" class="px-4 py-2 rounded-lg font-bold ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">+ Recept</button>
-          ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700 hover:bg-red-200'}">⚙️ Admin</button>` : ''}
+          ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700 hover:bg-red-200'} relative">⚙️ Admin${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
           <button onclick="logout()" class="px-4 py-2 rounded-lg font-bold bg-slate-200 hover:bg-slate-300">Uitloggen</button>
         </div>
       </div>
@@ -382,8 +431,8 @@ function showRecipe(idx, isSaved) {
       
       <div class="border-t pt-6">
         <h3 class="text-2xl font-bold mb-4">Reviews (${reviews.length})</h3>
-        <div class="space-y-3 mb-6">
-          ${reviews.map(r => `
+        <div class="space-y-3 mb-6 max-h-60 overflow-y-auto">
+          ${reviews.length === 0 ? '<p class="text-slate-500">Nog geen reviews. Wees de eerste!</p>' : reviews.map(r => `
             <div class="bg-slate-50 p-4 rounded-xl">
               <div class="flex items-center justify-between mb-2">
                 <span class="font-bold">${r.user}</span>
@@ -443,20 +492,42 @@ function uploadRecipe() {
   
   if (!title || !category || !ingredients || !steps) return alert('⚠️ Vul alle velden in');
   
-  const customRecipes = db.get('customRecipes') || [];
-  customRecipes.push({
-    id: 'c' + Date.now(),
+  const pending = db.pendingRecipes();
+  pending.push({
+    id: 'p' + Date.now(),
     title,
     cat: category,
     img: image,
-    ingr: ingredients.split('\n').join('||'),
-    steps: steps.split('\n').join('||'),
+    ingr: ingredients.split('\n').filter(l=>l.trim()).join('||'),
+    steps: steps.split('\n').filter(l=>l.trim()).join('||'),
     author: currentUser.name
   });
   
-  db.set('customRecipes', customRecipes);
-  alert('✅ Recept gepubliceerd!');
-  changeView('community');
+  db.set('pendingRecipes', pending);
+  alert('✅ Recept verzonden! Admin beoordeelt het binnenkort.');
+  changeView('home');
+}
+
+function approveRecipe(id) {
+  const pending = db.pendingRecipes();
+  const recipe = pending.find(r => r.id === id);
+  if (!recipe) return;
+  
+  const approved = db.get('approvedRecipes') || [];
+  approved.push({...recipe, id: 'a' + Date.now()});
+  db.set('approvedRecipes', approved);
+  
+  db.set('pendingRecipes', pending.filter(r => r.id !== id));
+  alert('✅ Recept goedgekeurd!');
+  render();
+}
+
+function rejectRecipe(id) {
+  if (!confirm('Weet je zeker dat je dit recept wilt afwijzen?')) return;
+  const pending = db.pendingRecipes();
+  db.set('pendingRecipes', pending.filter(r => r.id !== id));
+  alert('❌ Recept afgewezen');
+  render();
 }
 
 function deleteUser(email) {
@@ -466,10 +537,10 @@ function deleteUser(email) {
   render();
 }
 
-function deleteRecipe(id) {
+function deleteApprovedRecipe(id) {
   if (!confirm('Weet je zeker dat je dit recept wilt verwijderen?')) return;
-  const recipes = (db.get('customRecipes') || []).filter(r => r.id !== id);
-  db.set('customRecipes', recipes);
+  const approved = (db.get('approvedRecipes') || []).filter(r => r.id !== id);
+  db.set('approvedRecipes', approved);
   render();
 }
 

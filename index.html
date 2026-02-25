@@ -68,13 +68,76 @@ const RECIPES = [
   {id:'r50',title:'Thai Green Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el groene currypasta||500g kip||Thaise aubergine||Bamboescheuten||Basilicum||Rijst',steps:'Bak currypasta||Voeg kokosmelk toe||Breng aan kook||Voeg kip en groenten toe||Laat 15 min sudderen||Garneer met basilicum||Serveer met rijst',cat:'Aziatisch',author:'admin'}
 ];
 
+// TheMealDB cache in localStorage
+let mealDBCache = [];
+let mealDBLoading = false;
+
+// Functie om TheMealDB recepten op te halen
+async function fetchMealDBRecipes() {
+  if (mealDBLoading) return;
+  mealDBLoading = true;
+  
+  try {
+    // Haal 20 random recepten op
+    const promises = [];
+    for (let i = 0; i < 20; i++) {
+      promises.push(fetch('https://www.themealdb.com/api/json/v1/1/random.php'));
+    }
+    
+    const responses = await Promise.all(promises);
+    const data = await Promise.all(responses.map(r => r.json()));
+    
+    const meals = data
+      .filter(d => d.meals && d.meals[0])
+      .map(d => d.meals[0])
+      .map(meal => {
+        // Verzamel ingrediënten
+        const ingredients = [];
+        for (let i = 1; i <= 20; i++) {
+          const ingredient = meal[`strIngredient${i}`];
+          const measure = meal[`strMeasure${i}`];
+          if (ingredient && ingredient.trim()) {
+            ingredients.push(`${measure || ''} ${ingredient}`.trim());
+          }
+        }
+        
+        // Splits instructies in stappen
+        const steps = meal.strInstructions
+          .split('.')
+          .map(s => s.trim())
+          .filter(s => s.length > 10)
+          .slice(0, 7);
+        
+        return {
+          id: 'mdb' + meal.idMeal,
+          title: meal.strMeal,
+          img: meal.strMealThumb,
+          ingr: ingredients.join('||'),
+          steps: steps.join('||'),
+          cat: meal.strCategory || 'Internationaal',
+          author: 'TheMealDB',
+          source: 'mealdb'
+        };
+      });
+    
+    mealDBCache = meals;
+    mealDBLoading = false;
+    return meals;
+  } catch (error) {
+    console.error('Fout bij laden TheMealDB:', error);
+    mealDBLoading = false;
+    return [];
+  }
+}
+
 const db = {
   get: (key) => JSON.parse(localStorage.getItem(key) || 'null'),
   set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
   users: () => db.get('users') || [],
   recipes: () => {
     const approved = db.get('approvedRecipes') || [];
-    return [...RECIPES, ...approved];
+    // Combineer lokale recepten met TheMealDB cache
+    return [...RECIPES, ...approved, ...mealDBCache];
   },
   pendingRecipes: () => db.get('pendingRecipes') || [],
   reviews: () => db.get('reviews') || {},
@@ -154,7 +217,8 @@ function render() {
         <div class="text-center py-12 bg-white rounded-3xl shadow-xl mb-12">
           <h1 class="text-5xl font-black mb-4">Welkom, ${currentUser.name}! 👋</h1>
           <p class="text-xl text-slate-600 mb-2">Kies uit <span class="text-orange-600 font-black">${totalRecipes} recepten</span></p>
-          <p class="text-sm text-slate-400 mb-8">50 categorieën: Italiaans, Aziatisch, BBQ, Nederlands & meer!</p>
+          <p class="text-sm text-slate-400 mb-2">50 categorieën: Italiaans, Aziatisch, BBQ, Nederlands & meer!</p>
+          <p class="text-xs text-green-600 font-bold mb-8">🌍 Nu met TheMealDB internationale recepten!</p>
           
           <div class="flex justify-center items-center gap-4 mb-8">
             <span class="text-lg font-bold">Personen:</span>
@@ -343,12 +407,14 @@ function renderMenu() {
 function renderRecipeCard(recipe, idx, isSaved = false) {
   const reviews = db.reviews()[recipe.id] || [];
   const avgRating = reviews.length > 0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : 'N/A';
+  const sourceIcon = recipe.source === 'mealdb' ? '🌍' : '';
   
   return `
     <div onclick="showRecipe(${idx}, ${isSaved})" class="bg-white rounded-2xl p-4 shadow-xl hover:shadow-2xl cursor-pointer transition-all hover:-translate-y-2">
       <div class="relative mb-3 h-40 rounded-xl overflow-hidden">
         <img src="${recipe.img}" class="w-full h-full object-cover" />
         ${recipe.day ? `<div class="absolute top-2 left-2 bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-bold">${recipe.day}</div>` : ''}
+        ${sourceIcon ? `<div class="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">${sourceIcon} TheMealDB</div>` : ''}
       </div>
       <h3 class="font-black text-lg mb-1">${recipe.title}</h3>
       <div class="flex items-center justify-between">
@@ -383,7 +449,9 @@ function login() {
   currentUser = user;
   db.set('currentUser', user);
   view = 'home';
-  render();
+  
+  // Laad TheMealDB recepten bij inloggen
+  fetchMealDBRecipes().then(() => render());
 }
 
 function register() {
@@ -403,7 +471,9 @@ function register() {
   currentUser = newUser;
   db.set('currentUser', newUser);
   view = 'home';
-  render();
+  
+  // Laad TheMealDB recepten bij registreren
+  fetchMealDBRecipes().then(() => render());
 }
 
 function logout() {
@@ -418,7 +488,18 @@ function changeView(v) {
   render();
 }
 
-function generateMenu() {
+async function generateMenu() {
+  // Als cache leeg is, laad nieuwe recepten
+  if (mealDBCache.length < 10) {
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'fixed top-20 right-4 bg-green-600 text-white px-6 py-3 rounded-xl font-bold shadow-xl z-50';
+    loadingMsg.textContent = '🌍 Laden van nieuwe recepten...';
+    document.body.appendChild(loadingMsg);
+    
+    await fetchMealDBRecipes();
+    loadingMsg.remove();
+  }
+  
   const days = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
   const allRecipes = db.recipes();
   
@@ -462,6 +543,7 @@ function showRecipe(idx, isSaved) {
           <h2 class="text-4xl font-black mb-2">${recipe.title}</h2>
           <span class="bg-orange-100 text-orange-800 px-3 py-2 rounded-full font-bold">${recipe.cat}</span>
           <p class="text-sm text-slate-500 mt-2">Door: ${recipe.author || 'Onbekend'}</p>
+          ${recipe.source === 'mealdb' ? '<p class="text-xs text-green-600 font-bold mt-1">🌍 TheMealDB</p>' : ''}
         </div>
         <button onclick="this.closest('div').parentElement.remove()" class="text-4xl font-bold text-slate-400 hover:text-slate-600">×</button>
       </div>
@@ -603,7 +685,12 @@ if (!users.find(u => u.email === 'admin@weekhap.nl')) {
   db.set('users', users);
 }
 
-render();
+// Laad TheMealDB recepten bij opstarten als er een gebruiker is
+if (currentUser) {
+  fetchMealDBRecipes().then(() => render());
+} else {
+  render();
+}
 </script>
 </body>
 </html>

@@ -142,7 +142,8 @@ const db = {
   },
   pendingRecipes: () => db.get('pendingRecipes') || [],
   reviews: () => db.get('reviews') || {},
-  savedMenus: () => db.get('savedMenus') || {}
+  savedMenus: () => db.get('savedMenus') || {},
+  savedRecipes: () => db.get('savedRecipes') || {}
 };
 
 let currentUser = db.get('currentUser');
@@ -206,6 +207,7 @@ function render() {
           <div class="flex items-center gap-2">
             <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold bg-orange-600 text-white">Home</button>
             <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">Opgeslagen (${savedMenu.length})</button>
+            <button onclick="changeView('myrecipes')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">Mijn Recepten</button>
             <button onclick="changeView('community')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">Community</button>
             <button onclick="changeView('upload')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">+ Recept</button>
             ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold bg-red-100 text-red-700 hover:bg-red-200 relative">⚙️ Admin${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
@@ -217,9 +219,7 @@ function render() {
       <div class="max-w-6xl mx-auto p-4 py-12">
         <div class="text-center py-12 bg-white rounded-3xl shadow-xl mb-12">
           <h1 class="text-5xl font-black mb-4">Welkom, ${currentUser.name}! 👋</h1>
-          <p class="text-xl text-slate-600 mb-2">Kies uit <span class="text-orange-600 font-black">${totalRecipes} recepten</span></p>
-          <p class="text-sm text-slate-400 mb-2">50 categorieën: Italiaans, Aziatisch, BBQ, Nederlands & meer!</p>
-          <p class="text-xs text-green-600 font-bold mb-8">🌍 Nu met TheMealDB internationale recepten!</p>
+          <p class="text-xl text-slate-600 mb-8">Kies uit <span class="text-orange-600 font-black">${totalRecipes} recepten</span></p>
           
           <div class="flex justify-center items-center gap-4 mb-8">
             <span class="text-lg font-bold">Personen:</span>
@@ -244,10 +244,28 @@ function render() {
     app.innerHTML = `
       ${renderNav()}
       <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8">Jouw Opgeslagen Menu 💚</h1>
-        ${saved.length === 0 ? '<div class="bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Geen opgeslagen recepten. Genereer een menu en klik "Bewaar Menu"!</p></div>' : `
+        <h1 class="text-4xl font-black mb-8">Opgeslagen Weekmenu 💚</h1>
+        ${saved.length === 0 ? '<div class="bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Geen opgeslagen weekmenu. Genereer een menu en klik "Bewaar Menu"!</p></div>' : `
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             ${saved.map((r,i) => renderRecipeCard(r, i, true)).join('')}
+          </div>
+        `}
+      </div>
+    `;
+  }
+  
+  else if (view === 'myrecipes') {
+    const saved = db.savedRecipes()[currentUser.email] || [];
+    const allRecipes = db.recipes();
+    const myRecipes = saved.map(id => allRecipes.find(r => r.id === id)).filter(r => r);
+    
+    app.innerHTML = `
+      ${renderNav()}
+      <div class="max-w-6xl mx-auto p-4 py-12">
+        <h1 class="text-4xl font-black mb-8">Mijn Recepten ⭐ (${myRecipes.length})</h1>
+        ${myRecipes.length === 0 ? '<div class="bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Nog geen recepten opgeslagen. Klik op het hartje bij een recept om het op te slaan!</p></div>' : `
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            ${myRecipes.map((r,i) => renderRecipeCard(r, i, false, true)).join('')}
           </div>
         `}
       </div>
@@ -364,6 +382,7 @@ function render() {
 
 function renderNav() {
   const savedMenu = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+  const myRecipes = db.savedRecipes()[currentUser.email] || [];
   const pendingCount = db.pendingRecipes().length;
   return `
     <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
@@ -374,7 +393,8 @@ function renderNav() {
         </div>
         <div class="flex items-center gap-2 text-sm">
           <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Home</button>
-          <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Opgeslagen (${savedMenu.length})</button>
+          <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Weekmenu (${savedMenu.length})</button>
+          <button onclick="changeView('myrecipes')" class="px-4 py-2 rounded-lg font-bold ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Mijn Recepten (${myRecipes.length})</button>
           <button onclick="changeView('community')" class="px-4 py-2 rounded-lg font-bold ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Community</button>
           <button onclick="changeView('upload')" class="px-4 py-2 rounded-lg font-bold ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">+ Recept</button>
           ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700 hover:bg-red-200'} relative">⚙️ Admin${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
@@ -405,25 +425,52 @@ function renderMenu() {
   `;
 }
 
-function renderRecipeCard(recipe, idx, isSaved = false) {
+function renderRecipeCard(recipe, idx, isSaved = false, isMyRecipes = false) {
   const reviews = db.reviews()[recipe.id] || [];
   const avgRating = reviews.length > 0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : 'N/A';
-  const sourceIcon = recipe.source === 'mealdb' ? '🌍' : '';
+  const sourceIcon = recipe.source === 'mealdb' ? '🌍' : (recipe.author && recipe.author !== 'admin' ? '👨‍🍳' : '');
+  
+  // Check if recipe is in user's saved recipes
+  const userSavedRecipes = db.savedRecipes()[currentUser.email] || [];
+  const isRecipeSaved = userSavedRecipes.includes(recipe.id);
   
   return `
-    <div onclick="showRecipe(${idx}, ${isSaved})" class="bg-white rounded-2xl p-4 shadow-xl hover:shadow-2xl cursor-pointer transition-all hover:-translate-y-2">
-      <div class="relative mb-3 h-40 rounded-xl overflow-hidden">
-        <img src="${recipe.img}" class="w-full h-full object-cover" />
-        ${recipe.day ? `<div class="absolute top-2 left-2 bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-bold">${recipe.day}</div>` : ''}
-        ${sourceIcon ? `<div class="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">${sourceIcon} TheMealDB</div>` : ''}
+    <div class="bg-white rounded-2xl p-4 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 relative">
+      <div onclick="showRecipe(${idx}, ${isSaved}, ${isMyRecipes})" class="cursor-pointer">
+        <div class="relative mb-3 h-40 rounded-xl overflow-hidden">
+          <img src="${recipe.img}" class="w-full h-full object-cover" />
+          ${recipe.day ? `<div class="absolute top-2 left-2 bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-bold">${recipe.day}</div>` : ''}
+          ${sourceIcon ? `<div class="absolute top-2 right-2 text-xl">${sourceIcon}</div>` : ''}
+        </div>
+        <h3 class="font-black text-lg mb-1">${recipe.title}</h3>
+        <div class="flex items-center justify-between">
+          <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-semibold">${recipe.cat}</span>
+          <span class="text-sm font-bold">⭐ ${avgRating} (${reviews.length})</span>
+        </div>
       </div>
-      <h3 class="font-black text-lg mb-1">${recipe.title}</h3>
-      <div class="flex items-center justify-between">
-        <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-semibold">${recipe.cat}</span>
-        <span class="text-sm font-bold">⭐ ${avgRating} (${reviews.length})</span>
-      </div>
+      <button onclick="toggleSaveRecipe('${recipe.id}', event)" class="absolute bottom-4 right-4 w-10 h-10 rounded-full ${isRecipeSaved ? 'bg-red-500' : 'bg-slate-200'} hover:scale-110 transition-all flex items-center justify-center text-xl" title="${isRecipeSaved ? 'Verwijder uit mijn recepten' : 'Bewaar recept'}">
+        ${isRecipeSaved ? '❤️' : '🤍'}
+      </button>
     </div>
   `;
+}
+
+function toggleSaveRecipe(recipeId, event) {
+  event.stopPropagation();
+  const savedRecipes = db.savedRecipes();
+  if (!savedRecipes[currentUser.email]) savedRecipes[currentUser.email] = [];
+  
+  const userRecipes = savedRecipes[currentUser.email];
+  const index = userRecipes.indexOf(recipeId);
+  
+  if (index > -1) {
+    userRecipes.splice(index, 1);
+  } else {
+    userRecipes.push(recipeId);
+  }
+  
+  db.set('savedRecipes', savedRecipes);
+  render();
 }
 
 function showLogin() {
@@ -529,13 +576,26 @@ function saveMenu() {
   render();
 }
 
-function showRecipe(idx, isSaved) {
-  const recipe = isSaved ? (db.savedMenus()[currentUser.email].recipes[idx]) : currentMenu[idx];
+function showRecipe(idx, isSaved, isMyRecipes = false) {
+  let recipe;
+  if (isMyRecipes) {
+    const saved = db.savedRecipes()[currentUser.email] || [];
+    const allRecipes = db.recipes();
+    const myRecipes = saved.map(id => allRecipes.find(r => r.id === id)).filter(r => r);
+    recipe = myRecipes[idx];
+  } else if (isSaved) {
+    recipe = (db.savedMenus()[currentUser.email].recipes[idx]);
+  } else {
+    recipe = currentMenu[idx];
+  }
+  
   const reviews = db.reviews()[recipe.id] || [];
   
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4';
   modal.onclick = () => modal.remove();
+  
+  const sourceLabel = recipe.source === 'mealdb' ? '🌍 Internationaal' : (recipe.author && recipe.author !== 'admin' ? '👨‍🍳 Community' : '');
   
   modal.innerHTML = `
     <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-auto p-8" onclick="event.stopPropagation()">
@@ -544,7 +604,7 @@ function showRecipe(idx, isSaved) {
           <h2 class="text-4xl font-black mb-2">${recipe.title}</h2>
           <span class="bg-orange-100 text-orange-800 px-3 py-2 rounded-full font-bold">${recipe.cat}</span>
           <p class="text-sm text-slate-500 mt-2">Door: ${recipe.author || 'Onbekend'}</p>
-          ${recipe.source === 'mealdb' ? '<p class="text-xs text-green-600 font-bold mt-1">🌍 TheMealDB</p>' : ''}
+          ${sourceLabel ? `<p class="text-xs font-bold mt-1">${sourceLabel}</p>` : ''}
         </div>
         <button onclick="this.closest('div').parentElement.remove()" class="text-4xl font-bold text-slate-400 hover:text-slate-600">×</button>
       </div>

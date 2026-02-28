@@ -1,0 +1,35 @@
+/* Remove white screen/loading issues */
+
+/* Ensure body is always visible */
+body {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Remove any loading overlays */
+.loading-overlay,
+.white-screen,
+[class*="loading"] {
+  display: none !important;
+}
+
+/* Ensure app container is visible */
+#app {
+  opacity: 1 !important;
+  visibility: visible !important;
+  min-height: 100vh;
+}
+
+/* Language switch mobile responsiveness */
+@media (max-width: 640px) {
+  #lang-nl,
+  #lang-en {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Smooth transitions */
+* {
+  transition: opacity 0.2s ease-in-out;
+}

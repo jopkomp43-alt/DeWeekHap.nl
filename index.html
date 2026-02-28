@@ -18,86 +18,51 @@ body { font-family: 'Outfit', sans-serif; }
 <div id="app"></div>
 
 <script>
-// KEYWORD MAPPING (Nederlands naar Engels voor TheMealDB)
 const KEYWORDS = {
-  // Vlees
-  'kip': 'chicken',
-  'kipfilet': 'chicken',
-  'kippenvlees': 'chicken',
-  'rundvlees': 'beef',
-  'rund': 'beef',
-  'varkensvlees': 'pork',
-  'varken': 'pork',
-  'lam': 'lamb',
-  'lamsvlees': 'lamb',
-  
-  // Vis
-  'vis': 'fish',
-  'zalm': 'salmon',
-  'tonijn': 'tuna',
-  'garnaal': 'shrimp',
-  'garnalen': 'shrimp',
-  
-  // Vegetarisch
-  'vegetarisch': 'vegetarian',
-  'vega': 'vegetarian',
-  'plantaardig': 'vegetarian',
-  
-  // Ingrediënten
-  'pasta': 'pasta',
-  'rijst': 'rice',
-  'aardappel': 'potato',
-  'aardappelen': 'potato',
-  'broccoli': 'broccoli',
-  'tomaat': 'tomato',
-  'tomaten': 'tomato',
-  'ui': 'onion',
-  'uien': 'onion',
-  'knoflook': 'garlic',
-  
-  // Negatieve woorden
-  'geen': 'NO',
-  'niet': 'NO',
-  'zonder': 'NO'
+  'kip': 'chicken', 'kipfilet': 'chicken', 'kippenvlees': 'chicken',
+  'rundvlees': 'beef', 'rund': 'beef',
+  'varkensvlees': 'pork', 'varken': 'pork',
+  'lam': 'lamb', 'lamsvlees': 'lamb',
+  'vis': 'fish', 'zalm': 'salmon', 'tonijn': 'tuna',
+  'garnaal': 'shrimp', 'garnalen': 'shrimp',
+  'vegetarisch': 'vegetarian', 'vega': 'vegetarian',
+  'pasta': 'pasta', 'rijst': 'rice',
+  'aardappel': 'potato', 'aardappelen': 'potato',
+  'broccoli': 'broccoli', 'tomaat': 'tomato', 'tomaten': 'tomato',
+  'ui': 'onion', 'uien': 'onion', 'knoflook': 'garlic',
+  'geen': 'NO', 'niet': 'NO', 'zonder': 'NO'
 };
 
-// STATE
 let state = {
   view: 'generator',
   userInput: '',
   parsedPreferences: { want: [], dontwant: [] },
   servings: 2,
+  availableRecipes: [],
+  selectedRecipeIds: new Set(),
   generatedMenu: [],
   savedRecipes: [],
   currentRecipe: null,
   loading: false
 };
 
-// Load saved
 try {
   const saved = localStorage.getItem('savedRecipes');
   if (saved) state.savedRecipes = JSON.parse(saved);
 } catch (e) {}
 
-// PARSE USER INPUT
 function parseUserInput(text) {
   text = text.toLowerCase();
-  const want = [];
-  const dontwant = [];
-  
+  const want = [], dontwant = [];
   const words = text.split(/\s+/);
   let isNegative = false;
   
   for (let i = 0; i < words.length; i++) {
     const word = words[i].replace(/[,\.!?]/g, '');
-    
-    // Check if negative word
     if (['geen', 'niet', 'zonder'].includes(word)) {
       isNegative = true;
       continue;
     }
-    
-    // Check if keyword exists
     if (KEYWORDS[word]) {
       const english = KEYWORDS[word];
       if (isNegative) {
@@ -107,25 +72,16 @@ function parseUserInput(text) {
         want.push(english);
       }
     }
-    
-    // Reset negative after non-keyword
-    if (!['en', 'of', 'maar'].includes(word)) {
-      isNegative = false;
-    }
+    if (!['en', 'of', 'maar'].includes(word)) isNegative = false;
   }
-  
   return { want, dontwant };
 }
 
-// FETCH FROM THEMEALDB
 async function fetchRecipesFromAPI(preferences) {
   const recipes = [];
-  
-  // Als er specifieke ingrediënten gewenst zijn
   if (preferences.want.length > 0) {
     for (const ingredient of preferences.want) {
       if (ingredient === 'vegetarian') {
-        // Fetch vegetarian category
         const response = await fetch('https://www.themealdb.com/api/json/v1/1/filter.php?c=Vegetarian');
         const data = await response.json();
         if (data.meals) {
@@ -136,7 +92,6 @@ async function fetchRecipesFromAPI(preferences) {
           }
         }
       } else {
-        // Search by ingredient
         const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredient}`);
         const data = await response.json();
         if (data.meals) {
@@ -149,15 +104,13 @@ async function fetchRecipesFromAPI(preferences) {
       }
     }
   } else {
-    // Random recepten als geen voorkeuren
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       const response = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
       const data = await response.json();
       if (data.meals) recipes.push(data.meals[0]);
     }
   }
   
-  // Filter uit wat NIET gewenst is
   const filtered = recipes.filter(recipe => {
     const instructions = recipe.strInstructions.toLowerCase();
     const ingredients = [];
@@ -165,45 +118,29 @@ async function fetchRecipesFromAPI(preferences) {
       const ing = recipe[`strIngredient${i}`];
       if (ing) ingredients.push(ing.toLowerCase());
     }
-    
     const allText = instructions + ' ' + ingredients.join(' ');
-    
     for (const unwanted of preferences.dontwant) {
       if (allText.includes(unwanted)) return false;
     }
     return true;
   });
-  
   return filtered;
 }
 
-// CONVERT MEALDB TO OUR FORMAT
 function convertMealDBRecipe(meal) {
   const ingredients = [];
   for (let i = 1; i <= 20; i++) {
     const ingredient = meal[`strIngredient${i}`];
     const measure = meal[`strMeasure${i}`];
     if (ingredient && ingredient.trim()) {
-      ingredients.push({
-        item: ingredient,
-        amount: measure || '1',
-        unit: 'stuk'
-      });
+      ingredients.push({ item: ingredient, amount: measure || '1', unit: 'stuk' });
     }
   }
   
-  // Split instructions into detailed steps
   const instructionText = meal.strInstructions;
-  const sentences = instructionText
-    .split(/\.|\n/)
-    .map(s => s.trim())
-    .filter(s => s.length > 10);
-  
+  const sentences = instructionText.split(/\.|\n/).map(s => s.trim()).filter(s => s.length > 10);
   const steps = sentences.slice(0, 15).map((sentence, i) => ({
-    num: i + 1,
-    action: sentence,
-    tools: [],
-    time: i === 0 ? '5 min' : '3 min'
+    num: i + 1, action: sentence, tools: [], time: i === 0 ? '5 min' : '3 min'
   }));
   
   return {
@@ -215,24 +152,18 @@ function convertMealDBRecipe(meal) {
     servings: 2,
     cookTime: 30,
     ingredients: ingredients,
-    steps: steps,
-    
+    steps: steps
   };
 }
 
-// SCALE INGREDIENTS
 function scaleIngredients(recipe, newServings) {
   const scale = newServings / recipe.servings;
   return recipe.ingredients.map(ing => {
     const amount = parseFloat(ing.amount) || 1;
-    return {
-      ...ing,
-      amount: Math.round(amount * scale * 10) / 10
-    };
+    return { ...ing, amount: Math.round(amount * scale * 10) / 10 };
   });
 }
 
-// RENDER NAV
 function renderNav() {
   return `
     <nav class="bg-white shadow-md mb-8">
@@ -243,12 +174,8 @@ function renderNav() {
             <span class="text-2xl font-black text-orange-600">DE WEEKHAP</span>
           </div>
           <div class="flex gap-4">
-            <button onclick="navigateTo('generator')" class="px-4 py-2 rounded-lg font-semibold transition ${state.view === 'generator' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'}">
-              Generator
-            </button>
-            <button onclick="navigateTo('saved')" class="px-4 py-2 rounded-lg font-semibold transition ${state.view === 'saved' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'}">
-              Opgeslagen (${state.savedRecipes.length})
-            </button>
+            <button class="nav-btn" data-view="generator">Generator</button>
+            <button class="nav-btn" data-view="saved">Opgeslagen (${state.savedRecipes.length})</button>
           </div>
         </div>
       </div>
@@ -256,7 +183,6 @@ function renderNav() {
   `;
 }
 
-// RENDER GENERATOR
 function renderGenerator() {
   return `
     ${renderNav()}
@@ -264,56 +190,66 @@ function renderGenerator() {
       <h1 class="text-4xl font-black text-slate-800 mb-4">🤖 AI Weekmenu Generator</h1>
       <p class="text-lg text-slate-600 mb-8">Typ wat je WEL en NIET wilt eten</p>
       
-      <!-- TEXT INPUT -->
       <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
         <h2 class="text-xl font-bold mb-4">Vertel ons wat je wilt</h2>
         <textarea 
           id="userInput"
-          placeholder="Bijv: Ik wil iets met kip, maar geen rijst en geen ui. Liefst niet te pittig."
+          placeholder="Bijv: Ik wil iets met kip, maar geen rijst"
           class="w-full h-32 p-4 border-2 border-slate-200 rounded-xl focus:border-orange-500 focus:outline-none resize-none"
-          onkeyup="updateUserInput(this.value)"
         >${state.userInput}</textarea>
         
         ${state.parsedPreferences.want.length > 0 || state.parsedPreferences.dontwant.length > 0 ? `
           <div class="mt-4 p-4 bg-slate-50 rounded-xl">
             <p class="text-sm font-bold text-slate-700 mb-2">🧠 Wat ik begrijp:</p>
-            ${state.parsedPreferences.want.length > 0 ? `
-              <p class="text-sm text-green-700">✅ WEL: ${state.parsedPreferences.want.join(', ')}</p>
-            ` : ''}
-            ${state.parsedPreferences.dontwant.length > 0 ? `
-              <p class="text-sm text-red-700">❌ NIET: ${state.parsedPreferences.dontwant.join(', ')}</p>
-            ` : ''}
+            ${state.parsedPreferences.want.length > 0 ? `<p class="text-sm text-green-700">✅ WEL: ${state.parsedPreferences.want.join(', ')}</p>` : ''}
+            ${state.parsedPreferences.dontwant.length > 0 ? `<p class="text-sm text-red-700">❌ NIET: ${state.parsedPreferences.dontwant.join(', ')}</p>` : ''}
           </div>
         ` : ''}
         
         <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p class="text-sm text-blue-800">💡 <strong>Tip:</strong> Je kunt zeggen: "Ik wil kip", "Geen pasta", "Vegetarisch maar zonder broccoli"</p>
+          <p class="text-sm text-blue-800">💡 <strong>Tip:</strong> Zeg "Ik wil kip", "Geen pasta", "Vegetarisch"</p>
         </div>
       </div>
       
-      <!-- SERVINGS -->
       <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
         <h2 class="text-xl font-bold mb-4">Voor hoeveel personen?</h2>
         <div class="flex items-center gap-4">
-          <button onclick="changeServings(-1)" class="w-12 h-12 rounded-full bg-slate-200 hover:bg-slate-300 font-bold text-2xl transition">-</button>
+          <button id="servingsDown" class="w-12 h-12 rounded-full bg-slate-200 hover:bg-slate-300 font-bold text-2xl">-</button>
           <div class="flex-1 text-center">
             <div class="text-5xl font-black text-orange-600">${state.servings}</div>
             <div class="text-sm text-slate-600 mt-1">personen</div>
           </div>
-          <button onclick="changeServings(1)" class="w-12 h-12 rounded-full bg-slate-200 hover:bg-slate-300 font-bold text-2xl transition">+</button>
+          <button id="servingsUp" class="w-12 h-12 rounded-full bg-slate-200 hover:bg-slate-300 font-bold text-2xl">+</button>
         </div>
       </div>
       
-      <!-- GENERATE BUTTON -->
-      <button 
-        onclick="generateWithAPI()" 
-        class="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-6 rounded-2xl text-2xl font-black shadow-xl hover:shadow-2xl hover:scale-105 transition transform ${state.loading ? 'opacity-50 cursor-not-allowed' : ''}"
-        ${state.loading ? 'disabled' : ''}
-      >
-        ${state.loading ? '⏳ Recepten ophalen...' : '🎲 Genereer Weekmenu (7 dagen)'}
+      <button id="searchBtn" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-6 rounded-2xl text-2xl font-black shadow-xl hover:shadow-2xl ${state.loading ? 'opacity-50' : ''}" ${state.loading ? 'disabled' : ''}>
+        ${state.loading ? '⏳ Recepten zoeken...' : '🔍 Zoek Recepten'}
       </button>
       
-      <!-- GENERATED MENU -->
+      ${state.availableRecipes.length > 0 ? `
+        <div class="mt-12">
+          <h2 class="text-3xl font-black mb-4">Gevonden Recepten</h2>
+          <p class="text-slate-600 mb-6">Selecteer de gerechten die je wilt (min 1, max 7)</p>
+          <div class="space-y-4">
+            ${state.availableRecipes.map(recipe => `
+              <div class="bg-white rounded-xl shadow-md p-4 flex items-center gap-4">
+                <input type="checkbox" class="recipe-checkbox w-6 h-6 text-orange-500" data-recipe-id="${recipe.id}" ${state.selectedRecipeIds.has(recipe.id) ? 'checked' : ''}>
+                <img src="${recipe.img}" class="w-20 h-20 rounded-lg object-cover">
+                <div class="flex-1">
+                  <h3 class="font-bold text-lg">${recipe.title}</h3>
+                  <p class="text-sm text-slate-600">⏱️ ${recipe.cookTime} min • 👥 ${state.servings} personen</p>
+                </div>
+                <button class="view-recipe-btn px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600" data-recipe-id="${recipe.id}">Bekijk</button>
+              </div>
+            `).join('')}
+          </div>
+          <button id="generateMenuBtn" class="w-full mt-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-6 rounded-2xl text-2xl font-black shadow-xl">
+            🎲 Genereer Menu met Geselecteerde (${state.selectedRecipeIds.size})
+          </button>
+        </div>
+      ` : ''}
+      
       ${state.generatedMenu.length > 0 ? `
         <div class="mt-12">
           <h2 class="text-3xl font-black mb-6">Jouw Weekmenu</h2>
@@ -321,33 +257,25 @@ function renderGenerator() {
             ${state.generatedMenu.map((recipe, i) => {
               const days = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
               return `
-                <div class="bg-white rounded-xl shadow-md p-4 flex items-center gap-4 hover:shadow-lg transition">
-                  <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
-                    ${days[i].slice(0,2)}
-                  </div>
+                <div class="bg-white rounded-xl shadow-md p-4 flex items-center gap-4">
+                  <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">${days[i].slice(0,2)}</div>
                   <img src="${recipe.img}" class="w-20 h-20 rounded-lg object-cover">
                   <div class="flex-1">
                     <h3 class="font-bold text-lg">${recipe.title}</h3>
-                    <p class="text-sm text-slate-600">⏱️ ${recipe.cookTime} min • 👥 ${state.servings} personen</p>
-                    
+                    <p class="text-sm text-slate-600">⏱️ ${recipe.cookTime} min</p>
                   </div>
-                  <button onclick="viewRecipe(${recipe.id})" class="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition">
-                    Bekijk
-                  </button>
+                  <button class="view-recipe-btn px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold" data-recipe-id="${recipe.id}">Bekijk</button>
                 </div>
               `;
             }).join('')}
           </div>
-          <button onclick="downloadShoppingList()" class="w-full mt-6 bg-slate-700 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition">
-            📝 Download Boodschappenlijst
-          </button>
+          <button id="downloadBtn" class="w-full mt-6 bg-slate-700 text-white py-4 rounded-xl font-bold">📝 Download Boodschappenlijst</button>
         </div>
       ` : ''}
     </div>
   `;
 }
 
-// RENDER SAVED (simplified)
 function renderSaved() {
   return `
     ${renderNav()}
@@ -356,18 +284,16 @@ function renderSaved() {
       ${state.savedRecipes.length === 0 ? `
         <div class="text-center py-16 bg-white rounded-2xl shadow-lg">
           <div class="text-6xl mb-4">📖</div>
-          <p class="text-xl text-slate-500">Je hebt nog geen recepten opgeslagen</p>
+          <p class="text-xl text-slate-500">Nog geen recepten opgeslagen</p>
         </div>
       ` : `
         <div class="grid gap-4">
           ${state.savedRecipes.map(recipe => `
             <div class="bg-white rounded-xl shadow-md p-4 flex items-center gap-4">
               <img src="${recipe.img}" class="w-20 h-20 rounded-lg object-cover">
-              <div class="flex-1">
-                <h3 class="font-bold text-lg">${recipe.title}</h3>
-              </div>
-              <button onclick="viewRecipe(${recipe.id})" class="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold">Bekijk</button>
-              <button onclick="unsaveRecipe(${recipe.id})" class="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold">✕</button>
+              <div class="flex-1"><h3 class="font-bold text-lg">${recipe.title}</h3></div>
+              <button class="view-recipe-btn px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold" data-recipe-id="${recipe.id}">Bekijk</button>
+              <button class="unsave-btn px-4 py-2 bg-red-500 text-white rounded-lg font-semibold" data-recipe-id="${recipe.id}">✕</button>
             </div>
           `).join('')}
         </div>
@@ -376,13 +302,8 @@ function renderSaved() {
   `;
 }
 
-// RENDER RECIPE DETAIL
 function renderRecipeDetail() {
-  if (!state.currentRecipe) {
-    console.error('No current recipe!');
-    return renderNav() + '<div class="container mx-auto px-4 max-w-4xl"><p class="text-center text-red-500">Fout: Recept niet gevonden</p></div>';
-  }
-  
+  if (!state.currentRecipe) return '';
   const recipe = state.currentRecipe;
   const scaledIngredients = scaleIngredients(recipe, state.servings);
   const isSaved = state.savedRecipes.some(r => r.id === recipe.id);
@@ -390,23 +311,19 @@ function renderRecipeDetail() {
   return `
     ${renderNav()}
     <div class="container mx-auto px-4 max-w-4xl">
-      <button onclick="goBack()" class="mb-4 text-orange-600 font-semibold hover:underline">← Terug</button>
-      
+      <button id="backBtn" class="mb-4 text-orange-600 font-semibold hover:underline">← Terug</button>
       <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
         <img src="${recipe.img}" class="w-full h-64 object-cover">
-        
         <div class="p-8">
           <div class="flex justify-between items-start mb-6">
             <div>
               <h1 class="text-4xl font-black text-slate-800 mb-2">${recipe.title}</h1>
               <p class="text-slate-600">⏱️ ${recipe.cookTime} min • 👥 ${state.servings} personen</p>
-              
             </div>
-            <button onclick="toggleSaveRecipe(${recipe.id})" class="px-6 py-3 rounded-xl font-bold transition ${isSaved ? 'bg-red-500 text-white' : 'bg-orange-500 text-white'}">
+            <button id="toggleSaveBtn" data-recipe-id="${recipe.id}" class="px-6 py-3 rounded-xl font-bold ${isSaved ? 'bg-red-500' : 'bg-orange-500'} text-white">
               ${isSaved ? '❤️ Opgeslagen' : '🤍 Opslaan'}
             </button>
           </div>
-          
           <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">🛒 Ingrediënten</h2>
             <div class="bg-gradient-to-r from-orange-50 to-slate-50 rounded-xl p-6">
@@ -418,18 +335,13 @@ function renderRecipeDetail() {
               `).join('')}
             </div>
           </div>
-          
           <div>
             <h2 class="text-2xl font-bold mb-4">👨‍🍳 Bereiding</h2>
             <div class="space-y-4">
               ${recipe.steps.map(step => `
                 <div class="flex gap-4 bg-slate-50 rounded-xl p-4">
-                  <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-full flex items-center justify-center font-bold">
-                    ${step.num}
-                  </div>
-                  <div class="flex-1">
-                    <p class="font-medium text-slate-800">${step.action}</p>
-                  </div>
+                  <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-full flex items-center justify-center font-bold">${step.num}</div>
+                  <div class="flex-1"><p class="font-medium text-slate-800">${step.action}</p></div>
                 </div>
               `).join('')}
             </div>
@@ -440,128 +352,128 @@ function renderRecipeDetail() {
   `;
 }
 
-// FUNCTIONS
-function navigateTo(view) {
-  state.view = view;
-  state.currentRecipe = null;
-  render();
-  window.scrollTo(0, 0);
-}
-
-function updateUserInput(value) {
-  state.userInput = value;
-  state.parsedPreferences = parseUserInput(value);
-  render();
-}
-
-function changeServings(delta) {
-  state.servings = Math.max(1, Math.min(10, state.servings + delta));
-  render();
-}
-
-async function generateWithAPI() {
-  state.loading = true;
-  render();
-  
-  try {
-    const recipes = await fetchRecipesFromAPI(state.parsedPreferences);
-    const converted = recipes.map(meal => convertMealDBRecipe(meal));
-    
-    // Remove duplicates
-    const unique = [];
-    const ids = new Set();
-    for (const recipe of converted) {
-      if (!ids.has(recipe.id)) {
-        unique.push(recipe);
-        ids.add(recipe.id);
-      }
-    }
-    
-    state.generatedMenu = unique.slice(0, 7);
-  } catch (error) {
-    alert('Fout bij ophalen recepten. Probeer opnieuw.');
-    console.error(error);
-  }
-  
-  state.loading = false;
-  render();
-  
-  setTimeout(() => {
-    const menu = document.querySelector('.mt-12');
-    if (menu) menu.scrollIntoView({ behavior: 'smooth' });
-  }, 100);
-}
-
-function viewRecipe(id) {
-  console.log('ViewRecipe called with id:', id);
-  const allRecipes = [...state.generatedMenu, ...state.savedRecipes];
-  console.log('Available recipes:', allRecipes.length);
-  state.currentRecipe = allRecipes.find(r => r.id === id);
-  console.log('Found recipe:', state.currentRecipe ? state.currentRecipe.title : 'NOT FOUND');
-  if (!state.currentRecipe) {
-    alert('Recept niet gevonden!');
-    return;
-  }
-  state.view = 'detail';
-  render();
-  window.scrollTo(0, 0);
-}
-
-function toggleSaveRecipe(id) {
-  const recipe = [...state.generatedMenu, ...state.savedRecipes].find(r => r.id === id);
-  const index = state.savedRecipes.findIndex(r => r.id === id);
-  
-  if (index > -1) {
-    state.savedRecipes.splice(index, 1);
-  } else {
-    state.savedRecipes.push(recipe);
-  }
-  
-  try {
-    localStorage.setItem('savedRecipes', JSON.stringify(state.savedRecipes));
-  } catch (e) {}
-  
-  render();
-}
-
-function unsaveRecipe(id) {
-  state.savedRecipes = state.savedRecipes.filter(r => r.id !== id);
-  try {
-    localStorage.setItem('savedRecipes', JSON.stringify(state.savedRecipes));
-  } catch (e) {}
-  render();
-}
-
-function goBack() {
-  state.view = 'generator';
-  state.currentRecipe = null;
-  render();
-}
-
-function downloadShoppingList() {
-  let text = '🛒 BOODSCHAPPENLIJST\n\n';
-  text += `Voor ${state.servings} personen\n\n`;
-  
-  const allIng = {};
-  state.generatedMenu.forEach(recipe => {
-    scaleIngredients(recipe, state.servings).forEach(ing => {
-      if (allIng[ing.item]) {
-        allIng[ing.item].amount += parseFloat(ing.amount) || 0;
-      } else {
-        allIng[ing.item] = {...ing};
-      }
+function attachEventListeners() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      state.view = e.target.dataset.view;
+      state.currentRecipe = null;
+      render();
     });
   });
   
-  Object.values(allIng).forEach(ing => {
-    text += `☐ ${ing.item}: ${Math.round(ing.amount * 10) / 10} ${ing.unit}\n`;
+  const userInput = document.getElementById('userInput');
+  if (userInput) {
+    userInput.addEventListener('input', (e) => {
+      state.userInput = e.target.value;
+      state.parsedPreferences = parseUserInput(e.target.value);
+      render();
+    });
+  }
+  
+  const servingsDown = document.getElementById('servingsDown');
+  const servingsUp = document.getElementById('servingsUp');
+  if (servingsDown) servingsDown.addEventListener('click', () => { state.servings = Math.max(1, state.servings - 1); render(); });
+  if (servingsUp) servingsUp.addEventListener('click', () => { state.servings = Math.min(10, state.servings + 1); render(); });
+  
+  const searchBtn = document.getElementById('searchBtn');
+  if (searchBtn) {
+    searchBtn.addEventListener('click', async () => {
+      state.loading = true;
+      render();
+      try {
+        const recipes = await fetchRecipesFromAPI(state.parsedPreferences);
+        const converted = recipes.map(meal => convertMealDBRecipe(meal));
+        const unique = [];
+        const ids = new Set();
+        for (const recipe of converted) {
+          if (!ids.has(recipe.id)) { unique.push(recipe); ids.add(recipe.id); }
+        }
+        state.availableRecipes = unique;
+        state.selectedRecipeIds.clear();
+      } catch (error) {
+        alert('Fout bij ophalen recepten');
+      }
+      state.loading = false;
+      render();
+    });
+  }
+  
+  document.querySelectorAll('.recipe-checkbox').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const id = parseInt(e.target.dataset.recipeId);
+      if (e.target.checked) {
+        if (state.selectedRecipeIds.size < 7) state.selectedRecipeIds.add(id);
+        else { e.target.checked = false; alert('Maximaal 7 recepten'); }
+      } else {
+        state.selectedRecipeIds.delete(id);
+      }
+      render();
+    });
   });
   
-  const blob = new Blob([text], {type: 'text/plain'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'boodschappenlijst.txt';
-  a.click();
+  const generateMenuBtn = document.getElementById('generateMenuBtn');
+  if (generateMenuBtn) {
+    generateMenuBtn.addEventListener('click', () => {
+      if (state.selectedRecipeIds.size === 0) { alert('Selecteer minimaal 1 recept'); return; }
+      state.generatedMenu = state.availableRecipes.filter(r => state.selectedRecipeIds.has(r.id));
+      render();
+      setTimeout(() => { document.querySelector('.mt-12:last-of-type')?.scrollIntoView({ behavior: 'smooth' }); }, 100);
+    });
+  }
+  
+  document.querySelectorAll('.view-recipe-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = parseInt(e.target.dataset.recipeId);
+      const allRecipes = [...state.availableRecipes, ...state.generatedMenu, ...state.savedRecipes];
+      state.currentRecipe = allRecipes.find(r => r.id === id);
+      if (state.currentRecipe) { state.view = 'detail'; render(); window.scrollTo(0, 0); }
+      else alert('Recept niet gevonden');
+    });
+  });
+  
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) backBtn.addEventListener('click', () => { state.view = 'generator'; state.currentRecipe = null; render(); });
+  
+  const toggleSaveBtn = document.getElementById('toggleSaveBtn');
+  if (toggleSaveBtn) {
+    toggleSaveBtn.addEventListener('click', (e) => {
+      const id = parseInt(e.target.dataset.recipeId);
+      const idx = state.savedRecipes.findIndex(r => r.id === id);
+      if (idx > -1) state.savedRecipes.splice(idx, 1);
+      else state.savedRecipes.push(state.currentRecipe);
+      try { localStorage.setItem('savedRecipes', JSON.stringify(state.savedRecipes)); } catch (e) {}
+      render();
+    });
+  }
+  
+  document.querySelectorAll('.unsave-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = parseInt(e.target.dataset.recipeId);
+      state.savedRecipes = state.savedRecipes.filter(r => r.id !== id);
+      try { localStorage.setItem('savedRecipes', JSON.stringify(state.savedRecipes)); } catch (e) {}
+      render();
+    });
+  });
+  
+  const downloadBtn = document.getElementById('downloadBtn');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      let text = '🛒 BOODSCHAPPENLIJST\n\nVoor ' + state.servings + ' personen\n\n';
+      const allIng = {};
+      state.generatedMenu.forEach(recipe => {
+        scaleIngredients(recipe, state.servings).forEach(ing => {
+          if (allIng[ing.item]) allIng[ing.item].amount += parseFloat(ing.amount) || 0;
+          else allIng[ing.item] = {...ing};
+        });
+      });
+      Object.values(allIng).forEach(ing => { text += '☐ ' + ing.item + ': ' + Math.round(ing.amount * 10) / 10 + ' ' + ing.unit + '\n'; });
+      const blob = new Blob([text], {type: 'text/plain'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'boodschappenlijst.txt';
+      a.click();
+    });
+  }
 }
 
 function render() {
@@ -569,9 +481,9 @@ function render() {
   if (state.view === 'generator') app.innerHTML = renderGenerator();
   else if (state.view === 'saved') app.innerHTML = renderSaved();
   else if (state.view === 'detail') app.innerHTML = renderRecipeDetail();
+  attachEventListeners();
 }
 
-// INIT
 render();
 </script>
 

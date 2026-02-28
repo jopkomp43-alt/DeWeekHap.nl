@@ -216,7 +216,7 @@ function convertMealDBRecipe(meal) {
     cookTime: 30,
     ingredients: ingredients,
     steps: steps,
-    source: 'TheMealDB'
+    
   };
 }
 
@@ -329,7 +329,7 @@ function renderGenerator() {
                   <div class="flex-1">
                     <h3 class="font-bold text-lg">${recipe.title}</h3>
                     <p class="text-sm text-slate-600">⏱️ ${recipe.cookTime} min • 👥 ${state.servings} personen</p>
-                    ${recipe.source === 'TheMealDB' ? '<span class="text-xs text-blue-600">🌍 TheMealDB</span>' : ''}
+                    
                   </div>
                   <button onclick="viewRecipe(${recipe.id})" class="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition">
                     Bekijk
@@ -397,7 +397,7 @@ function renderRecipeDetail() {
             <div>
               <h1 class="text-4xl font-black text-slate-800 mb-2">${recipe.title}</h1>
               <p class="text-slate-600">⏱️ ${recipe.cookTime} min • 👥 ${state.servings} personen</p>
-              ${recipe.source === 'TheMealDB' ? '<p class="text-sm text-blue-600 mt-2">🌍 Recept van TheMealDB</p>' : ''}
+              
             </div>
             <button onclick="toggleSaveRecipe(${recipe.id})" class="px-6 py-3 rounded-xl font-bold transition ${isSaved ? 'bg-red-500 text-white' : 'bg-orange-500 text-white'}">
               ${isSaved ? '❤️ Opgeslagen' : '🤍 Opslaan'}

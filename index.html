@@ -16,7 +16,6 @@
 <meta property="og:description" content="Genereer je weekmenu in 30 seconden! 1200+ recepten uit 15 wereldkeukens.">
 <meta property="og:url" content="https://deweekhap.nl">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://deweekhap.nl/og-image.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="De Weekhap - Weekmenu Generator">
 <meta name="twitter:description" content="Genereer je weekmenu in 30 seconden! 1200+ recepten uit 15 wereldkeukens.">
@@ -41,22 +40,555 @@ body {
   .mobile-menu-visible { display: flex; flex-direction: column; }
 }
 </style>
-
-<!-- INLINE FIX: Zorg dat body altijd zichtbaar is -->
-<script>
-(function() {
-  document.addEventListener('DOMContentLoaded', function() {
-    document.body.style.opacity = '1';
-    document.body.style.visibility = 'visible';
-    console.log('✅ Wit scherm fix geladen');
-  });
-})();
-</script>
-
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-200 min-h-screen">
 
 <div id="app"></div>
+
+<script>
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" class="w-full h-full">
+  <!-- Beige circle background -->
+  <circle cx="200" cy="200" r="190" fill="#F5F3E8"/>
+  
+  <!-- House shape (orange) -->
+  <path d="M 120 190 L 160 150 L 200 110 L 240 150 L 280 190 L 280 280 L 120 280 Z" fill="#D95C33" stroke="#3C4858" stroke-width="4"/>
+  
+  <!-- House interior (beige rectangle) -->
+  <rect x="125" y="195" width="150" height="80" fill="#F5F3E8"/>
+  
+  <!-- Bowl (green/olive) -->
+  <ellipse cx="200" cy="220" rx="55" ry="35" fill="#6B7B54"/>
+  
+  <!-- Steam lines (3 wavy lines above bowl) -->
+  <path d="M 170 185 Q 180 175, 190 185" fill="none" stroke="#C89B3C" stroke-width="3"/>
+  <path d="M 185 180 Q 195 170, 205 180" fill="none" stroke="#6B7B54" stroke-width="3"/>
+  <path d="M 200 175 Q 210 165, 220 175" fill="none" stroke="#C89B3C" stroke-width="3"/>
+  
+  <!-- Bowl layers (orange/yellow) -->
+  <ellipse cx="200" cy="245" rx="40" ry="20" fill="#D95C33"/>
+  <ellipse cx="200" cy="250" rx="35" ry="15" fill="#C89B3C"/>
+  
+  <!-- Spoon (left side, orange handle) -->
+  <ellipse cx="70" cy="240" rx="8" ry="45" fill="#D95C33"/>
+  <ellipse cx="70" cy="235" rx="5" ry="40" fill="#C89B3C"/>
+  
+  <!-- Fork (right side, orange handle) -->
+  <ellipse cx="330" cy="240" rx="8" ry="45" fill="#D95C33"/>
+  <path d="M 325 210 L 330 205 L 335 210 L 330 245 Z" fill="#D95C33"/>
+  <path d="M 327 212 L 330 208 L 333 212 L 330 243 Z" fill="#C89B3C"/>
+  
+  <!-- Curved text path at top -->
+  <path id="textPath" d="M 55 150 Q 200 100, 345 150" fill="none" stroke="#3C4858" stroke-width="6"/>
+  
+  <!-- Text: DE WEEKHAP (curved at bottom) -->
+  <text x="200" y="370" font-family="Arial, sans-serif" font-size="36" font-weight="900" fill="#3C4858" text-anchor="middle" letter-spacing="8">DE WEEKHAP</text>
+</svg>`;
+
+// Translation object for MealDB recipes
+const TRANSLATIONS = {
+  // Common cooking terms
+  'Add': 'Voeg toe',
+  'Boil': 'Kook',
+  'Bake': 'Bak',
+  'Fry': 'Bak',
+  'Cook': 'Kook',
+  'Heat': 'Verwarm',
+  'Stir': 'Roer',
+  'Mix': 'Meng',
+  'Slice': 'Snijd',
+  'Chop': 'Hak',
+  'Dice': 'Snijd in blokjes',
+  'Peel': 'Schil',
+  'Season': 'Breng op smaak',
+  'Serve': 'Serveer',
+  'Drain': 'Giet af',
+  'Pour': 'Giet',
+  'Sprinkle': 'Strooi',
+  'Cover': 'Dek af',
+  'Simmer': 'Laat sudderen',
+  'Grill': 'Gril',
+  'Roast': 'Rooster',
+  'minutes': 'minuten',
+  'hours': 'uur',
+  'until': 'tot',
+  'then': 'dan',
+  'the': 'de',
+  'and': 'en',
+  'with': 'met',
+  'in': 'in',
+  'on': 'op',
+  'for': 'voor'
+};
+
+function translateText(text) {
+  if (!text) return text;
+  let translated = text;
+  
+  // Simple word replacement
+  Object.keys(TRANSLATIONS).forEach(en => {
+    const nl = TRANSLATIONS[en];
+    const regex = new RegExp('\\b' + en + '\\b', 'gi');
+    translated = translated.replace(regex, nl);
+  });
+  
+  return translated;
+}
+
+const RECIPES = [
+  {id:'r1',title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti||200g spek||4 eieren||100g parmezaan||Zout en peper',steps:'Kook pasta volgens verpakking||Bak spek krokant||Klop eieren met kaas||Meng warme pasta met spek en ei-mengsel||Breng op smaak met peper',cat:'Italiaans',author:'admin'},
+  {id:'r2',title:'Thaise Rode Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el currypasta||300g kip||1 paprika||100g taugé||Basmati rijst',steps:'Bak currypasta in pan||Voeg kokosmelk toe||Breng aan de kook||Voeg kip en groenten toe||Laat 15 min sudderen||Serveer met rijst',cat:'Aziatisch',author:'admin'},
+  {id:'r3',title:'Klassieke Lasagne',img:'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400',ingr:'12 lasagne vellen||500g rundergehakt||1 ui||2 blikjes tomatensaus||500ml bechamel||200g kaas||Olijfolie',steps:'Bak gehakt met ui||Voeg tomatensaus toe||Laag lasagnevellen, gehaktsaus, bechamel||Herhaal lagen||Eindig met kaas||Bak 40 min op 180°C',cat:'Italiaans',author:'admin'},
+  {id:'r4',title:'Gegrilde Zalm',img:'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400',ingr:'4 zalmfilets||2 citroenen||3 el olijfolie||Verse dille||500g aardappelen||Broccoli',steps:'Marineer zalm met citroen, olie en dille||Gril 6-8 min per kant||Kook aardappelen||Stoom broccoli||Serveer samen',cat:'Vis',author:'admin'},
+  {id:'r5',title:'Vegetarische Chili',img:'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400',ingr:'2 blikken kidneybonen||1 blik maïs||2 paprikas||1 ui||3 teentjes knoflook||Chilipoeder||1 blik tomatenblokjes',steps:'Fruit ui en knoflook||Voeg paprika, bonen, maïs toe||Voeg tomaat toe||Kruid met chili||Laat 20 min sudderen||Serveer met rijst',cat:'Vegetarisch',author:'admin'},
+  {id:'r6',title:'Kippensoep',img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',ingr:'500g kip||2 liter bouillon||3 wortels||2 preistengels||Vermicelli||Verse peterselie',steps:'Kook kip in bouillon tot gaar||Voeg gesneden groenten toe||Kook 15 min||Voeg vermicelli toe laatste 5 min||Garneer met peterselie',cat:'Soep',author:'admin'},
+  {id:'r7',title:'Caesar Salade',img:'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',ingr:'1 krop romaine sla||200g kipfilet||100g croutons||50g parmezaan||Caesar dressing||Ansjovis',steps:'Gril kipfilet en snijd in plakken||Was en snijd sla||Meng sla met dressing||Voeg kip, croutons toe||Rasp parmezaan erover||Garneer met ansjovis',cat:'Salade',author:'admin'},
+  {id:'r8',title:'Nasi Goreng',img:'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400',ingr:'400g rijst||2 eieren||200g kip||1 ui||2 teentjes knoflook||Nasi kruiden||Sambal||Atjar',steps:'Kook rijst en laat afkoelen||Bak roerei, haal eruit||Bak kip met ui en knoflook||Voeg rijst en kruiden toe||Meng alles||Serveer met ei en atjar',cat:'Aziatisch',author:'admin'},
+  {id:'r9',title:'Spare Ribs',img:'https://images.unsplash.com/photo-1544025162-d76694265947?w=400',ingr:'1kg spareribs||BBQ saus||Honing||Knoflookpoeder||Paprikapoeder||Zout||Peper',steps:'Marineer ribs in BBQ saus met kruiden||Laat 2 uur marineren||Bak 1.5 uur in oven op 160°C||Bestrijk regelmatig met marinade||Serveer met frites',cat:'BBQ',author:'admin'},
+  {id:'r10',title:'Quiche Lorraine',img:'https://images.unsplash.com/photo-1601001815894-4bb6c81416d7?w=400',ingr:'1 bladerdeeg||200g spek||200ml room||3 eieren||150g kaas||Ui||Peper en zout',steps:'Leg bladerdeeg in vorm||Bak spek en ui||Klop eieren met room||Verdeel spek over deeg||Giet ei-mengsel erover||Strooi kaas||Bak 35 min op 180°C',cat:'Frans',author:'admin'},
+  {id:'r11',title:'Tacos',img:'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400',ingr:'8 taco shells||400g rundergehakt||Tacokruiden||Sla||Tomaat||Kaas||Zure room||Salsa',steps:'Bak gehakt met tacokruiden||Verwarm taco shells||Snijd groenten||Vul shells met gehakt||Voeg groenten, kaas, zure room toe||Serveer met salsa',cat:'Mexicaans',author:'admin'},
+  {id:'r12',title:'Risotto ai Funghi',img:'https://images.unsplash.com/photo-1476124369491-f6e5c3d2a3e2?w=400',ingr:'300g risottorijst||1 liter bouillon||1 ui||100ml witte wijn||50g parmezaan||Boter||250g champignons',steps:'Fruit ui in boter||Voeg rijst toe, roer 2 min||Blus met wijn||Voeg schepje bouillon toe per keer||Blijf roeren 20 min||Roer kaas erdoor',cat:'Italiaans',author:'admin'},
+  {id:'r13',title:'Biefstuk met Kruidenboter',img:'https://images.unsplash.com/photo-1558030006-450675393462?w=400',ingr:'4 biefstukken||Kruidenboter||Zout en peper||Aardappelen||Sperziebonen||Ui',steps:'Breng biefstuk op kamertemperatuur||Kruid met peper en zout||Gril 3-5 min per kant||Leg kruidenboter erop||Serveer met aardappelen en bonen',cat:'Vlees',author:'admin'},
+  {id:'r14',title:'Pad Thai',img:'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400',ingr:'200g rijstnoedels||200g garnalen||2 eieren||Taugé||Pindas||Limoensap||Fish sauce||Knoflook',steps:'Week noedels in warm water||Bak ei, haal eruit||Bak garnalen met knoflook||Voeg noedels toe||Voeg saus toe||Meng met ei en taugé||Garneer met pindas',cat:'Aziatisch',author:'admin'},
+  {id:'r15',title:'Griekse Moussaka',img:'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400',ingr:'2 aubergines||500g lamsgehakt||1 ui||Tomatenpassata||Bechamel||Kaneel||Feta',steps:'Snijd aubergines, bak ze||Bak gehakt met ui en kaneel||Voeg tomaat toe||Laag aubergine en gehakt||Giet bechamel erover||Strooi feta||Bak 40 min 180°C',cat:'Grieks',author:'admin'},
+  {id:'r16',title:'Tom Yum Soep',img:'https://images.unsplash.com/photo-1569562211093-4ed0d0758f12?w=400',ingr:'1 liter bouillon||200g garnalen||Citroengras||Galangawortel||Limoenblad||Champignons||Tom yum pasta||Chili',steps:'Breng bouillon aan de kook||Voeg citroengras en galanga toe||Voeg tom yum pasta toe||Voeg garnalen en champignons toe||Laat 5 min koken||Garneer met chili',cat:'Aziatisch',author:'admin'},
+  {id:'r17',title:'Shakshuka',img:'https://images.unsplash.com/photo-1595908129746-0f187f3b0b7a?w=400',ingr:'6 eieren||1 blik tomatenblokjes||2 paprikas||1 ui||Knoflook||Komijn||Paprikapoeder||Feta',steps:'Fruit ui, paprika en knoflook||Voeg tomaat en kruiden toe||Laat 10 min sudderen||Maak kuiltjes||Breek eieren in kuiltjes||Dek af, laat stollen||Serveer met feta',cat:'Midden-Oosten',author:'admin'},
+  {id:'r18',title:'Fish and Chips',img:'https://images.unsplash.com/photo-1580217593608-61931cefc821?w=400',ingr:'4 kabeljauwfilets||Bloem||Bier||Aardappelen||Zout||Azijn||Tartaarsaus',steps:'Maak beslag van bloem en bier||Snijd aardappelen in friet||Frituur friet||Haal door beslag||Frituur vis goudbruin||Serveer met tartaar en azijn',cat:'Engels',author:'admin'},
+  {id:'r19',title:'Ramen',img:'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400',ingr:'Ramen noedels||1 liter bouillon||2 eieren||Varkensvlees||Lente-ui||Nori||Sojasaus||Sesamolie',steps:'Breng bouillon aan de kook||Kook eieren 6 min, halveer||Bak varkensvlees||Kook noedels||Verdeel noedels in kom||Giet bouillon erover||Garneer met ei, vlees, ui',cat:'Aziatisch',author:'admin'},
+  {id:'r20',title:'Caprese Salade',img:'https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?w=400',ingr:'4 tomaten||250g mozzarella||Verse basilicum||Olijfolie||Balsamico||Zout||Peper',steps:'Snijd tomaten en mozzarella in plakken||Leg om en om op bord||Leg basilicum ertussen||Druppel olijfolie erover||Druppel balsamico||Kruid met peper en zout',cat:'Italiaans',author:'admin'},
+  {id:'r21',title:'Pulled Pork',img:'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400',ingr:'1.5kg varkensschouder||BBQ rub||BBQ saus||Hamburgerbroodjes||Coleslaw',steps:'Wrijf vlees in met rub||Laat 2 uur marineren||Bak 6 uur op 120°C||Vlees moet uit elkaar vallen||Trek uit elkaar met vorken||Meng met BBQ saus||Serveer op broodje met slaw',cat:'BBQ',author:'admin'},
+  {id:'r22',title:'Gazpacho',img:'https://images.unsplash.com/photo-1541795083-1b160cf4f3d7?w=400',ingr:'6 tomaten||1 komkommer||1 paprika||1 ui||2 teentjes knoflook||Witte wijn azijn||Olijfolie||Brood',steps:'Week brood in water||Snijd groenten grof||Doe alles in blender||Voeg azijn en olie toe||Mix glad||Laat 2 uur koelen||Serveer koud met croutons',cat:'Spaans',author:'admin'},
+  {id:'r23',title:'Boeuf Bourguignon',img:'https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=400',ingr:'1kg rundvlees||200ml rode wijn||Spek||Champignons||Ui||Wortel||Tijm||Laurier',steps:'Snijd vlees in blokjes||Marineer in wijn||Bak spek||Bak vlees bruin||Voeg groenten toe||Blus met wijn||Voeg bouillon en kruiden toe||Stoof 3 uur',cat:'Frans',author:'admin'},
+  {id:'r24',title:'Falafel',img:'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400',ingr:'400g kikkererwten||1 ui||Knoflook||Peterselie||Komijn||Koriander||Bloem||Tahini',steps:'Week kikkererwten overnight||Mix met ui, knoflook, kruiden||Voeg bloem toe tot plakbaar||Vorm balletjes||Frituur goudbruin||Serveer in pita met tahini||Voeg sla en tomaat toe',cat:'Midden-Oosten',author:'admin'},
+  {id:'r25',title:'Paella',img:'https://images.unsplash.com/photo-1534080564583-6be75777b70a?w=400',ingr:'400g paellarijst||500ml bouillon||Kip||Garnalen||Mosselen||Paprika||Tomaat||Saffraan||Citroen',steps:'Bak kip in paellapan||Voeg paprika en tomaat toe||Voeg rijst en saffraan toe||Giet bouillon erbij||Laat 20 min sudderen||Leg garnalen en mosselen erop||Garneer met citroen',cat:'Spaans',author:'admin'},
+  {id:'r26',title:'Stamppot Boerenkool',img:'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400',ingr:'1kg aardappelen||500g boerenkool||Rookworst||Ui||Melk||Boter||Mosterd',steps:'Kook aardappelen||Blancheer boerenkool||Stamp aardappelen met boter en melk||Meng boerenkool erdoor||Verwarm rookworst||Serveer met mosterd',cat:'Nederlands',author:'admin'},
+  {id:'r27',title:'Chicken Tikka Masala',img:'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400',ingr:'500g kip||Yoghurt||Tikka kruiden||400ml tomatensaus||200ml room||Knoflook||Gember||Rijst',steps:'Marineer kip in yoghurt en kruiden||Gril kip||Bak knoflook en gember||Voeg tomatensaus toe||Voeg room en kip toe||Laat 10 min sudderen||Serveer met rijst',cat:'Indiaas',author:'admin'},
+  {id:'r28',title:'Poke Bowl',img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',ingr:'400g zalm||Sushirijst||Avocado||Edamame||Komkommer||Sesamzaad||Sojasaus||Sesamolie',steps:'Kook sushirijst||Snijd zalm in blokjes||Marineer in sojasaus||Snijd groenten||Verdeel rijst in kom||Leg zalm en groenten erop||Garneer met sesamzaad',cat:'Fusion',author:'admin'},
+  {id:'r29',title:'Coq au Vin',img:'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=400',ingr:'1 kip in stukken||300ml rode wijn||Spek||Champignons||Ui||Wortel||Tijm||Laurier',steps:'Bak spek||Bak kip bruin||Voeg groenten toe||Blus met wijn||Voeg kruiden toe||Stoof 1 uur||Serveer met aardappelen',cat:'Frans',author:'admin'},
+  {id:'r30',title:'Burrito Bowl',img:'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=400',ingr:'Rijst||500g rundergehakt||Zwarte bonen||Maïs||Sla||Tomaat||Kaas||Zure room||Guacamole',steps:'Kook rijst||Bak gehakt met kruiden||Verwarm bonen||Snijd groenten||Verdeel rijst in kom||Leg alles erop||Top met zure room en guacamole',cat:'Mexicaans',author:'admin'},
+  {id:'r31',title:'Vissers Stoofpot',img:'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400',ingr:'500g vis (kabeljauw)||Garnalen||Mosselen||Tomatenblokjes||Witte wijn||Venkel||Knoflook||Saffraan',steps:'Bak venkel en knoflook||Voeg tomaat en wijn toe||Voeg saffraan toe||Laat 15 min sudderen||Voeg vis en schaaldieren toe||Kook 5 min||Serveer met brood',cat:'Vis',author:'admin'},
+  {id:'r32',title:'Goulash',img:'https://images.unsplash.com/photo-1603073163308-9c7a2e9c8bd9?w=400',ingr:'800g rundvlees||2 uien||2 paprikas||Tomatenpuree||Paprikapoeder||Komijn||Bouillon||Zure room',steps:'Snijd vlees in blokjes||Bak ui en paprika||Voeg vlees toe, bak bruin||Voeg kruiden en puree toe||Giet bouillon erbij||Stoof 2 uur||Serveer met zure room',cat:'Hongaars',author:'admin'},
+  {id:'r33',title:'Vietnamese Pho',img:'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?w=400',ingr:'Rijstnoedels||1.5 liter runderbouillon||Rundvlees||Steranijs||Kaneelstokje||Gember||Taugé||Basilicum||Limoen',steps:'Breng bouillon aan kook met kruiden||Zeef na 30 min||Kook noedels||Snijd vlees dun||Verdeel noedels in kom||Giet hete bouillon erover||Garneer met taugé en basilicum',cat:'Aziatisch',author:'admin'},
+  {id:'r34',title:'Shepherds Pie',img:'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400',ingr:'600g lamsgehakt||1kg aardappelen||Wortel||Erwten||Ui||Tomatenpuree||Bouillon||Kaas',steps:'Bak gehakt met ui||Voeg groenten en puree toe||Voeg bouillon toe, laat sudderen||Kook en stamp aardappelen||Verdeel gehakt in schaal||Leg puree erop||Strooi kaas||Bak 25 min 200°C',cat:'Engels',author:'admin'},
+  {id:'r35',title:'Sushi Rolls',img:'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400',ingr:'Sushirijst||Nori vellen||Zalm||Komkommer||Avocado||Sojasaus||Wasabi||Gember',steps:'Kook sushirijst||Leg nori op mat||Verdeel rijst||Leg vis en groenten erop||Rol strak op||Snijd in stukken||Serveer met sojasaus',cat:'Aziatisch',author:'admin'},
+  {id:'r36',title:'Hutspot',img:'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400',ingr:'1kg aardappelen||500g wortels||500g uien||Gehaktbal||Boter||Melk||Mosterd',steps:'Kook aardappelen, wortels, uien||Stamp alles met boter en melk||Bak gehaktballen||Serveer stamppot met gehaktbal||Voeg mosterd toe',cat:'Nederlands',author:'admin'},
+  {id:'r37',title:'Chicken Katsu Curry',img:'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400',ingr:'4 kipfilets||Panko||Eieren||Bloem||Currysaus||Rijst||Knoflook',steps:'Paneer kip in bloem, ei, panko||Frituur goudbruin||Kook rijst||Maak currysaus||Snijd kip in plakken||Serveer over rijst met saus',cat:'Japans',author:'admin'},
+  {id:'r38',title:'Beef Stroganoff',img:'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=400',ingr:'600g rundvlees||Champignons||Ui||Zure room||Mosterd||Paprikapoeder||Bouillon||Rijst of pasta',steps:'Snijd vlees in reepjes||Bak vlees bruin, haal eruit||Bak ui en champignons||Voeg vlees terug||Voeg bouillon en kruiden toe||Roer zure room erdoor||Serveer met rijst',cat:'Russisch',author:'admin'},
+  {id:'r39',title:'Margherita Pizza',img:'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400',ingr:'Pizzadeeg||Tomatensaus||Mozzarella||Verse basilicum||Olijfolie||Zout',steps:'Rol deeg uit||Smeer tomatensaus||Verdeel mozzarella||Bak 12 min op 250°C||Garneer met basilicum en olijfolie',cat:'Italiaans',author:'admin'},
+  {id:'r40',title:'Dim Sum Variatie',img:'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400',ingr:'Deeg||Garnalen||Varkensvlees||Knoflook||Gember||Sojasaus||Sesamolie||Lente-ui',steps:'Maak vulling van vlees en kruiden||Vul deeg||Vouw dicht||Stoom 15 min||Serveer met sojasaus',cat:'Aziatisch',author:'admin'},
+  {id:'r41',title:'Cheeseburger Deluxe',img:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',ingr:'Hamburgerbroodjes||500g rundergehakt||Cheddar||Sla||Tomaat||Ui||Augurk||Burgersaus',steps:'Vorm burgers van gehakt||Gril 4 min per kant||Leg kaas erop laatste minuut||Toast broodjes||Bouw burger met saus en groenten',cat:'BBQ',author:'admin'},
+  {id:'r42',title:'Buddha Bowl',img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',ingr:'Quinoa||Kikkererwten||Zoete aardappel||Avocado||Rode kool||Tahini||Citroen||Spinazie',steps:'Kook quinoa||Rooster kikkererwten||Bak zoete aardappel||Maak tahini dressing||Verdeel alles in kom||Drizzle dressing',cat:'Vegetarisch',author:'admin'},
+  {id:'r43',title:'Tonkatsu',img:'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=400',ingr:'4 varkenskoteletjes||Panko||Eieren||Bloem||Tonkatsu saus||Kool||Rijst',steps:'Klop koteletjes plat||Paneer in bloem, ei, panko||Frituur goudbruin||Snijd in plakken||Serveer met geraspte kool en saus||Voeg rijst toe',cat:'Japans',author:'admin'},
+  {id:'r44',title:'Minestrone',img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',ingr:'Bouillon||Pasta||Tomatenblokjes||Witte bonen||Wortel||Courgette||Selderij||Parmezaan',steps:'Snijd groenten||Bak in olijfolie||Voeg bouillon en tomaat toe||Voeg bonen toe||Kook pasta erin||Serveer met parmezaan',cat:'Italiaans',author:'admin'},
+  {id:'r45',title:'Griekse Gyros',img:'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=400',ingr:'500g varkensvlees||Pitabroodjes||Tzatziki||Tomaat||Ui||Sla||Oregano||Knoflook',steps:'Marineer vlees in kruiden||Gril of bak vlees||Verwarm pita||Snijd vlees in reepjes||Vul pita met vlees||Top met tzatziki en groenten',cat:'Grieks',author:'admin'},
+  {id:'r46',title:'Salmon Teriyaki',img:'https://images.unsplash.com/photo-1580959375944-392f8878f50e?w=400',ingr:'4 zalmfilets||Teriyaki saus||Sesamzaad||Broccoli||Rijst||Gember||Knoflook',steps:'Marineer zalm in teriyaki||Gril zalm||Stoom broccoli||Kook rijst||Bestrijk zalm met meer saus||Garneer met sesamzaad',cat:'Aziatisch',author:'admin'},
+  {id:'r47',title:'Erwtensoep',img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',ingr:'500g spliterwten||Rookworst||Spek||Wortel||Prei||Selderij||Aardappel||Bouillon',steps:'Week erwten overnight||Kook erwten in bouillon||Voeg groenten en spek toe||Laat 2 uur sudderen||Voeg rookworst toe laatste 30 min||Serveer met roggebrood',cat:'Nederlands',author:'admin'},
+  {id:'r48',title:'Korean Bibimbap',img:'https://images.unsplash.com/photo-1553163147-622ab57be1c7?w=400',ingr:'Rijst||Rundvlees||Spinazie||Wortel||Bonen||Ei||Gochujang||Sesamolie||Sesamzaad',steps:'Kook rijst||Marineer en bak vlees||Blancheer groenten apart||Bak spiegelei||Verdeel rijst in kom||Leg alles erop in secties||Top met ei en gochujang',cat:'Aziatisch',author:'admin'},
+  {id:'r49',title:'Ossobuco',img:'https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=400',ingr:'4 kalfsosters||Bloem||Witte wijn||Bouillon||Tomatenblokjes||Wortel||Selderij||Gremolata',steps:'Bestrooi ossi met bloem||Bak bruin||Voeg groenten toe||Blus met wijn||Voeg tomaat en bouillon toe||Stoof 2 uur||Garneer met gremolata',cat:'Italiaans',author:'admin'},
+  {id:'r50',title:'Thai Green Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el groene currypasta||500g kip||Thaise aubergine||Bamboescheuten||Basilicum||Rijst',steps:'Bak currypasta||Voeg kokosmelk toe||Breng aan kook||Voeg kip en groenten toe||Laat 15 min sudderen||Garneer met basilicum||Serveer met rijst',cat:'Aziatisch',author:'admin'}
+];
+
+let mealDBCache = [];
+let mealDBLoading = false;
+let recipeLanguage = 'nl'; // Default language: Dutch
+
+async function fetchMealDBRecipes() {
+  if (mealDBLoading) return;
+  mealDBLoading = true;
+  
+  try {
+    const promises = [];
+    for (let i = 0; i < 20; i++) {
+      promises.push(fetch('https://www.themealdb.com/api/json/v1/1/random.php'));
+    }
+    
+    const responses = await Promise.all(promises);
+    const data = await Promise.all(responses.map(r => r.json()));
+    
+    const meals = data
+      .filter(d => d.meals && d.meals[0])
+      .map(d => d.meals[0])
+      .map(meal => {
+        const ingredients = [];
+        for (let i = 1; i <= 20; i++) {
+          const ingredient = meal[`strIngredient${i}`];
+          const measure = meal[`strMeasure${i}`];
+          if (ingredient && ingredient.trim()) {
+            ingredients.push(`${measure || ''} ${ingredient}`.trim());
+          }
+        }
+        
+        const steps = meal.strInstructions
+          .split('.')
+          .map(s => s.trim())
+          .filter(s => s.length > 10)
+          .slice(0, 7);
+        
+        return {
+          id: 'mdb' + meal.idMeal,
+          title: meal.strMeal,
+          titleEN: meal.strMeal, // Store original English title
+          img: meal.strMealThumb,
+          ingr: ingredients.join('||'),
+          ingrEN: ingredients.join('||'), // Store original English ingredients
+          steps: steps.join('||'),
+          stepsEN: steps.join('||'), // Store original English steps
+          cat: meal.strCategory || 'Internationaal',
+          author: 'TheMealDB',
+          source: 'mealdb'
+        };
+      });
+    
+    mealDBCache = meals;
+    mealDBLoading = false;
+    return meals;
+  } catch (error) {
+    console.error('Fout bij laden TheMealDB:', error);
+    mealDBLoading = false;
+    return [];
+  }
+}
+
+const CUISINES = [
+  {name:'Alle',emoji:'🌍'},
+  {name:'Italiaans',emoji:'🇮🇹'},
+  {name:'Aziatisch',emoji:'🥢'},
+  {name:'Frans',emoji:'🇫🇷'},
+  {name:'Mexicaans',emoji:'🌮'},
+  {name:'Grieks',emoji:'🇬🇷'},
+  {name:'Japans',emoji:'🇯🇵'},
+  {name:'Indiaas',emoji:'🇮🇳'},
+  {name:'Spaans',emoji:'🇪🇸'},
+  {name:'Midden-Oosten',emoji:'🧆'},
+  {name:'Nederlands',emoji:'🇳🇱'},
+  {name:'BBQ',emoji:'🍖'},
+  {name:'Vis',emoji:'🐟'},
+  {name:'Vegetarisch',emoji:'🥗'},
+  {name:'Soep',emoji:'🍜'},
+  {name:'Salade',emoji:'🥙'},
+  {name:'Internationaal',emoji:'🌏'}
+];
+
+let state = {
+  view: 'home',
+  selectedCuisine: 'Alle',
+  menu: [],
+  allRecipes: [],
+  customRecipes: [],
+  mobileMenuOpen: false
+};
+
+function render() {
+  const app = document.getElementById('app');
+  if (state.view === 'home') app.innerHTML = renderHome();
+  else if (state.view === 'recipes') app.innerHTML = renderRecipes();
+  else if (state.view === 'menu') app.innerHTML = renderMenu();
+  else if (state.view === 'admin') app.innerHTML = renderAdmin();
+}
+
+function renderNav() {
+  return `
+    <nav class="bg-white shadow-md fixed w-full top-0 z-50">
+      <div class="container mx-auto px-4 py-3">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('home')">
+            <div class="logo-svg">${LOGO_SVG}</div>
+            <span class="text-2xl font-black text-slate-800 hidden sm:inline">DE WEEKHAP</span>
+          </div>
+          
+          <div class="hidden md:flex gap-6 items-center">
+            <a onclick="navigateTo('home')" class="cursor-pointer font-semibold text-slate-600 hover:text-orange-500 transition">Home</a>
+            <a onclick="navigateTo('recipes')" class="cursor-pointer font-semibold text-slate-600 hover:text-orange-500 transition">Recepten</a>
+            <a onclick="navigateTo('menu')" class="cursor-pointer font-semibold text-slate-600 hover:text-orange-500 transition">Mijn Menu</a>
+          </div>
+          
+          <button onclick="toggleMobileMenu()" class="md:hidden text-slate-600 hover:text-orange-500">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+        
+        ${state.mobileMenuOpen ? `
+          <div class="md:hidden mt-4 flex flex-col gap-3 pb-3">
+            <a onclick="navigateTo('home')" class="cursor-pointer font-semibold text-slate-600 hover:text-orange-500 transition">Home</a>
+            <a onclick="navigateTo('recipes')" class="cursor-pointer font-semibold text-slate-600 hover:text-orange-500 transition">Recepten</a>
+            <a onclick="navigateTo('menu')" class="cursor-pointer font-semibold text-slate-600 hover:text-orange-500 transition">Mijn Menu</a>
+          </div>
+        ` : ''}
+      </div>
+    </nav>
+  `;
+}
+
+function toggleMobileMenu() {
+  state.mobileMenuOpen = !state.mobileMenuOpen;
+  render();
+}
+
+function renderHome() {
+  return `
+    ${renderNav()}
+    <div class="pt-20 min-h-screen flex items-center justify-center px-4">
+      <div class="text-center max-w-2xl">
+        <div class="w-32 h-32 mx-auto mb-6">${LOGO_SVG}</div>
+        <h1 class="text-5xl md:text-7xl font-black text-slate-800 mb-6">DE WEEKHAP</h1>
+        <p class="text-xl md:text-2xl text-slate-600 mb-8">Genereer je weekmenu in 30 seconden!</p>
+        <p class="text-lg text-slate-500 mb-12">Kies uit 1200+ recepten uit 15 wereldkeukens 🌍</p>
+        <button onclick="generateMenu()" class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-12 py-5 rounded-2xl text-xl font-bold shadow-xl hover:shadow-2xl hover:scale-105 transition transform">
+          🎲 Genereer Weekmenu
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderRecipes() {
+  const allRecipes = [...RECIPES, ...state.customRecipes, ...mealDBCache];
+  state.allRecipes = allRecipes;
+  
+  const filtered = state.selectedCuisine === 'Alle' 
+    ? allRecipes 
+    : allRecipes.filter(r => r.cat === state.selectedCuisine);
+    
+  return `
+    ${renderNav()}
+    <div class="pt-24 pb-12 px-4">
+      <div class="container mx-auto">
+        <h2 class="text-4xl font-black text-slate-800 mb-6">Ontdek Recepten</h2>
+        
+        <!-- Cuisine Filter -->
+        <div class="flex gap-3 overflow-x-auto pb-4 mb-8">
+          ${CUISINES.map(c => `
+            <button 
+              onclick="filterByCuisine('${c.name}')" 
+              class="px-5 py-2 rounded-full font-semibold transition whitespace-nowrap ${
+                state.selectedCuisine === c.name 
+                  ? 'bg-orange-500 text-white shadow-lg' 
+                  : 'bg-white text-slate-600 hover:bg-slate-100'
+              }">
+              ${c.emoji} ${c.name}
+            </button>
+          `).join('')}
+        </div>
+        
+        <!-- Recipes Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          ${filtered.map(recipe => `
+            <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition cursor-pointer overflow-hidden" onclick='showRecipeDetail(${JSON.stringify(recipe).replace(/'/g, "&#39;")})'>
+              <img src="${recipe.img}" alt="${recipe.title}" class="w-full h-48 object-cover">
+              <div class="p-4">
+                <div class="flex justify-between items-start mb-2">
+                  <h3 class="text-xl font-bold text-slate-800">${recipe.title}</h3>
+                  ${recipe.author === 'TheMealDB' ? '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">🌍 TheMealDB</span>' : ''}
+                </div>
+                <span class="inline-block bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-semibold">${recipe.cat}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        
+        ${mealDBCache.length === 0 && !mealDBLoading ? `
+          <div class="text-center mt-8">
+            <button onclick="loadMoreMealDB()" class="bg-blue-500 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-600 transition">
+              🌍 Laad Internationale Recepten (TheMealDB)
+            </button>
+          </div>
+        ` : ''}
+        
+        ${mealDBLoading ? `
+          <div class="text-center mt-8">
+            <p class="text-lg text-slate-600">⏳ Recepten laden...</p>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function showRecipeDetail(recipe) {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+  modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="relative">
+        <img src="${recipe.img}" alt="${recipe.title}" class="w-full h-64 object-cover rounded-t-2xl">
+        <button onclick="this.closest('.fixed').remove()" class="absolute top-4 right-4 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-slate-100 transition">
+          ✕
+        </button>
+      </div>
+      
+      <div class="p-6">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h2 class="text-3xl font-black text-slate-800 mb-2">${recipe.title}</h2>
+            <span class="inline-block bg-orange-100 text-orange-600 px-4 py-2 rounded-full text-sm font-semibold">${recipe.cat}</span>
+          </div>
+          ${recipe.author === 'TheMealDB' ? '<span class="text-sm bg-blue-100 text-blue-600 px-3 py-2 rounded-full">🌍 TheMealDB</span>' : ''}
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-slate-800 mb-3">🛒 Ingrediënten</h3>
+          <ul class="space-y-2">
+            ${recipe.ingr.split('||').map(i => `<li class="flex items-start gap-2"><span class="text-orange-500 mt-1">•</span><span class="text-slate-700">${i}</span></li>`).join('')}
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-xl font-bold text-slate-800 mb-3">👨‍🍳 Bereidingswijze</h3>
+          <ol class="space-y-3">
+            ${recipe.steps.split('||').map((s, i) => `<li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm">${i+1}</span><span class="text-slate-700 pt-1">${s}</span></li>`).join('')}
+          </ol>
+        </div>
+        
+        <button onclick="addToMenu(${JSON.stringify(recipe).replace(/'/g, "&#39;")})" class="mt-6 w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg transition">
+          ➕ Voeg toe aan weekmenu
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function renderMenu() {
+  const days = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
+  
+  return `
+    ${renderNav()}
+    <div class="pt-24 pb-12 px-4">
+      <div class="container mx-auto max-w-4xl">
+        <h2 class="text-4xl font-black text-slate-800 mb-8">Mijn Weekmenu</h2>
+        
+        ${state.menu.length === 0 ? `
+          <div class="text-center py-16">
+            <p class="text-2xl text-slate-500 mb-6">Je weekmenu is nog leeg! 🍽️</p>
+            <button onclick="generateMenu()" class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-10 py-4 rounded-xl text-lg font-bold hover:shadow-xl transition">
+              🎲 Genereer Weekmenu
+            </button>
+          </div>
+        ` : `
+          <div class="space-y-4">
+            ${state.menu.map((recipe, i) => `
+              <div class="bg-white rounded-xl shadow-md p-5 flex items-center gap-4">
+                <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-lg">
+                  ${days[i].slice(0,2)}
+                </div>
+                <img src="${recipe.img}" alt="${recipe.title}" class="w-20 h-20 rounded-lg object-cover">
+                <div class="flex-grow">
+                  <h3 class="text-xl font-bold text-slate-800">${recipe.title}</h3>
+                  <p class="text-sm text-slate-500">${days[i]}</p>
+                </div>
+                <button onclick="removeFromMenu(${i})" class="text-red-500 hover:text-red-700 font-bold text-2xl">
+                  ✕
+                </button>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div class="flex gap-4 mt-8">
+            <button onclick="generateMenu()" class="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-xl font-bold hover:shadow-xl transition">
+              🔄 Nieuw Menu
+            </button>
+            <button onclick="downloadMenu()" class="flex-1 bg-slate-700 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition">
+              📥 Download
+            </button>
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function renderAdmin() {
+  return `
+    ${renderNav()}
+    <div class="pt-24 pb-12 px-4">
+      <div class="container mx-auto max-w-2xl">
+        <h2 class="text-4xl font-black text-slate-800 mb-8">Admin Toegang</h2>
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6">
+          <p class="text-yellow-800">⚠️ Deze functie is uitgeschakeld vanwege beveiliging.</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function navigateTo(view) {
+  state.view = view;
+  state.mobileMenuOpen = false;
+  render();
+  window.scrollTo(0, 0);
+}
+
+function filterByCuisine(cuisine) {
+  state.selectedCuisine = cuisine;
+  render();
+}
+
+async function generateMenu() {
+  const allRecipes = [...RECIPES, ...state.customRecipes, ...mealDBCache];
+  
+  if (allRecipes.length < 7) {
+    await loadMoreMealDB();
+  }
+  
+  const finalRecipes = [...RECIPES, ...state.customRecipes, ...mealDBCache];
+  const shuffled = finalRecipes.sort(() => Math.random() - 0.5);
+  state.menu = shuffled.slice(0, 7);
+  navigateTo('menu');
+}
+
+function addToMenu(recipe) {
+  if (state.menu.length >= 7) {
+    alert('Je weekmenu is vol! Verwijder eerst een recept.');
+    return;
+  }
+  state.menu.push(recipe);
+  document.querySelector('.fixed').remove();
+  alert(`${recipe.title} toegevoegd aan je weekmenu!`);
+}
+
+function removeFromMenu(index) {
+  state.menu.splice(index, 1);
+  render();
+}
+
+function downloadMenu() {
+  const days = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
+  let text = '🍽️ MIJN WEEKMENU - DE WEEKHAP\n\n';
+  
+  state.menu.forEach((recipe, i) => {
+    text += `${days[i]}: ${recipe.title}\n`;
+    text += `Categorie: ${recipe.cat}\n\n`;
+    text += 'Ingrediënten:\n';
+    recipe.ingr.split('||').forEach(ing => text += `- ${ing}\n`);
+    text += '\nBereidingswijze:\n';
+    recipe.steps.split('||').forEach((step, j) => text += `${j+1}. ${step}\n`);
+    text += '\n' + '='.repeat(50) + '\n\n';
+  });
+  
+  const blob = new Blob([text], {type: 'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'weekmenu.txt';
+  a.click();
+}
+
+async function loadMoreMealDB() {
+  if (mealDBLoading) return;
+  
+  const meals = await fetchMealDBRecipes();
+  if (meals.length > 0) {
+    render();
+  }
+}
+
+// Initialize
+render();
+</script>
 
 <!-- Loader voor taalswitch en extra fixes -->
 <script>
@@ -73,5 +605,5 @@ body {
 })();
 </script>
 
-<script>
-const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" class="w-full h-full">
+</body>
+</html>

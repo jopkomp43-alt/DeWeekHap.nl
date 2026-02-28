@@ -3,26 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>De Weekhap - Weekmenu Generator (TEST)</title>
-<meta name="robots" content="noindex">
-<link rel="stylesheet" href="styles-fix.css">
-<script>
-// Redirect to main site with loader
-window.location.href = 'index.html';
-
-// But first inject the loader
-setTimeout(function() {
-  const script = document.createElement('script');
-  script.src = 'loader.js';
-  document.body.appendChild(script);
-}, 100);
-</script>
+<title>Test - De Weekhap</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<div style="text-align: center; padding: 50px; font-family: Arial;">
-  <h1>🚀 Laden...</h1>
-  <p>Je wordt doorgestuurd naar de hoofdpagina met alle verbeteringen!</p>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center">
+
+<div class="bg-white rounded-3xl p-10 shadow-2xl max-w-md text-center">
+  <h1 class="text-4xl font-black mb-4">✅ CODE WERKT!</h1>
+  <p class="text-xl text-slate-600 mb-6">De site wordt geladen.</p>
+  <button onclick="alert('JavaScript werkt!')" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700">
+    Test Knop
+  </button>
+  <p class="text-sm text-slate-500 mt-6">Als je dit ziet, werkt de upload!</p>
 </div>
-<script src="loader.js"></script>
+
 </body>
 </html>

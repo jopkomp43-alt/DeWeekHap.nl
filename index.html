@@ -4,11 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>De Weekhap - Weekmenu Generator</title>
-
-<!-- Enhanced Favicon Implementation -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Ccircle cx='200' cy='200' r='190' fill='%23F5F3E8'/%3E%3Cpath d='M 120 190 L 160 150 L 200 110 L 240 150 L 280 190 L 280 280 L 120 280 Z' fill='%23D95C33' stroke='%233C4858' stroke-width='4'/%3E%3Crect x='125' y='195' width='150' height='80' fill='%23F5F3E8'/%3E%3Cellipse cx='200' cy='220' rx='55' ry='35' fill='%236B7B54'/%3E%3Cpath d='M 170 185 Q 180 175, 190 185' fill='none' stroke='%23C89B3C' stroke-width='3'/%3E%3Cpath d='M 185 180 Q 195 170, 205 180' fill='none' stroke='%236B7B54' stroke-width='3'/%3E%3Cpath d='M 200 175 Q 210 165, 220 175' fill='none' stroke='%23C89B3C' stroke-width='3'/%3E%3Cellipse cx='200' cy='245' rx='40' ry='20' fill='%23D95C33'/%3E%3Cellipse cx='200' cy='250' rx='35' ry='15' fill='%23C89B3C'/%3E%3Cellipse cx='70' cy='240' rx='8' ry='45' fill='%23D95C33'/%3E%3Cellipse cx='70' cy='235' rx='5' ry='40' fill='%23C89B3C'/%3E%3Cellipse cx='330' cy='240' rx='8' ry='45' fill='%23D95C33'/%3E%3Cpath d='M 325 210 L 330 205 L 335 210 L 330 245 Z' fill='%23D95C33'/%3E%3Cpath d='M 327 212 L 330 208 L 333 212 L 330 243 Z' fill='%23C89B3C'/%3E%3Cpath d='M 55 150 Q 200 100, 345 150' fill='none' stroke='%233C4858' stroke-width='6'/%3E%3Ctext x='200' y='370' font-family='Arial,sans-serif' font-size='36' font-weight='900' fill='%233C4858' text-anchor='middle' letter-spacing='8'%3EDE WEEKHAP%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Ccircle cx='200' cy='200' r='190' fill='%23F5F3E8'/%3E%3Cpath d='M 120 190 L 160 150 L 200 110 L 240 150 L 280 190 L 280 280 L 120 280 Z' fill='%23D95C33' stroke='%233C4858' stroke-width='4'/%3E%3Crect x='125' y='195' width='150' height='80' fill='%23F5F3E8'/%3E%3Cellipse cx='200' cy='220' rx='55' ry='35' fill='%236B7B54'/%3E%3Cpath d='M 170 185 Q 180 175, 190 185' fill='none' stroke='%23C89B3C' stroke-width='3'/%3E%3Cpath d='M 185 180 Q 195 170, 205 180' fill='none' stroke='%236B7B54' stroke-width='3'/%3E%3Cpath d='M 200 175 Q 210 165, 220 175' fill='none' stroke='%23C89B3C' stroke-width='3'/%3E%3Cellipse cx='200' cy='245' rx='40' ry='20' fill='%23D95C33'/%3E%3Cellipse cx='200' cy='250' rx='35' ry='15' fill='%23C89B3C'/%3E%3Cellipse cx='70' cy='240' rx='8' ry='45' fill='%23D95C33'/%3E%3Cellipse cx='70' cy='235' rx='5' ry='40' fill='%23C89B3C'/%3E%3Cellipse cx='330' cy='240' rx='8' ry='45' fill='%23D95C33'/%3E%3Cpath d='M 325 210 L 330 205 L 335 210 L 330 245 Z' fill='%23D95C33'/%3E%3Cpath d='M 327 212 L 330 208 L 333 212 L 330 243 Z' fill='%23C89B3C'/%3E%3Cpath d='M 55 150 Q 200 100, 345 150' fill='none' stroke='%233C4858' stroke-width='6'/%3E%3Ctext x='200' y='370' font-family='Arial,sans-serif' font-size='36' font-weight='900' fill='%233C4858' text-anchor='middle' letter-spacing='8'%3EDE WEEKHAP%3C/text%3E%3C/svg%3E">
-<meta name="theme-color" content="#D95C33">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 
 <!-- Open Graph & SEO -->
 <meta name="description" content="Genereer je weekmenu in 30 seconden! Kies uit 1200+ recepten uit 15 wereldkeukens.">
@@ -23,11 +19,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;900&display=swap');
-body { 
-  font-family: 'Outfit', sans-serif;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
+body { font-family: 'Outfit', sans-serif; }
 
 .logo-svg {
   width: 40px;
@@ -588,21 +580,6 @@ async function loadMoreMealDB() {
 
 // Initialize
 render();
-</script>
-
-<!-- Loader voor taalswitch en extra fixes -->
-<script>
-(function() {
-  // Ensure body is visible immediately
-  document.body.style.opacity = '1';
-  document.body.style.visibility = 'visible';
-  
-  // Load external enhancements
-  const loaderScript = document.createElement('script');
-  loaderScript.src = 'loader.js';
-  loaderScript.async = true;
-  document.head.appendChild(loaderScript);
-})();
 </script>
 
 </body>

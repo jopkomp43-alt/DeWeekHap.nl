@@ -4,11 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>De Weekhap - Weekmenu Generator</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<!-- Logo Favicon -->
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+
+<!-- Open Graph voor social media preview -->
+<meta property="og:title" content="De Weekhap - Weekmenu Generator">
+<meta property="og:description" content="Genereer je weekmenu in 30 seconden! 1200+ recepten uit 15 wereldkeukens.">
+<meta property="og:image" content="https://deweekhap.nl/logo.png">
+<meta property="og:url" content="https://deweekhap.nl">
+<meta name="twitter:card" content="summary_large_image">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;900&display=swap');
 body { font-family: 'Outfit', sans-serif; }
+
+/* Mobiel menu toggle */
+@media (max-width: 768px) {
+  .mobile-menu-hidden { display: none; }
+  .mobile-menu-visible { display: flex; flex-direction: column; }
+}
 </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-200 min-h-screen">
@@ -69,17 +86,14 @@ const RECIPES = [
   {id:'r50',title:'Thai Green Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el groene currypasta||500g kip||Thaise aubergine||Bamboescheuten||Basilicum||Rijst',steps:'Bak currypasta||Voeg kokosmelk toe||Breng aan kook||Voeg kip en groenten toe||Laat 15 min sudderen||Garneer met basilicum||Serveer met rijst',cat:'Aziatisch',author:'admin'}
 ];
 
-// TheMealDB cache in localStorage
 let mealDBCache = [];
 let mealDBLoading = false;
 
-// Functie om TheMealDB recepten op te halen
 async function fetchMealDBRecipes() {
   if (mealDBLoading) return;
   mealDBLoading = true;
   
   try {
-    // Haal 20 random recepten op
     const promises = [];
     for (let i = 0; i < 20; i++) {
       promises.push(fetch('https://www.themealdb.com/api/json/v1/1/random.php'));
@@ -92,7 +106,6 @@ async function fetchMealDBRecipes() {
       .filter(d => d.meals && d.meals[0])
       .map(d => d.meals[0])
       .map(meal => {
-        // Verzamel ingrediënten
         const ingredients = [];
         for (let i = 1; i <= 20; i++) {
           const ingredient = meal[`strIngredient${i}`];
@@ -102,7 +115,6 @@ async function fetchMealDBRecipes() {
           }
         }
         
-        // Splits instructies in stappen
         const steps = meal.strInstructions
           .split('.')
           .map(s => s.trim())
@@ -137,7 +149,6 @@ const db = {
   users: () => db.get('users') || [],
   recipes: () => {
     const approved = db.get('approvedRecipes') || [];
-    // Combineer lokale recepten met TheMealDB cache
     return [...RECIPES, ...approved, ...mealDBCache];
   },
   pendingRecipes: () => db.get('pendingRecipes') || [],
@@ -151,8 +162,8 @@ let view = currentUser ? 'home' : 'login';
 let servings = 2;
 let currentMenu = [];
 let lastGeneratedIds = [];
+let mobileMenuOpen = false;
 
-// Fisher-Yates shuffle for guaranteed unique picks
 function shuffleArray(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -168,23 +179,23 @@ function render() {
   if (view === 'login') {
     app.innerHTML = `
       <div class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-10 shadow-2xl max-w-md w-full">
-          <div class="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-3xl font-black">W</div>
-          <h1 class="text-4xl font-black text-center mb-8">De Weekhap</h1>
+        <div class="bg-white rounded-3xl p-6 md:p-10 shadow-2xl max-w-md w-full">
+          <img src="logo.png" class="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-lg" alt="Weekhap Logo">
+          <h1 class="text-3xl md:text-4xl font-black text-center mb-8">De Weekhap</h1>
           
           <div id="loginForm">
-            <input id="email" type="email" placeholder="Email" class="w-full p-4 mb-3 border-2 rounded-xl" />
-            <input id="password" type="password" placeholder="Wachtwoord" class="w-full p-4 mb-4 border-2 rounded-xl" />
-            <button onclick="login()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold mb-3 hover:bg-orange-700">Inloggen</button>
-            <button onclick="showRegister()" class="w-full bg-slate-200 text-slate-700 p-4 rounded-xl font-bold hover:bg-slate-300">Registreren</button>
+            <input id="email" type="email" placeholder="Email" class="w-full p-4 mb-3 border-2 rounded-xl touch-manipulation" />
+            <input id="password" type="password" placeholder="Wachtwoord" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation" />
+            <button onclick="login()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold mb-3 hover:bg-orange-700 touch-manipulation">Inloggen</button>
+            <button onclick="showRegister()" class="w-full bg-slate-200 text-slate-700 p-4 rounded-xl font-bold hover:bg-slate-300 touch-manipulation">Registreren</button>
           </div>
           
           <div id="registerForm" class="hidden">
-            <input id="regName" type="text" placeholder="Naam" class="w-full p-4 mb-3 border-2 rounded-xl" />
-            <input id="regEmail" type="email" placeholder="Email" class="w-full p-4 mb-3 border-2 rounded-xl" />
-            <input id="regPassword" type="password" placeholder="Wachtwoord" class="w-full p-4 mb-4 border-2 rounded-xl" />
-            <button onclick="register()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold mb-3 hover:bg-orange-700">Account Aanmaken</button>
-            <button onclick="showLogin()" class="w-full bg-slate-200 text-slate-700 p-4 rounded-xl font-bold hover:bg-slate-300">Terug naar Login</button>
+            <input id="regName" type="text" placeholder="Naam" class="w-full p-4 mb-3 border-2 rounded-xl touch-manipulation" />
+            <input id="regEmail" type="email" placeholder="Email" class="w-full p-4 mb-3 border-2 rounded-xl touch-manipulation" />
+            <input id="regPassword" type="password" placeholder="Wachtwoord" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation" />
+            <button onclick="register()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold mb-3 hover:bg-orange-700 touch-manipulation">Account Aanmaken</button>
+            <button onclick="showLogin()" class="w-full bg-slate-200 text-slate-700 p-4 rounded-xl font-bold hover:bg-slate-300 touch-manipulation">Terug naar Login</button>
           </div>
           
           <p class="text-center mt-6 text-sm text-slate-500">Admin? Email: admin@weekhap.nl | Pass: admin123</p>
@@ -201,34 +212,54 @@ function render() {
       <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black">W</div>
-            <span class="font-black text-xl">De Weekhap</span>
+            <img src="logo.png" class="w-10 h-10 rounded-xl shadow-md" alt="Logo">
+            <span class="font-black text-lg md:text-xl">De Weekhap</span>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold bg-orange-600 text-white">Home</button>
-            <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">Opgeslagen (${savedMenu.length})</button>
-            <button onclick="changeView('myrecipes')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">Mijn Recepten</button>
-            <button onclick="changeView('community')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">Community</button>
-            <button onclick="changeView('upload')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100">+ Recept</button>
-            ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold bg-red-100 text-red-700 hover:bg-red-200 relative">⚙️ Admin${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
-            <button onclick="logout()" class="px-4 py-2 rounded-lg font-bold bg-slate-200 hover:bg-slate-300">Uitloggen</button>
+          
+          <!-- Mobile menu toggle -->
+          <button onclick="toggleMobileMenu()" class="md:hidden p-2 hover:bg-slate-100 rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+          
+          <!-- Desktop menu -->
+          <div class="hidden md:flex items-center gap-2 text-sm">
+            <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold bg-orange-600 text-white touch-manipulation">Home</button>
+            <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100 touch-manipulation">Opgeslagen (${savedMenu.length})</button>
+            <button onclick="changeView('myrecipes')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100 touch-manipulation">Mijn Recepten</button>
+            <button onclick="changeView('community')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100 touch-manipulation">Community</button>
+            <button onclick="changeView('upload')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100 touch-manipulation">+ Recept</button>
+            ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold bg-red-100 text-red-700 hover:bg-red-200 relative touch-manipulation">⚙️ Admin${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
+            <button onclick="logout()" class="px-4 py-2 rounded-lg font-bold bg-slate-200 hover:bg-slate-300 touch-manipulation">Uitloggen</button>
           </div>
+        </div>
+        
+        <!-- Mobile menu dropdown -->
+        <div id="mobileMenu" class="md:hidden mobile-menu-hidden bg-white border-t p-4 flex-col gap-2">
+          <button onclick="changeView('home');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Home</button>
+          <button onclick="changeView('saved');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Opgeslagen (${savedMenu.length})</button>
+          <button onclick="changeView('myrecipes');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Mijn Recepten</button>
+          <button onclick="changeView('community');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Community</button>
+          <button onclick="changeView('upload');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">+ Recept</button>
+          ${currentUser.isAdmin ? `<button onclick="changeView('admin');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left bg-red-100 text-red-700">⚙️ Admin${pendingCount > 0 ? ` (${pendingCount})` : ''}</button>` : ''}
+          <button onclick="logout()" class="w-full px-4 py-3 rounded-lg font-bold text-left bg-slate-200">Uitloggen</button>
         </div>
       </nav>
       
-      <div class="max-w-6xl mx-auto p-4 py-12">
-        <div class="text-center py-12 bg-white rounded-3xl shadow-xl mb-12">
-          <h1 class="text-5xl font-black mb-4">Welkom, ${currentUser.name}! 👋</h1>
-          <p class="text-xl text-slate-600 mb-8">Kies uit <span class="text-orange-600 font-black">${totalRecipes} recepten</span></p>
+      <div class="max-w-6xl mx-auto p-4 py-6 md:py-12">
+        <div class="text-center py-8 md:py-12 bg-white rounded-3xl shadow-xl mb-8 md:mb-12">
+          <h1 class="text-3xl md:text-5xl font-black mb-4">Welkom, ${currentUser.name}! 👋</h1>
+          <p class="text-lg md:text-xl text-slate-600 mb-6 md:mb-8">Kies uit <span class="text-orange-600 font-black">${totalRecipes} recepten</span></p>
           
-          <div class="flex justify-center items-center gap-4 mb-8">
-            <span class="text-lg font-bold">Personen:</span>
-            <button onclick="servings=Math.max(1,servings-1);render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200">−</button>
-            <span class="text-3xl font-black">${servings}</span>
-            <button onclick="servings++;render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200">+</button>
+          <div class="flex justify-center items-center gap-4 mb-6 md:mb-8">
+            <span class="text-base md:text-lg font-bold">Personen:</span>
+            <button onclick="servings=Math.max(1,servings-1);render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200 touch-manipulation">−</button>
+            <span class="text-2xl md:text-3xl font-black">${servings}</span>
+            <button onclick="servings++;render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200 touch-manipulation">+</button>
           </div>
           
-          <button onclick="generateMenu()" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-12 py-6 rounded-2xl font-black text-xl shadow-xl hover:scale-105 transition-all">
+          <button onclick="generateMenu()" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-8 md:px-12 py-4 md:py-6 rounded-2xl font-black text-lg md:text-xl shadow-xl hover:scale-105 transition-all touch-manipulation">
             🍽️ Genereer Weekmenu
           </button>
           ${currentMenu.length > 0 ? '<p class="mt-4 text-sm text-slate-500">Elke generatie is uniek - geen duplicates!</p>' : ''}
@@ -243,10 +274,10 @@ function render() {
     const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8">Opgeslagen Weekmenu 💚</h1>
-        ${saved.length === 0 ? '<div class="bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Geen opgeslagen weekmenu. Genereer een menu en klik "Bewaar Menu"!</p></div>' : `
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="max-w-6xl mx-auto p-4 py-6 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-6 md:mb-8">Opgeslagen Weekmenu 💚</h1>
+        ${saved.length === 0 ? '<div class="bg-white rounded-3xl p-8 md:p-12 text-center"><p class="text-lg md:text-xl text-slate-500">Geen opgeslagen weekmenu. Genereer een menu en klik "Bewaar Menu"!</p></div>' : `
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             ${saved.map((r,i) => renderRecipeCard(r, i, true)).join('')}
           </div>
         `}
@@ -261,10 +292,10 @@ function render() {
     
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8">Mijn Recepten ⭐ (${myRecipes.length})</h1>
-        ${myRecipes.length === 0 ? '<div class="bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Nog geen recepten opgeslagen. Klik op het hartje bij een recept om het op te slaan!</p></div>' : `
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="max-w-6xl mx-auto p-4 py-6 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-6 md:mb-8">Mijn Recepten ⭐ (${myRecipes.length})</h1>
+        ${myRecipes.length === 0 ? '<div class="bg-white rounded-3xl p-8 md:p-12 text-center"><p class="text-lg md:text-xl text-slate-500">Nog geen recepten opgeslagen. Klik op het hartje bij een recept om het op te slaan!</p></div>' : `
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             ${myRecipes.map((r,i) => renderRecipeCard(r, i, false, true)).join('')}
           </div>
         `}
@@ -276,11 +307,11 @@ function render() {
     const approved = db.get('approvedRecipes') || [];
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8">Community Recepten 👥 (${approved.length})</h1>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="max-w-6xl mx-auto p-4 py-6 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-6 md:mb-8">Community Recepten 👥 (${approved.length})</h1>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           ${approved.map((r,i) => renderRecipeCard(r, i)).join('')}
-          ${approved.length === 0 ? '<div class="col-span-3 bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Nog geen goedgekeurde recepten</p></div>' : ''}
+          ${approved.length === 0 ? '<div class="col-span-full bg-white rounded-3xl p-8 md:p-12 text-center"><p class="text-lg md:text-xl text-slate-500">Nog geen goedgekeurde recepten</p></div>' : ''}
         </div>
       </div>
     `;
@@ -289,16 +320,16 @@ function render() {
   else if (view === 'upload') {
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-3xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-4">Voeg Recept Toe 📤</h1>
-        <p class="text-slate-600 mb-8">Je recept wordt eerst goedgekeurd door admin</p>
-        <div class="bg-white rounded-3xl p-8 shadow-xl">
-          <input id="title" placeholder="Receptnaam" class="w-full p-4 mb-4 border-2 rounded-xl" />
-          <input id="category" placeholder="Categorie (bijv. Italiaans, Aziatisch)" class="w-full p-4 mb-4 border-2 rounded-xl" />
-          <input id="image" placeholder="Foto URL (optioneel)" class="w-full p-4 mb-4 border-2 rounded-xl" />
-          <textarea id="ingredients" placeholder="Ingrediënten (1 per regel)\nBijvoorbeeld:\n400g spaghetti\n200g spek\n4 eieren" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl"></textarea>
-          <textarea id="steps" placeholder="Bereidingsstappen (1 per regel)\nBijvoorbeeld:\nKook de pasta\nBak het spek\nMeng alles" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl"></textarea>
-          <button onclick="uploadRecipe()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold hover:bg-orange-700">Verstuur ter Goedkeuring</button>
+      <div class="max-w-3xl mx-auto p-4 py-6 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-4">Voeg Recept Toe 📤</h1>
+        <p class="text-slate-600 mb-6 md:mb-8">Je recept wordt eerst goedgekeurd door admin</p>
+        <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl">
+          <input id="title" placeholder="Receptnaam" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation" />
+          <input id="category" placeholder="Categorie (bijv. Italiaans, Aziatisch)" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation" />
+          <input id="image" placeholder="Foto URL (optioneel)" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation" />
+          <textarea id="ingredients" placeholder="Ingrediënten (1 per regel)\nBijvoorbeeld:\n400g spaghetti\n200g spek\n4 eieren" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation"></textarea>
+          <textarea id="steps" placeholder="Bereidingsstappen (1 per regel)\nBijvoorbeeld:\nKook de pasta\nBak het spek\nMeng alles" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation"></textarea>
+          <button onclick="uploadRecipe()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold hover:bg-orange-700 touch-manipulation">Verstuur ter Goedkeuring</button>
         </div>
       </div>
     `;
@@ -310,73 +341,82 @@ function render() {
     const pending = db.pendingRecipes();
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8 text-red-600">⚙️ Admin Panel</h1>
+      <div class="max-w-6xl mx-auto p-4 py-6 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-6 md:mb-8 text-red-600">⚙️ Admin Panel</h1>
         
-        <div class="grid md:grid-cols-4 gap-6 mb-12">
-          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-orange-600">${users.length}</div>
-            <div class="text-xl font-bold mt-2">Gebruikers</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-orange-600">${users.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Gebruikers</div>
           </div>
-          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-blue-600">${RECIPES.length}</div>
-            <div class="text-xl font-bold mt-2">Standaard Recepten</div>
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-blue-600">${RECIPES.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Standaard</div>
           </div>
-          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-green-600">${approved.length}</div>
-            <div class="text-xl font-bold mt-2">Goedgekeurd</div>
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-green-600">${approved.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Goedgekeurd</div>
           </div>
-          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-yellow-600">${pending.length}</div>
-            <div class="text-xl font-bold mt-2">Te Beoordelen</div>
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-yellow-600">${pending.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Te Beoordelen</div>
           </div>
         </div>
         
         ${pending.length > 0 ? `
-          <h2 class="text-3xl font-black mb-4 text-yellow-600">Te Beoordelen Recepten (🔔 ${pending.length})</h2>
-          <div class="grid md:grid-cols-2 gap-6 mb-12">
+          <h2 class="text-2xl md:text-3xl font-black mb-4 text-yellow-600">Te Beoordelen (🔔 ${pending.length})</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-12">
             ${pending.map(r => `
-              <div class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-6 shadow-xl">
-                <img src="${r.img}" class="w-full h-40 object-cover rounded-xl mb-4" />
-                <h3 class="font-black text-xl mb-2">${r.title}</h3>
+              <div class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 md:p-6 shadow-xl">
+                <img src="${r.img}" class="w-full h-32 md:h-40 object-cover rounded-xl mb-4" />
+                <h3 class="font-black text-lg md:text-xl mb-2">${r.title}</h3>
                 <p class="text-sm text-slate-600 mb-1"><strong>Categorie:</strong> ${r.cat}</p>
                 <p class="text-sm text-slate-600 mb-1"><strong>Door:</strong> ${r.author}</p>
                 <p class="text-sm text-slate-600 mb-3"><strong>Ingrediënten:</strong> ${r.ingr.split('||').slice(0,3).join(', ')}...</p>
-                <div class="flex gap-3">
-                  <button onclick="approveRecipe('${r.id}')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">✅ Goedkeuren</button>
-                  <button onclick="rejectRecipe('${r.id}')" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700">❌ Afwijzen</button>
+                <div class="flex flex-col sm:flex-row gap-3">
+                  <button onclick="approveRecipe('${r.id}')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 touch-manipulation">✅ Goedkeuren</button>
+                  <button onclick="rejectRecipe('${r.id}')" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 touch-manipulation">❌ Afwijzen</button>
                 </div>
               </div>
             `).join('')}
           </div>
         ` : ''}
         
-        <h2 class="text-3xl font-black mb-4">Gebruikers</h2>
-        <div class="bg-white rounded-3xl p-6 shadow-xl mb-8">
+        <h2 class="text-2xl md:text-3xl font-black mb-4">Gebruikers</h2>
+        <div class="bg-white rounded-3xl p-4 md:p-6 shadow-xl mb-6 md:mb-8">
           ${users.map(u => `
-            <div class="flex items-center justify-between p-4 border-b last:border-b-0">
+            <div class="flex items-center justify-between p-3 md:p-4 border-b last:border-b-0">
               <div>
-                <div class="font-bold">${u.name}</div>
-                <div class="text-sm text-slate-500">${u.email}</div>
+                <div class="font-bold text-sm md:text-base">${u.name}</div>
+                <div class="text-xs md:text-sm text-slate-500">${u.email}</div>
               </div>
-              ${!u.isAdmin ? `<button onclick="deleteUser('${u.email}')" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Verwijder</button>` : '<span class="text-red-600 font-bold">Admin</span>'}
+              ${!u.isAdmin ? `<button onclick="deleteUser('${u.email}')" class="bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-red-600 text-sm touch-manipulation">Verwijder</button>` : '<span class="text-red-600 font-bold text-sm">Admin</span>'}
             </div>
           `).join('')}
         </div>
         
-        <h2 class="text-3xl font-black mb-4">Goedgekeurde Community Recepten (${approved.length})</h2>
-        <div class="grid md:grid-cols-3 gap-6">
+        <h2 class="text-2xl md:text-3xl font-black mb-4">Goedgekeurd (${approved.length})</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           ${approved.map(r => `
             <div class="bg-white rounded-2xl p-4 shadow-xl">
-              <h3 class="font-bold text-lg mb-2">${r.title}</h3>
-              <p class="text-sm text-slate-500 mb-2">Door: ${r.author}</p>
-              <button onclick="deleteApprovedRecipe('${r.id}')" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600">Verwijder</button>
+              <h3 class="font-bold text-base md:text-lg mb-2">${r.title}</h3>
+              <p class="text-xs md:text-sm text-slate-500 mb-2">Door: ${r.author}</p>
+              <button onclick="deleteApprovedRecipe('${r.id}')" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 text-sm touch-manipulation">Verwijder</button>
             </div>
           `).join('')}
-          ${approved.length === 0 ? '<p class="col-span-3 text-slate-500">Nog geen goedgekeurde recepten</p>' : ''}
+          ${approved.length === 0 ? '<p class="col-span-full text-slate-500">Nog geen goedgekeurde recepten</p>' : ''}
         </div>
       </div>
     `;
+  }
+}
+
+function toggleMobileMenu() {
+  mobileMenuOpen = !mobileMenuOpen;
+  const menu = document.getElementById('mobileMenu');
+  if (menu) {
+    menu.classList.toggle('mobile-menu-hidden');
+    menu.classList.toggle('mobile-menu-visible');
   }
 }
 
@@ -388,18 +428,38 @@ function renderNav() {
     <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black">W</div>
-          <span class="font-black text-xl">De Weekhap</span>
+          <img src="logo.png" class="w-10 h-10 rounded-xl shadow-md" alt="Logo">
+          <span class="font-black text-lg md:text-xl">De Weekhap</span>
         </div>
-        <div class="flex items-center gap-2 text-sm">
-          <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Home</button>
-          <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Weekmenu (${savedMenu.length})</button>
-          <button onclick="changeView('myrecipes')" class="px-4 py-2 rounded-lg font-bold ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Mijn Recepten (${myRecipes.length})</button>
-          <button onclick="changeView('community')" class="px-4 py-2 rounded-lg font-bold ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Community</button>
-          <button onclick="changeView('upload')" class="px-4 py-2 rounded-lg font-bold ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">+ Recept</button>
-          ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700 hover:bg-red-200'} relative">⚙️ Admin${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
-          <button onclick="logout()" class="px-4 py-2 rounded-lg font-bold bg-slate-200 hover:bg-slate-300">Uitloggen</button>
+        
+        <!-- Mobile menu toggle -->
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 hover:bg-slate-100 rounded-lg">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+        
+        <!-- Desktop menu -->
+        <div class="hidden md:flex items-center gap-2 text-sm">
+          <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'} touch-manipulation">Home</button>
+          <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'} touch-manipulation">Weekmenu (${savedMenu.length})</button>
+          <button onclick="changeView('myrecipes')" class="px-4 py-2 rounded-lg font-bold ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'} touch-manipulation">Mijn Recepten (${myRecipes.length})</button>
+          <button onclick="changeView('community')" class="px-4 py-2 rounded-lg font-bold ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'} touch-manipulation">Community</button>
+          <button onclick="changeView('upload')" class="px-4 py-2 rounded-lg font-bold ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'} touch-manipulation">+ Recept</button>
+          ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700 hover:bg-red-200'} relative touch-manipulation">⚙️ Admin${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
+          <button onclick="logout()" class="px-4 py-2 rounded-lg font-bold bg-slate-200 hover:bg-slate-300 touch-manipulation">Uitloggen</button>
         </div>
+      </div>
+      
+      <!-- Mobile menu dropdown -->
+      <div id="mobileMenu" class="md:hidden mobile-menu-hidden bg-white border-t p-4 flex-col gap-2">
+        <button onclick="changeView('home');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Home</button>
+        <button onclick="changeView('saved');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Weekmenu (${savedMenu.length})</button>
+        <button onclick="changeView('myrecipes');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Mijn Recepten (${myRecipes.length})</button>
+        <button onclick="changeView('community');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Community</button>
+        <button onclick="changeView('upload');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">+ Recept</button>
+        ${currentUser.isAdmin ? `<button onclick="changeView('admin');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left bg-red-100 text-red-700">⚙️ Admin${pendingCount > 0 ? ` (${pendingCount})` : ''}</button>` : ''}
+        <button onclick="logout()" class="w-full px-4 py-3 rounded-lg font-bold text-left bg-slate-200">Uitloggen</button>
       </div>
     </nav>
   `;
@@ -411,14 +471,14 @@ function renderMenu() {
   
   return `
     <div>
-      <div class="flex items-center justify-between mb-8">
-        <h2 class="text-4xl font-black">Jouw Weekmenu 📅</h2>
-        <div class="flex gap-4">
-          ${!isSaved ? `<button onclick="saveMenu()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700">💾 Bewaar Menu</button>` : '<span class="text-green-600 font-bold text-lg">✅ Menu Opgeslagen</span>'}
-          <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700">🖨️ Print</button>
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
+        <h2 class="text-3xl md:text-4xl font-black">Jouw Weekmenu 📅</h2>
+        <div class="flex gap-3 w-full sm:w-auto">
+          ${!isSaved ? `<button onclick="saveMenu()" class="flex-1 sm:flex-none bg-green-600 text-white px-4 md:px-6 py-3 rounded-xl font-bold hover:bg-green-700 text-sm md:text-base touch-manipulation">💾 Bewaar Menu</button>` : '<span class="text-green-600 font-bold text-base md:text-lg">✅ Menu Opgeslagen</span>'}
+          <button onclick="window.print()" class="flex-1 sm:flex-none bg-blue-600 text-white px-4 md:px-6 py-3 rounded-xl font-bold hover:bg-blue-700 text-sm md:text-base touch-manipulation">🖨️ Print</button>
         </div>
       </div>
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         ${currentMenu.map((r,i) => renderRecipeCard(r, i)).join('')}
       </div>
     </div>
@@ -430,25 +490,24 @@ function renderRecipeCard(recipe, idx, isSaved = false, isMyRecipes = false) {
   const avgRating = reviews.length > 0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : 'N/A';
   const sourceIcon = recipe.source === 'mealdb' ? '🌍' : (recipe.author && recipe.author !== 'admin' ? '👨‍🍳' : '');
   
-  // Check if recipe is in user's saved recipes
   const userSavedRecipes = db.savedRecipes()[currentUser.email] || [];
   const isRecipeSaved = userSavedRecipes.includes(recipe.id);
   
   return `
-    <div class="bg-white rounded-2xl p-4 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 relative">
+    <div class="bg-white rounded-2xl p-4 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 relative touch-manipulation">
       <div onclick="showRecipe(${idx}, ${isSaved}, ${isMyRecipes})" class="cursor-pointer">
-        <div class="relative mb-3 h-40 rounded-xl overflow-hidden">
-          <img src="${recipe.img}" class="w-full h-full object-cover" />
+        <div class="relative mb-3 h-32 md:h-40 rounded-xl overflow-hidden">
+          <img src="${recipe.img}" class="w-full h-full object-cover" loading="lazy" />
           ${recipe.day ? `<div class="absolute top-2 left-2 bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-bold">${recipe.day}</div>` : ''}
-          ${sourceIcon ? `<div class="absolute top-2 right-2 text-xl">${sourceIcon}</div>` : ''}
+          ${sourceIcon ? `<div class="absolute top-2 right-2 text-lg md:text-xl">${sourceIcon}</div>` : ''}
         </div>
-        <h3 class="font-black text-lg mb-1">${recipe.title}</h3>
+        <h3 class="font-black text-base md:text-lg mb-1">${recipe.title}</h3>
         <div class="flex items-center justify-between">
           <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-semibold">${recipe.cat}</span>
-          <span class="text-sm font-bold">⭐ ${avgRating} (${reviews.length})</span>
+          <span class="text-xs md:text-sm font-bold">⭐ ${avgRating} (${reviews.length})</span>
         </div>
       </div>
-      <button onclick="toggleSaveRecipe('${recipe.id}', event)" class="absolute bottom-4 right-4 w-10 h-10 rounded-full ${isRecipeSaved ? 'bg-red-500' : 'bg-slate-200'} hover:scale-110 transition-all flex items-center justify-center text-xl" title="${isRecipeSaved ? 'Verwijder uit mijn recepten' : 'Bewaar recept'}">
+      <button onclick="toggleSaveRecipe('${recipe.id}', event)" class="absolute bottom-4 right-4 w-10 h-10 md:w-12 md:h-12 rounded-full ${isRecipeSaved ? 'bg-red-500' : 'bg-slate-200'} hover:scale-110 transition-all flex items-center justify-center text-lg md:text-xl touch-manipulation" title="${isRecipeSaved ? 'Verwijder uit mijn recepten' : 'Bewaar recept'}">
         ${isRecipeSaved ? '❤️' : '🤍'}
       </button>
     </div>
@@ -498,7 +557,6 @@ function login() {
   db.set('currentUser', user);
   view = 'home';
   
-  // Laad TheMealDB recepten bij inloggen
   fetchMealDBRecipes().then(() => render());
 }
 
@@ -520,7 +578,6 @@ function register() {
   db.set('currentUser', newUser);
   view = 'home';
   
-  // Laad TheMealDB recepten bij registreren
   fetchMealDBRecipes().then(() => render());
 }
 
@@ -528,16 +585,17 @@ function logout() {
   currentUser = null;
   db.set('currentUser', null);
   view = 'login';
+  mobileMenuOpen = false;
   render();
 }
 
 function changeView(v) {
   view = v;
+  mobileMenuOpen = false;
   render();
 }
 
 async function generateMenu() {
-  // Als cache leeg is, laad nieuwe recepten
   if (mealDBCache.length < 10) {
     const loadingMsg = document.createElement('div');
     loadingMsg.className = 'fixed top-20 right-4 bg-green-600 text-white px-6 py-3 rounded-xl font-bold shadow-xl z-50';
@@ -551,15 +609,12 @@ async function generateMenu() {
   const days = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
   const allRecipes = db.recipes();
   
-  // Fisher-Yates shuffle voor gegarandeerd unieke picks
   const shuffled = shuffleArray(allRecipes);
   const selected = shuffled.slice(0, 7);
   
-  // Check geen overlap met vorige generatie
   if (lastGeneratedIds.length > 0) {
     const hasOverlap = selected.some(r => lastGeneratedIds.includes(r.id));
     if (hasOverlap && allRecipes.length >= 14) {
-      // Re-shuffle als overlap en genoeg recepten
       return generateMenu();
     }
   }
@@ -592,63 +647,63 @@ function showRecipe(idx, isSaved, isMyRecipes = false) {
   const reviews = db.reviews()[recipe.id] || [];
   
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4';
+  modal.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto';
   modal.onclick = () => modal.remove();
   
   const sourceLabel = recipe.source === 'mealdb' ? '🌍 Internationaal' : (recipe.author && recipe.author !== 'admin' ? '👨‍🍳 Community' : '');
   
   modal.innerHTML = `
-    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-auto p-8" onclick="event.stopPropagation()">
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-auto p-6 md:p-8 my-8" onclick="event.stopPropagation()">
       <div class="flex justify-between items-start mb-6">
         <div>
-          <h2 class="text-4xl font-black mb-2">${recipe.title}</h2>
-          <span class="bg-orange-100 text-orange-800 px-3 py-2 rounded-full font-bold">${recipe.cat}</span>
-          <p class="text-sm text-slate-500 mt-2">Door: ${recipe.author || 'Onbekend'}</p>
+          <h2 class="text-2xl md:text-4xl font-black mb-2">${recipe.title}</h2>
+          <span class="bg-orange-100 text-orange-800 px-3 py-2 rounded-full font-bold text-sm">${recipe.cat}</span>
+          <p class="text-xs md:text-sm text-slate-500 mt-2">Door: ${recipe.author || 'Onbekend'}</p>
           ${sourceLabel ? `<p class="text-xs font-bold mt-1">${sourceLabel}</p>` : ''}
         </div>
-        <button onclick="this.closest('div').parentElement.remove()" class="text-4xl font-bold text-slate-400 hover:text-slate-600">×</button>
+        <button onclick="this.closest('div').parentElement.remove()" class="text-3xl md:text-4xl font-bold text-slate-400 hover:text-slate-600 touch-manipulation">×</button>
       </div>
       
-      <div class="grid md:grid-cols-2 gap-8 mb-8">
+      <div class="grid md:grid-cols-2 gap-6 md:gap-8 mb-6 md:mb-8">
         <div>
-          <h3 class="text-2xl font-bold mb-4">Ingrediënten (${servings}p)</h3>
-          <ul class="bg-slate-50 p-6 rounded-2xl space-y-2">
+          <h3 class="text-xl md:text-2xl font-bold mb-4">Ingrediënten (${servings}p)</h3>
+          <ul class="bg-slate-50 p-4 md:p-6 rounded-2xl space-y-2 text-sm md:text-base">
             ${recipe.ingr.split('||').map(i => `<li>• ${i}</li>`).join('')}
           </ul>
         </div>
         <div>
-          <h3 class="text-2xl font-bold mb-4">Bereiding</h3>
-          <ol class="bg-slate-50 p-6 rounded-2xl space-y-3">
-            ${recipe.steps.split('||').map((s,i) => `<li class="flex gap-3"><span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">${i+1}</span><span class="pt-1">${s}</span></li>`).join('')}
+          <h3 class="text-xl md:text-2xl font-bold mb-4">Bereiding</h3>
+          <ol class="bg-slate-50 p-4 md:p-6 rounded-2xl space-y-3 text-sm md:text-base">
+            ${recipe.steps.split('||').map((s,i) => `<li class="flex gap-3"><span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm">${i+1}</span><span class="pt-1">${s}</span></li>`).join('')}
           </ol>
         </div>
       </div>
       
       <div class="border-t pt-6">
-        <h3 class="text-2xl font-bold mb-4">Reviews (${reviews.length})</h3>
+        <h3 class="text-xl md:text-2xl font-bold mb-4">Reviews (${reviews.length})</h3>
         <div class="space-y-3 mb-6 max-h-60 overflow-y-auto">
-          ${reviews.length === 0 ? '<p class="text-slate-500">Nog geen reviews. Wees de eerste!</p>' : reviews.map(r => `
+          ${reviews.length === 0 ? '<p class="text-slate-500 text-sm md:text-base">Nog geen reviews. Wees de eerste!</p>' : reviews.map(r => `
             <div class="bg-slate-50 p-4 rounded-xl">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">${r.user}</span>
-                <span class="text-orange-600 font-bold">⭐ ${r.rating}/5</span>
+                <span class="font-bold text-sm md:text-base">${r.user}</span>
+                <span class="text-orange-600 font-bold text-sm md:text-base">⭐ ${r.rating}/5</span>
               </div>
-              <p>${r.comment}</p>
+              <p class="text-sm md:text-base">${r.comment}</p>
             </div>
           `).join('')}
         </div>
         
-        <div class="bg-slate-50 p-6 rounded-2xl">
-          <h4 class="font-bold mb-3">Voeg Review Toe</h4>
-          <select id="rating" class="w-full p-3 mb-3 border-2 rounded-xl">
+        <div class="bg-slate-50 p-4 md:p-6 rounded-2xl">
+          <h4 class="font-bold mb-3 text-base md:text-lg">Voeg Review Toe</h4>
+          <select id="rating" class="w-full p-3 mb-3 border-2 rounded-xl text-sm md:text-base touch-manipulation">
             <option value="5">5 ⭐ Uitstekend</option>
             <option value="4">4 ⭐ Goed</option>
             <option value="3">3 ⭐ Gemiddeld</option>
             <option value="2">2 ⭐ Matig</option>
             <option value="1">1 ⭐ Slecht</option>
           </select>
-          <textarea id="comment" placeholder="Jouw review..." class="w-full p-3 mb-3 border-2 rounded-xl" rows="3"></textarea>
-          <button onclick="addReview('${recipe.id}')" class="w-full bg-orange-600 text-white p-3 rounded-xl font-bold hover:bg-orange-700">Publiceer Review</button>
+          <textarea id="comment" placeholder="Jouw review..." class="w-full p-3 mb-3 border-2 rounded-xl text-sm md:text-base touch-manipulation" rows="3"></textarea>
+          <button onclick="addReview('${recipe.id}')" class="w-full bg-orange-600 text-white p-3 rounded-xl font-bold hover:bg-orange-700 text-sm md:text-base touch-manipulation">Publiceer Review</button>
         </div>
       </div>
     </div>
@@ -739,14 +794,12 @@ function deleteApprovedRecipe(id) {
   render();
 }
 
-// Init admin user
 const users = db.users();
 if (!users.find(u => u.email === 'admin@weekhap.nl')) {
   users.push({ name: 'Admin', email: 'admin@weekhap.nl', password: 'admin123', isAdmin: true });
   db.set('users', users);
 }
 
-// Laad TheMealDB recepten bij opstarten als er een gebruiker is
 if (currentUser) {
   fetchMealDBRecipes().then(() => render());
 } else {

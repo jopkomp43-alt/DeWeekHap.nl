@@ -226,8 +226,6 @@ function render() {
             <button onclick="register()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold mb-3 hover:bg-orange-700 touch-manipulation">Account Aanmaken</button>
             <button onclick="showLogin()" class="w-full bg-slate-200 text-slate-700 p-4 rounded-xl font-bold hover:bg-slate-300 touch-manipulation">Terug naar Login</button>
           </div>
-          
-          <p class="text-center mt-6 text-sm text-slate-500">Admin? Email: admin@weekhap.nl | Pass: admin123</p>
         </div>
       </div>
     `;
@@ -818,8 +816,8 @@ function deleteApprovedRecipe(id) {
 }
 
 const users = db.users();
-if (!users.find(u => u.email === 'admin@weekhap.nl')) {
-  users.push({ name: 'Admin', email: 'admin@weekhap.nl', password: 'admin123', isAdmin: true });
+if (!users.find(u => u.email === 'jop@deweekhap.nl')) {
+  users.push({ name: 'Jop', email: 'jop@deweekhap.nl', password: 'WeekHap2026!Secure', isAdmin: true });
   db.set('users', users);
 }
 

@@ -19,14 +19,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;900&display=swap');
 body { font-family: 'Outfit', sans-serif; }
 
-/* Embedded SVG Logo */
 .logo-svg {
   width: 40px;
   height: 40px;
   display: inline-block;
 }
 
-/* Mobile menu toggle */
 @media (max-width: 768px) {
   .mobile-menu-hidden { display: none; }
   .mobile-menu-visible { display: flex; flex-direction: column; }
@@ -38,7 +36,6 @@ body { font-family: 'Outfit', sans-serif; }
 <div id="app"></div>
 
 <script>
-// Embedded SVG Logo as a reusable string
 const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" class="w-full h-full">
   <circle cx="100" cy="100" r="95" fill="#FF6B35" stroke="#fff" stroke-width="3"/>
   <g fill="#fff">
@@ -70,10 +67,10 @@ const RECIPES = [
   {id:'r8',title:'Nasi Goreng',img:'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400',ingr:'400g rijst||2 eieren||200g kip||1 ui||2 teentjes knoflook||Nasi kruiden||Sambal||Atjar',steps:'Kook rijst en laat afkoelen||Bak roerei, haal eruit||Bak kip met ui en knoflook||Voeg rijst en kruiden toe||Meng alles||Serveer met ei en atjar',cat:'Aziatisch',author:'admin'},
   {id:'r9',title:'Spare Ribs',img:'https://images.unsplash.com/photo-1544025162-d76694265947?w=400',ingr:'1kg spareribs||BBQ saus||Honing||Knoflookpoeder||Paprikapoeder||Zout||Peper',steps:'Marineer ribs in BBQ saus met kruiden||Laat 2 uur marineren||Bak 1.5 uur in oven op 160°C||Bestrijk regelmatig met marinade||Serveer met frites',cat:'BBQ',author:'admin'},
   {id:'r10',title:'Quiche Lorraine',img:'https://images.unsplash.com/photo-1601001815894-4bb6c81416d7?w=400',ingr:'1 bladerdeeg||200g spek||200ml room||3 eieren||150g kaas||Ui||Peper en zout',steps:'Leg bladerdeeg in vorm||Bak spek en ui||Klop eieren met room||Verdeel spek over deeg||Giet ei-mengsel erover||Strooi kaas||Bak 35 min op 180°C',cat:'Frans',author:'admin'},
-  {id:'r11',title:'Taco\\'s',img:'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400',ingr:'8 taco shells||400g rundergehakt||Tacokruiden||Sla||Tomaat||Kaas||Zure room||Salsa',steps:'Bak gehakt met tacokruiden||Verwarm taco shells||Snijd groenten||Vul shells met gehakt||Voeg groenten, kaas, zure room toe||Serveer met salsa',cat:'Mexicaans',author:'admin'},
+  {id:'r11',title:'Tacos',img:'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400',ingr:'8 taco shells||400g rundergehakt||Tacokruiden||Sla||Tomaat||Kaas||Zure room||Salsa',steps:'Bak gehakt met tacokruiden||Verwarm taco shells||Snijd groenten||Vul shells met gehakt||Voeg groenten, kaas, zure room toe||Serveer met salsa',cat:'Mexicaans',author:'admin'},
   {id:'r12',title:'Risotto ai Funghi',img:'https://images.unsplash.com/photo-1476124369491-f6e5c3d2a3e2?w=400',ingr:'300g risottorijst||1 liter bouillon||1 ui||100ml witte wijn||50g parmezaan||Boter||250g champignons',steps:'Fruit ui in boter||Voeg rijst toe, roer 2 min||Blus met wijn||Voeg schepje bouillon toe per keer||Blijf roeren 20 min||Roer kaas erdoor',cat:'Italiaans',author:'admin'},
   {id:'r13',title:'Biefstuk met Kruidenboter',img:'https://images.unsplash.com/photo-1558030006-450675393462?w=400',ingr:'4 biefstukken||Kruidenboter||Zout en peper||Aardappelen||Sperziebonen||Ui',steps:'Breng biefstuk op kamertemperatuur||Kruid met peper en zout||Gril 3-5 min per kant||Leg kruidenboter erop||Serveer met aardappelen en bonen',cat:'Vlees',author:'admin'},
-  {id:'r14',title:'Pad Thai',img:'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400',ingr:'200g rijstnoedels||200g garnalen||2 eieren||Taugé||Pinda\\'s||Limoensap||Fish sauce||Knoflook',steps:'Week noedels in warm water||Bak ei, haal eruit||Bak garnalen met knoflook||Voeg noedels toe||Voeg saus toe||Meng met ei en taugé||Garneer met pinda\\'s',cat:'Aziatisch',author:'admin'},
+  {id:'r14',title:'Pad Thai',img:'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400',ingr:'200g rijstnoedels||200g garnalen||2 eieren||Taugé||Pindas||Limoensap||Fish sauce||Knoflook',steps:'Week noedels in warm water||Bak ei, haal eruit||Bak garnalen met knoflook||Voeg noedels toe||Voeg saus toe||Meng met ei en taugé||Garneer met pindas',cat:'Aziatisch',author:'admin'},
   {id:'r15',title:'Griekse Moussaka',img:'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400',ingr:'2 aubergines||500g lamsgehakt||1 ui||Tomatenpassata||Bechamel||Kaneel||Feta',steps:'Snijd aubergines, bak ze||Bak gehakt met ui en kaneel||Voeg tomaat toe||Laag aubergine en gehakt||Giet bechamel erover||Strooi feta||Bak 40 min 180°C',cat:'Grieks',author:'admin'},
   {id:'r16',title:'Tom Yum Soep',img:'https://images.unsplash.com/photo-1569562211093-4ed0d0758f12?w=400',ingr:'1 liter bouillon||200g garnalen||Citroengras||Galangawortel||Limoenblad||Champignons||Tom yum pasta||Chili',steps:'Breng bouillon aan de kook||Voeg citroengras en galanga toe||Voeg tom yum pasta toe||Voeg garnalen en champignons toe||Laat 5 min koken||Garneer met chili',cat:'Aziatisch',author:'admin'},
   {id:'r17',title:'Shakshuka',img:'https://images.unsplash.com/photo-1595908129746-0f187f3b0b7a?w=400',ingr:'6 eieren||1 blik tomatenblokjes||2 paprikas||1 ui||Knoflook||Komijn||Paprikapoeder||Feta',steps:'Fruit ui, paprika en knoflook||Voeg tomaat en kruiden toe||Laat 10 min sudderen||Maak kuiltjes||Breek eieren in kuiltjes||Dek af, laat stollen||Serveer met feta',cat:'Midden-Oosten',author:'admin'},
@@ -93,7 +90,7 @@ const RECIPES = [
   {id:'r31',title:'Vissers Stoofpot',img:'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400',ingr:'500g vis (kabeljauw)||Garnalen||Mosselen||Tomatenblokjes||Witte wijn||Venkel||Knoflook||Saffraan',steps:'Bak venkel en knoflook||Voeg tomaat en wijn toe||Voeg saffraan toe||Laat 15 min sudderen||Voeg vis en schaaldieren toe||Kook 5 min||Serveer met brood',cat:'Vis',author:'admin'},
   {id:'r32',title:'Goulash',img:'https://images.unsplash.com/photo-1603073163308-9c7a2e9c8bd9?w=400',ingr:'800g rundvlees||2 uien||2 paprikas||Tomatenpuree||Paprikapoeder||Komijn||Bouillon||Zure room',steps:'Snijd vlees in blokjes||Bak ui en paprika||Voeg vlees toe, bak bruin||Voeg kruiden en puree toe||Giet bouillon erbij||Stoof 2 uur||Serveer met zure room',cat:'Hongaars',author:'admin'},
   {id:'r33',title:'Vietnamese Pho',img:'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?w=400',ingr:'Rijstnoedels||1.5 liter runderbouillon||Rundvlees||Steranijs||Kaneelstokje||Gember||Taugé||Basilicum||Limoen',steps:'Breng bouillon aan kook met kruiden||Zeef na 30 min||Kook noedels||Snijd vlees dun||Verdeel noedels in kom||Giet hete bouillon erover||Garneer met taugé en basilicum',cat:'Aziatisch',author:'admin'},
-  {id:'r34',title:'Shepherd\\'s Pie',img:'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400',ingr:'600g lamsgehakt||1kg aardappelen||Wortel||Erwten||Ui||Tomatenpuree||Bouillon||Kaas',steps:'Bak gehakt met ui||Voeg groenten en puree toe||Voeg bouillon toe, laat sudderen||Kook en stamp aardappelen||Verdeel gehakt in schaal||Leg puree erop||Strooi kaas||Bak 25 min 200°C',cat:'Engels',author:'admin'},
+  {id:'r34',title:'Shepherds Pie',img:'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400',ingr:'600g lamsgehakt||1kg aardappelen||Wortel||Erwten||Ui||Tomatenpuree||Bouillon||Kaas',steps:'Bak gehakt met ui||Voeg groenten en puree toe||Voeg bouillon toe, laat sudderen||Kook en stamp aardappelen||Verdeel gehakt in schaal||Leg puree erop||Strooi kaas||Bak 25 min 200°C',cat:'Engels',author:'admin'},
   {id:'r35',title:'Sushi Rolls',img:'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400',ingr:'Sushirijst||Nori vellen||Zalm||Komkommer||Avocado||Sojasaus||Wasabi||Gember',steps:'Kook sushirijst||Leg nori op mat||Verdeel rijst||Leg vis en groenten erop||Rol strak op||Snijd in stukken||Serveer met sojasaus',cat:'Aziatisch',author:'admin'},
   {id:'r36',title:'Hutspot',img:'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400',ingr:'1kg aardappelen||500g wortels||500g uien||Gehaktbal||Boter||Melk||Mosterd',steps:'Kook aardappelen, wortels, uien||Stamp alles met boter en melk||Bak gehaktballen||Serveer stamppot met gehaktbal||Voeg mosterd toe',cat:'Nederlands',author:'admin'},
   {id:'r37',title:'Chicken Katsu Curry',img:'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400',ingr:'4 kipfilets||Panko||Eieren||Bloem||Currysaus||Rijst||Knoflook',steps:'Paneer kip in bloem, ei, panko||Frituur goudbruin||Kook rijst||Maak currysaus||Snijd kip in plakken||Serveer over rijst met saus',cat:'Japans',author:'admin'},
@@ -242,14 +239,12 @@ function render() {
             <span class="font-black text-lg md:text-xl">De Weekhap</span>
           </div>
           
-          <!-- Mobile menu toggle -->
           <button onclick="toggleMobileMenu()" class="md:hidden p-2 hover:bg-slate-100 rounded-lg">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
             </svg>
           </button>
           
-          <!-- Desktop menu -->
           <div class="hidden md:flex items-center gap-2 text-sm">
             <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold bg-orange-600 text-white touch-manipulation">Home</button>
             <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold hover:bg-slate-100 touch-manipulation">Opgeslagen (${savedMenu.length})</button>
@@ -261,7 +256,6 @@ function render() {
           </div>
         </div>
         
-        <!-- Mobile menu dropdown -->
         <div id="mobileMenu" class="md:hidden mobile-menu-hidden bg-white border-t p-4 flex-col gap-2">
           <button onclick="changeView('home');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Home</button>
           <button onclick="changeView('saved');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Opgeslagen (${savedMenu.length})</button>
@@ -353,8 +347,8 @@ function render() {
           <input id="title" placeholder="Receptnaam" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation" />
           <input id="category" placeholder="Categorie (bijv. Italiaans, Aziatisch)" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation" />
           <input id="image" placeholder="Foto URL (optioneel)" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation" />
-          <textarea id="ingredients" placeholder="Ingrediënten (1 per regel)\\nBijvoorbeeld:\\n400g spaghetti\\n200g spek\\n4 eieren" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation"></textarea>
-          <textarea id="steps" placeholder="Bereidingsstappen (1 per regel)\\nBijvoorbeeld:\\nKook de pasta\\nBak het spek\\nMeng alles" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation"></textarea>
+          <textarea id="ingredients" placeholder="Ingrediënten (1 per regel)" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation"></textarea>
+          <textarea id="steps" placeholder="Bereidingsstappen (1 per regel)" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl touch-manipulation"></textarea>
           <button onclick="uploadRecipe()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold hover:bg-orange-700 touch-manipulation">Verstuur ter Goedkeuring</button>
         </div>
       </div>
@@ -458,14 +452,12 @@ function renderNav() {
           <span class="font-black text-lg md:text-xl">De Weekhap</span>
         </div>
         
-        <!-- Mobile menu toggle -->
         <button onclick="toggleMobileMenu()" class="md:hidden p-2 hover:bg-slate-100 rounded-lg">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
         </button>
         
-        <!-- Desktop menu -->
         <div class="hidden md:flex items-center gap-2 text-sm">
           <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'} touch-manipulation">Home</button>
           <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'} touch-manipulation">Weekmenu (${savedMenu.length})</button>
@@ -477,7 +469,6 @@ function renderNav() {
         </div>
       </div>
       
-      <!-- Mobile menu dropdown -->
       <div id="mobileMenu" class="md:hidden mobile-menu-hidden bg-white border-t p-4 flex-col gap-2">
         <button onclick="changeView('home');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Home</button>
         <button onclick="changeView('saved');toggleMobileMenu()" class="w-full px-4 py-3 rounded-lg font-bold text-left hover:bg-orange-100">Weekmenu (${savedMenu.length})</button>
@@ -774,8 +765,8 @@ function uploadRecipe() {
     title,
     cat: category,
     img: image,
-    ingr: ingredients.split('\\n').filter(l=>l.trim()).join('||'),
-    steps: steps.split('\\n').filter(l=>l.trim()).join('||'),
+    ingr: ingredients.split('\n').filter(l=>l.trim()).join('||'),
+    steps: steps.split('\n').filter(l=>l.trim()).join('||'),
     author: currentUser.name
   });
   

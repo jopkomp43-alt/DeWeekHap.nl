@@ -378,7 +378,10 @@ function renderSaved() {
 
 // RENDER RECIPE DETAIL
 function renderRecipeDetail() {
-  if (!state.currentRecipe) return '';
+  if (!state.currentRecipe) {
+    console.error('No current recipe!');
+    return renderNav() + '<div class="container mx-auto px-4 max-w-4xl"><p class="text-center text-red-500">Fout: Recept niet gevonden</p></div>';
+  }
   
   const recipe = state.currentRecipe;
   const scaledIngredients = scaleIngredients(recipe, state.servings);
@@ -490,9 +493,18 @@ async function generateWithAPI() {
 }
 
 function viewRecipe(id) {
-  state.currentRecipe = [...state.generatedMenu, ...state.savedRecipes].find(r => r.id === id);
+  console.log('ViewRecipe called with id:', id);
+  const allRecipes = [...state.generatedMenu, ...state.savedRecipes];
+  console.log('Available recipes:', allRecipes.length);
+  state.currentRecipe = allRecipes.find(r => r.id === id);
+  console.log('Found recipe:', state.currentRecipe ? state.currentRecipe.title : 'NOT FOUND');
+  if (!state.currentRecipe) {
+    alert('Recept niet gevonden!');
+    return;
+  }
   state.view = 'detail';
   render();
+  window.scrollTo(0, 0);
 }
 
 function toggleSaveRecipe(id) {

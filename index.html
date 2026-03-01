@@ -164,6 +164,117 @@ function render() {
             <button onclick="showLogin()" class="w-full bg-slate-200 text-slate-700 p-4 rounded-xl font-bold hover:bg-slate-300">Terug naar Login</button>
           </div>
           <p class="text-center mt-6 text-sm text-slate-500">Admin? Email: admin@weekhap.nl | Pass: admin123</p>
+          <button onclick="changeView('info')" class="w-full mt-4 text-orange-600 font-bold hover:underline">ℹ️ Hoe werkt het?</button>
+        </div>
+      </div>
+    `;
+  } else if (view === 'info') {
+    app.innerHTML = `
+      ${renderNav()}
+      <div class="max-w-4xl mx-auto p-4 py-12">
+        <div class="bg-white rounded-3xl p-8 shadow-xl mb-6">
+          <h1 class="text-5xl font-black mb-4 text-center">🍽️ Welkom bij De Weekhap!</h1>
+          <p class="text-xl text-center text-slate-600 mb-8">Jouw slimme weekmenu generator</p>
+          
+          <div class="space-y-8">
+            <div>
+              <h2 class="text-3xl font-black mb-3 text-orange-600">💡 Wat is De Weekhap?</h2>
+              <p class="text-lg text-slate-700 leading-relaxed">
+                De Weekhap is jouw persoonlijke kookassistent die automatisch een gevarieerd weekmenu voor je samenstelt. 
+                Nooit meer het gedoe van "wat eten we vandaag?" - wij regelen het voor je! Met honderden recepten uit de hele wereld 
+                creëren we elke week een nieuw, verrassend menu op basis van jouw voorkeuren.
+              </p>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl">
+              <h2 class="text-3xl font-black mb-4">🎯 Hoe werkt het?</h2>
+              <ol class="space-y-3 text-lg">
+                <li class="flex gap-3">
+                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">1</span>
+                  <span><strong>Stel je voorkeuren in</strong> - Vertel ons wat je WEL en NIET wilt eten</span>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">2</span>
+                  <span><strong>Kies aantal personen</strong> - Voor hoeveel mensen kook je?</span>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">3</span>
+                  <span><strong>Genereer weekmenu</strong> - Krijg 7 unieke recepten voor elke dag</span>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">4</span>
+                  <span><strong>Bekijk boodschappenlijst</strong> - Alle ingrediënten overzichtelijk op een rij</span>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">5</span>
+                  <span><strong>Bewaar je favorieten</strong> - Klik op het hartje bij recepten die je lekker vindt</span>
+                </li>
+              </ol>
+            </div>
+
+            <div>
+              <h2 class="text-3xl font-black mb-4">✨ Wat kun je allemaal?</h2>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-slate-50 p-4 rounded-xl">
+                  <div class="text-2xl mb-2">🎲</div>
+                  <h3 class="font-bold mb-1">Weekmenu Generator</h3>
+                  <p class="text-sm text-slate-600">Krijg elke week 7 unieke recepten voor maandag t/m zondag</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl">
+                  <div class="text-2xl mb-2">🎛️</div>
+                  <h3 class="font-bold mb-1">Persoonlijke Voorkeuren</h3>
+                  <p class="text-sm text-slate-600">Filter op ingrediënten die je WEL of NIET wilt</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl">
+                  <div class="text-2xl mb-2">🛒</div>
+                  <h3 class="font-bold mb-1">Boodschappenlijst</h3>
+                  <p class="text-sm text-slate-600">Automatisch gegenereerde lijst met alle ingrediënten</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl">
+                  <div class="text-2xl mb-2">❤️</div>
+                  <h3 class="font-bold mb-1">Favoriete Recepten</h3>
+                  <p class="text-sm text-slate-600">Bewaar je lievelingsgerechten in je eigen collectie</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl">
+                  <div class="text-2xl mb-2">⭐</div>
+                  <h3 class="font-bold mb-1">Reviews & Ratings</h3>
+                  <p class="text-sm text-slate-600">Beoordeel recepten en lees wat anderen ervan vinden</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl">
+                  <div class="text-2xl mb-2">👥</div>
+                  <h3 class="font-bold mb-1">Community Recepten</h3>
+                  <p class="text-sm text-slate-600">Deel je eigen recepten met andere gebruikers</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl">
+                  <div class="text-2xl mb-2">🌍</div>
+                  <h3 class="font-bold mb-1">Internationale Keuken</h3>
+                  <p class="text-sm text-slate-600">Van Italiaans tot Aziatisch - kies uit honderden recepten</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl">
+                  <div class="text-2xl mb-2">🖨️</div>
+                  <h3 class="font-bold mb-1">Print & Exporteer</h3>
+                  <p class="text-sm text-slate-600">Print je weekmenu of kopieer je boodschappenlijst</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-green-50 p-6 rounded-2xl border-2 border-green-200">
+              <h2 class="text-3xl font-black mb-3 text-green-700">🎉 Waarom De Weekhap?</h2>
+              <ul class="space-y-2 text-lg">
+                <li>✅ <strong>Bespaar tijd</strong> - Geen uren meer nadenken over wat te koken</li>
+                <li>✅ <strong>Gevarieerd eten</strong> - Elke week nieuwe inspiratie</li>
+                <li>✅ <strong>Minder verspilling</strong> - Exacte boodschappenlijst = geen overbodige aankopen</li>
+                <li>✅ <strong>Op jouw manier</strong> - Filter op allergieën, voorkeuren en aantal personen</li>
+                <li>✅ <strong>100% gratis</strong> - Geen verborgen kosten of abonnementen</li>
+              </ul>
+            </div>
+
+            <div class="text-center">
+              <button onclick="changeView('${currentUser ? 'home' : 'login'}')" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-12 py-6 rounded-2xl font-black text-xl shadow-xl hover:scale-105 transition-all">
+                ${currentUser ? '🍽️ Naar Weekmenu Generator' : '🚀 Start Nu!'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -394,7 +505,7 @@ function renderNav() {
   return `
     <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="changeView('info')">
           <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black">W</div>
           <span class="font-black text-xl">De Weekhap</span>
         </div>

@@ -1,0 +1,16 @@
+{
+  "name": "DeWeekHap - Weekmenu Generator",
+  "short_name": "Weekhap",
+  "description": "Gratis weekmenu generator met boodschappenlijst",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

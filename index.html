@@ -48,6 +48,7 @@
 <link rel="apple-touch-icon" href="logo.jpg">
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.tailwindcss.com"></script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;900&display=swap');
 body { font-family: 'Outfit', sans-serif; }
@@ -57,6 +58,17 @@ body { font-family: 'Outfit', sans-serif; }
 }
 .recipe-card { animation: slideIn 0.3s ease-out; }
 .logo-img { object-fit: contain; }
+.goog-te-banner-frame { display: none !important; }
+.goog-te-combo { 
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  font-weight: 600;
+  background: white;
+  cursor: pointer;
+}
+body { top: 0 !important; }
+#google_translate_element { display: inline-block; }
 </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-200 min-h-screen">
@@ -64,6 +76,15 @@ body { font-family: 'Outfit', sans-serif; }
 <div id="app"></div>
 
 <script>
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'nl',
+    includedLanguages: 'nl,en,de,fr,es,it,pt,pl,tr,ar',
+    layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+    autoDisplay: false
+  }, 'google_translate_element');
+}
+
 const RECIPES = [
   {id:'r1',title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti||200g spek||4 eieren||100g parmezaan||Zout en peper',steps:'Kook pasta volgens verpakking||Bak spek krokant||Klop eieren met kaas||Meng warme pasta met spek en ei-mengsel||Breng op smaak met peper',cat:'Italiaans',author:'admin'},
   {id:'r2',title:'Thaise Rode Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el currypasta||300g kip||1 paprika||100g taugé||Basmati rijst',steps:'Bak currypasta in pan||Voeg kokosmelk toe||Breng aan de kook||Voeg kip en groenten toe||Laat 15 min sudderen||Serveer met rijst',cat:'Aziatisch',author:'admin'},
@@ -76,32 +97,6 @@ const RECIPES = [
   {id:'r9',title:'Spare Ribs',img:'https://images.unsplash.com/photo-1544025162-d76694265947?w=400',ingr:'1kg spareribs||BBQ saus||Honing||Knoflookpoeder||Paprikapoeder||Zout||Peper',steps:'Marineer ribs in BBQ saus met kruiden||Laat 2 uur marineren||Bak 1.5 uur in oven op 160°C||Bestrijk regelmatig met marinade||Serveer met frites',cat:'BBQ',author:'admin'},
   {id:'r10',title:'Quiche Lorraine',img:'https://images.unsplash.com/photo-1601001815894-4bb6c81416d7?w=400',ingr:'1 bladerdeeg||200g spek||200ml room||3 eieren||150g kaas||Ui||Peper en zout',steps:'Leg bladerdeeg in vorm||Bak spek en ui||Klop eieren met room||Verdeel spek over deeg||Giet ei-mengsel erover||Strooi kaas||Bak 35 min op 180°C',cat:'Frans',author:'admin'}
 ];
-
-const NL_DICT = {
-  'chicken':'kip','beef':'rundvlees','pork':'varkensvlees','lamb':'lamsvlees','fish':'vis','salmon':'zalm','tuna':'tonijn','shrimp':'garnalen','prawn':'garnaal',
-  'potato':'aardappel','potatoes':'aardappelen','tomato':'tomaat','tomatoes':'tomaten','onion':'ui','onions':'uien','garlic':'knoflook','carrot':'wortel','carrots':'wortels',
-  'pepper':'paprika','peppers':'paprikas','lettuce':'sla','cucumber':'komkommer','broccoli':'broccoli','spinach':'spinazie','mushroom':'champignon','mushrooms':'champignons',
-  'rice':'rijst','pasta':'pasta','noodles':'noedels','bread':'brood','flour':'bloem','egg':'ei','eggs':'eieren','milk':'melk','cream':'room','butter':'boter','cheese':'kaas',
-  'oil':'olie','olive oil':'olijfolie','salt':'zout','pepper':'peper','sugar':'suiker','honey':'honing','vinegar':'azijn','soy sauce':'sojasaus',
-  'cook':'kook','boil':'kook','fry':'bak','bake':'bak','grill':'gril','roast':'braad','steam':'stoom','simmer':'sudder','stir':'roer','mix':'meng','chop':'snijd','slice':'snijd',
-  'add':'voeg toe','heat':'verhit','serve':'serveer','pour':'giet','sprinkle':'strooi','season':'kruid','marinate':'marineer','drain':'giet af',
-  'minutes':'minuten','hours':'uur','cup':'kopje','tablespoon':'eetlepel','teaspoon':'theelepel','clove':'teentje','cloves':'teentjes',
-  'and':'en','with':'met','or':'of','until':'tot','for':'voor','in':'in','on':'op','into':'in','over':'over','to':'naar',
-  'Chicken':'Kip','Beef':'Rundvlees','Pork':'Varkensvlees','Fish':'Vis','Vegetarian':'Vegetarisch','Dessert':'Dessert','Breakfast':'Ontbijt',
-  'Side':'Bijgerecht','Starter':'Voorgerecht','Vegan':'Veganistisch','Pasta':'Pasta','Seafood':'Zeevruchten','Lamb':'Lam','Goat':'Geit',
-  'Miscellaneous':'Diversen','Preheat':'Verwarm voor','Place':'Plaats','Remove':'Verwijder','Transfer':'Doe over','Combine':'Combineer',
-  'Whisk':'Klop','Beat':'Klop','Blend':'Mix','Spread':'Smeer','Garnish':'Garneer','Top':'Doe erop','Cover':'Bedek','Wrap':'Wikkel'
-};
-
-function translateText(text) {
-  if (!text) return text;
-  let result = text;
-  Object.keys(NL_DICT).forEach(en => {
-    const nl = NL_DICT[en];
-    result = result.replace(new RegExp('\\b' + en + '\\b', 'gi'), nl);
-  });
-  return result;
-}
 
 let mealDBCache = [];
 let mealDBLoading = false;
@@ -121,25 +116,10 @@ async function fetchMealDBRecipes() {
       for (let i = 1; i <= 20; i++) {
         const ingredient = meal[`strIngredient${i}`];
         const measure = meal[`strMeasure${i}`];
-        if (ingredient && ingredient.trim()) {
-          const translatedIngr = translateText(ingredient);
-          const translatedMeas = translateText(measure || '');
-          ingredients.push(`${translatedMeas} ${translatedIngr}`.trim());
-        }
+        if (ingredient && ingredient.trim()) ingredients.push(`${measure || ''} ${ingredient}`.trim());
       }
-      const steps = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7).map(step => translateText(step));
-      const translatedTitle = translateText(meal.strMeal);
-      const translatedCat = translateText(meal.strCategory || 'Internationaal');
-      return {
-        id: 'mdb' + meal.idMeal,
-        title: translatedTitle,
-        img: meal.strMealThumb,
-        ingr: ingredients.join('||'),
-        steps: steps.join('||'),
-        cat: translatedCat,
-        author: 'TheMealDB',
-        source: 'mealdb'
-      };
+      const steps = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7);
+      return {id: 'mdb' + meal.idMeal, title: meal.strMeal, img: meal.strMealThumb, ingr: ingredients.join('||'), steps: steps.join('||'), cat: meal.strCategory || 'Internationaal', author: 'TheMealDB', source: 'mealdb'};
     });
     mealDBCache = meals;
     mealDBLoading = false;
@@ -605,6 +585,7 @@ function renderNav() {
           <div class="w-10 h-10 bg-orange-600 rounded-xl hidden items-center justify-center text-white font-black">W</div>
         </div>
         <div class="flex items-center gap-2 text-sm">
+          <div id="google_translate_element" class="mr-2"></div>
           <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Home</button>
           <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Weekmenu (${savedMenu.length})</button>
           <button onclick="changeView('shopping')" class="px-4 py-2 rounded-lg font-bold ${view==='shopping'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🛒 Boodschappen</button>

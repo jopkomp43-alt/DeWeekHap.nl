@@ -64,6 +64,74 @@ body { font-family: 'Outfit', sans-serif; }
 <div id="app"></div>
 
 <script>
+// Ingrediënten vertaalwoordenboek (Engels -> Nederlands)
+const TRANSLATE_INGREDIENTS = {
+  'chicken': 'kip', 'beef': 'rund', 'pork': 'varken', 'fish': 'vis', 'salmon': 'zalm',
+  'tuna': 'tonijn', 'shrimp': 'garnalen', 'prawns': 'garnalen', 'egg': 'ei', 'eggs': 'eieren',
+  'milk': 'melk', 'cream': 'room', 'butter': 'boter', 'cheese': 'kaas', 'yogurt': 'yoghurt',
+  'oil': 'olie', 'olive oil': 'olijfolie', 'vegetable oil': 'zonnebloemolie',
+  'salt': 'zout', 'pepper': 'peper', 'sugar': 'suiker', 'flour': 'bloem',
+  'rice': 'rijst', 'pasta': 'pasta', 'spaghetti': 'spaghetti', 'noodles': 'noedels',
+  'potato': 'aardappel', 'potatoes': 'aardappelen', 'tomato': 'tomaat', 'tomatoes': 'tomaten',
+  'onion': 'ui', 'onions': 'uien', 'garlic': 'knoflook', 'ginger': 'gember',
+  'carrot': 'wortel', 'carrots': 'wortels', 'broccoli': 'broccoli', 'spinach': 'spinazie',
+  'lettuce': 'sla', 'cucumber': 'komkommer', 'pepper bell': 'paprika', 'bell pepper': 'paprika',
+  'mushroom': 'champignon', 'mushrooms': 'champignons', 'corn': 'maïs', 'peas': 'erwten',
+  'beans': 'bonen', 'lentils': 'linzen', 'chickpeas': 'kikkererwten',
+  'bread': 'brood', 'toast': 'toast', 'baguette': 'stokbrood',
+  'wine': 'wijn', 'vinegar': 'azijn', 'soy sauce': 'sojasaus', 'stock': 'bouillon',
+  'chicken stock': 'kippenbouillon', 'vegetable stock': 'groentebouillon',
+  'coconut milk': 'kokosmelk', 'coconut cream': 'kokosroom',
+  'curry powder': 'kerrie', 'paprika': 'paprikapoeder', 'cumin': 'komijn',
+  'coriander': 'koriander', 'parsley': 'peterselie', 'basil': 'basilicum',
+  'thyme': 'tijm', 'rosemary': 'rozemarijn', 'oregano': 'oregano',
+  'bay leaf': 'laurierblad', 'bay leaves': 'laurierblaadjes',
+  'chili': 'chili', 'cayenne': 'cayennepeper', 'lemon': 'citroen',
+  'lime': 'limoen', 'orange': 'sinaasappel', 'apple': 'appel',
+  'banana': 'banaan', 'strawberry': 'aardbei', 'strawberries': 'aardbeien',
+  'honey': 'honing', 'maple syrup': 'ahornsiroop', 'chocolate': 'chocolade',
+  'water': 'water', 'broth': 'bouillon', 'sauce': 'saus'
+};
+
+// Kooktermen vertalen (Engels -> Nederlands)
+const TRANSLATE_COOKING = {
+  'heat': 'verwarm', 'boil': 'kook', 'simmer': 'laat sudderen', 'fry': 'bak',
+  'stir-fry': 'roerbak', 'grill': 'gril', 'bake': 'bak in oven', 'roast': 'braad',
+  'steam': 'stoom', 'poach': 'pocheer', 'blanch': 'blancheer',
+  'chop': 'hak', 'dice': 'snijd in blokjes', 'slice': 'snijd in plakken',
+  'mince': 'snipper fijn', 'grate': 'rasp', 'peel': 'schil',
+  'mix': 'meng', 'stir': 'roer', 'whisk': 'klop', 'beat': 'klop',
+  'season': 'breng op smaak', 'marinate': 'marineer', 'garnish': 'garneer',
+  'serve': 'serveer', 'add': 'voeg toe', 'pour': 'giet', 'drain': 'giet af',
+  'rinse': 'spoel af', 'bring to boil': 'breng aan de kook',
+  'reduce heat': 'verlaag het vuur', 'cook until': 'kook tot',
+  'set aside': 'zet opzij', 'let rest': 'laat rusten',
+  'preheat': 'verwarm de oven voor', 'cover': 'dek af', 'uncover': 'verwijder deksel',
+  'until golden': 'tot goudbruin', 'until tender': 'tot zacht',
+  'until cooked': 'tot gaar', 'until done': 'tot klaar'
+};
+
+function translateToD
+utch(text) {
+  if (!text) return text;
+  let translated = text.toLowerCase();
+  
+  // Vertaal ingrediënten
+  Object.entries(TRANSLATE_INGREDIENTS).forEach(([en, nl]) => {
+    const regex = new RegExp('\\b' + en + '\\b', 'gi');
+    translated = translated.replace(regex, nl);
+  });
+  
+  // Vertaal kooktermen
+  Object.entries(TRANSLATE_COOKING).forEach(([en, nl]) => {
+    const regex = new RegExp('\\b' + en + '\\b', 'gi');
+    translated = translated.replace(regex, nl);
+  });
+  
+  // Capitalize eerste letter
+  return translated.charAt(0).toUpperCase() + translated.slice(1);
+}
+
 const RECIPES = [
   {id:'r1',title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti||200g spek||4 eieren||100g parmezaan||Zout en peper',steps:'Kook pasta volgens verpakking||Bak spek krokant||Klop eieren met kaas||Meng warme pasta met spek en ei-mengsel||Breng op smaak met peper',cat:'Italiaans',author:'admin'},
   {id:'r2',title:'Thaise Rode Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el currypasta||300g kip||1 paprika||100g taugé||Basmati rijst',steps:'Bak currypasta in pan||Voeg kokosmelk toe||Breng aan de kook||Voeg kip en groenten toe||Laat 15 min sudderen||Serveer met rijst',cat:'Aziatisch',author:'admin'},
@@ -74,7 +142,12 @@ const RECIPES = [
   {id:'r7',title:'Caesar Salade',img:'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',ingr:'1 krop romaine sla||200g kipfilet||100g croutons||50g parmezaan||Caesar dressing||Ansjovis',steps:'Gril kipfilet en snijd in plakken||Was en snijd sla||Meng sla met dressing||Voeg kip, croutons toe||Rasp parmezaan erover||Garneer met ansjovis',cat:'Salade',author:'admin'},
   {id:'r8',title:'Nasi Goreng',img:'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400',ingr:'400g rijst||2 eieren||200g kip||1 ui||2 teentjes knoflook||Nasi kruiden||Sambal||Atjar',steps:'Kook rijst en laat afkoelen||Bak roerei, haal eruit||Bak kip met ui en knoflook||Voeg rijst en kruiden toe||Meng alles||Serveer met ei en atjar',cat:'Aziatisch',author:'admin'},
   {id:'r9',title:'Spare Ribs',img:'https://images.unsplash.com/photo-1544025162-d76694265947?w=400',ingr:'1kg spareribs||BBQ saus||Honing||Knoflookpoeder||Paprikapoeder||Zout||Peper',steps:'Marineer ribs in BBQ saus met kruiden||Laat 2 uur marineren||Bak 1.5 uur in oven op 160°C||Bestrijk regelmatig met marinade||Serveer met frites',cat:'BBQ',author:'admin'},
-  {id:'r10',title:'Quiche Lorraine',img:'https://images.unsplash.com/photo-1601001815894-4bb6c81416d7?w=400',ingr:'1 bladerdeeg||200g spek||200ml room||3 eieren||150g kaas||Ui||Peper en zout',steps:'Leg bladerdeeg in vorm||Bak spek en ui||Klop eieren met room||Verdeel spek over deeg||Giet ei-mengsel erover||Strooi kaas||Bak 35 min op 180°C',cat:'Frans',author:'admin'}
+  {id:'r10',title:'Quiche Lorraine',img:'https://images.unsplash.com/photo-1601001815894-4bb6c81416d7?w=400',ingr:'1 bladerdeeg||200g spek||200ml room||3 eieren||150g kaas||Ui||Peper en zout',steps:'Leg bladerdeeg in vorm||Bak spek en ui||Klop eieren met room||Verdeel spek over deeg||Giet ei-mengsel erover||Strooi kaas||Bak 35 min op 180°C',cat:'Frans',author:'admin'},
+  {id:'r11',title:'Pad Thai',img:'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400',ingr:'200g rijstnoedels||200g garnalen||2 eieren||100g taugé||3 el vissaus||2 el tamarindesaus||Pinda\'s||Limoen',steps:'Week noedels in warm water||Bak garnalen||Voeg eieren toe, roer||Voeg noedels en sauzen toe||Meng met taugé||Garneer met pinda\'s en limoen',cat:'Aziatisch',author:'admin'},
+  {id:'r12',title:'Griekse Gyros',img:'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=400',ingr:'500g kipfilet||Pita broodjes||Tzatziki||Tomaten||Rode ui||Sla||Griekse kruiden||Olijfolie',steps:'Marineer kip met kruiden en olie||Bak kip tot gaar||Snijd kip in reepjes||Verwarm pita\'s||Beleg met sla, tomaat, ui, kip||Top met tzatziki',cat:'Grieks',author:'admin'},
+  {id:'r13',title:'Risotto ai Funghi',img:'https://images.unsplash.com/photo-1476124369491-f51a78c585fa?w=400',ingr:'300g risottorijst||500g champignons||1 ui||1 liter bouillon||100ml witte wijn||Parmezaan||Boter',steps:'Fruit ui en champignons||Voeg rijst toe, roer||Blus met wijn||Voeg lepel voor lepel bouillon toe||Blijf roeren 20 min||Meng kaas en boter erdoor',cat:'Italiaans',author:'admin'},
+  {id:'r14',title:'Mexicaanse Burrito',img:'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=400',ingr:'Tortilla wraps||500g rundergehakt||Rode bonen||Rijst||Kaas||Salsa||Zure room||Ijsbergsla',steps:'Bak gehakt met kruiden||Verwarm tortilla\'s||Verdeel rijst en bonen||Voeg gehakt toe||Top met kaas, salsa, zure room||Rol dicht',cat:'Mexicaans',author:'admin'},
+  {id:'r15',title:'Japanse Ramen',img:'https://images.unsplash.com/photo-1557872943-16a5ac26437e?w=400',ingr:'Ramen noedels||1 liter bouillon||Varkensvlees||Lente-ui||Ei||Nori zeewier||Sojasaus||Sesamolie',steps:'Kook bouillon met sojasaus||Kook noedels apart||Bak varkensvlees||Kook eieren zacht||Verdeel noedels in kom||Giet bouillon erover||Top met vlees, ei, ui, nori',cat:'Aziatisch',author:'admin'}
 ];
 
 let mealDBCache = [];
@@ -95,16 +168,31 @@ async function fetchMealDBRecipes() {
       for (let i = 1; i <= 20; i++) {
         const ingredient = meal[`strIngredient${i}`];
         const measure = meal[`strMeasure${i}`];
-        if (ingredient && ingredient.trim()) ingredients.push(`${measure || ''} ${ingredient}`.trim());
+        if (ingredient && ingredient.trim()) {
+          const translatedIng = translateToDutch(ingredient);
+          const translatedMeas = translateToDutch(measure || '');
+          ingredients.push(`${translatedMeas} ${translatedIng}`.trim());
+        }
       }
-      const steps = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7);
-      return {id: 'mdb' + meal.idMeal, title: meal.strMeal, img: meal.strMealThumb, ingr: ingredients.join('||'), steps: steps.join('||'), cat: meal.strCategory || 'Internationaal', author: 'TheMealDB', source: 'mealdb'};
+      const stepsRaw = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7);
+      const steps = stepsRaw.map(step => translateToDutch(step));
+      
+      return {
+        id: 'mdb' + meal.idMeal, 
+        title: meal.strMeal, 
+        img: meal.strMealThumb, 
+        ingr: ingredients.join('||'), 
+        steps: steps.join('||'), 
+        cat: meal.strCategory || 'Internationaal', 
+        author: 'Community', 
+        source: 'mealdb'
+      };
     });
     mealDBCache = meals;
     mealDBLoading = false;
     return meals;
   } catch (error) {
-    console.error('Fout bij laden TheMealDB:', error);
+    console.error('Fout bij laden recepten:', error);
     mealDBLoading = false;
     return [];
   }

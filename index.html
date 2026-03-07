@@ -266,7 +266,6 @@ function filterByPrefs(recipes, extraFilter = '') {
   return recipes.filter(r => {
     const txt = `${r.title} ${r.cat} ${r.ingr}`.toLowerCase();
     
-    // Extra filter from dialog
     if (extraFilter && extraFilter.trim()) {
       const extraTerms = extraFilter.toLowerCase().split(' ').filter(t => t.trim());
       let hasExtraMatch = false;
@@ -279,7 +278,6 @@ function filterByPrefs(recipes, extraFilter = '') {
       if (!hasExtraMatch) return false;
     }
     
-    // Regular preferences
     if (prefs && prefs.niet) {
       const nietTerms = prefs.niet.toLowerCase().split(' ').filter(t => t.trim());
       for (const term of nietTerms) {
@@ -356,7 +354,7 @@ function showGenerateDialog() {
           ❌ Annuleren
         </button>
         <button 
-          onclick="startGenerateMenu()" 
+          id="btnGenerate"
           class="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 text-white p-3 md:p-4 rounded-xl font-bold hover:scale-105 transition-all text-sm md:text-base"
         >
           ✨ Genereer!
@@ -365,14 +363,13 @@ function showGenerateDialog() {
     </div>
   `;
   document.body.appendChild(modal);
-}
-
-async function startGenerateMenu() {
-  const modal = document.querySelector('.fixed');
-  const extraWish = document.getElementById('extraWish').value.trim();
-  modal.remove();
   
-  await generateMenu(extraWish);
+  // Event listener HIER toevoegen, niet in HTML
+  document.getElementById('btnGenerate').addEventListener('click', async function() {
+    const extraWish = document.getElementById('extraWish').value.trim();
+    modal.remove();
+    await generateMenu(extraWish);
+  });
 }
 
 async function generateMenu(extraFilter = '') {
@@ -390,7 +387,10 @@ async function generateMenu(extraFilter = '') {
     const currentRecipes = db.recipes();
     const filtered = filterByPrefs(currentRecipes, extraFilter);
     
+    console.log(`Poging ${attempts + 1}: ${filtered.length} recepten beschikbaar (doel: ${minRecipes})`);
+    
     if (filtered.length >= minRecipes) {
+      console.log('✅ Genoeg recepten gevonden!');
       break;
     }
     
@@ -398,13 +398,16 @@ async function generateMenu(extraFilter = '') {
       ? `🌍 Laden... ${filtered.length}/${minRecipes} recepten met "${extraFilter}"`
       : `🌍 Laden... ${filtered.length}/${minRecipes} recepten`;
     
+    console.log(`🌍 Nieuwe recepten laden... (${filtered.length}/${minRecipes})`);
     await fetchMealDBRecipes(30);
     attempts++;
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
   
   const finalRecipes = db.recipes();
   const filtered = filterByPrefs(finalRecipes, extraFilter);
+  
+  console.log(`Finale check: ${filtered.length} recepten beschikbaar`);
   
   if (filtered.length < 7) {
     loadingMsg.remove();
@@ -418,6 +421,7 @@ async function generateMenu(extraFilter = '') {
   if (lastGeneratedIds.length > 0) {
     const hasOverlap = selected.some(r => lastGeneratedIds.includes(r.id));
     if (hasOverlap && filtered.length >= 14) {
+      console.log('⚠️ Overlap gedetecteerd, opnieuw genereren...');
       loadingMsg.remove();
       return generateMenu(extraFilter);
     }
@@ -460,7 +464,6 @@ function render() {
       </div>
     `;
   } else if (view === 'info') {
-    // Info view unchanged - keeping it concise
     app.innerHTML = `
       ${renderNav()}
       <div class="max-w-4xl mx-auto p-4 py-8 md:py-12">
@@ -519,7 +522,6 @@ function render() {
     app.innerHTML = `
       ${renderNav()}
       <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
-        <!-- Uitleg -->
         <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl mb-8">
           <h2 class="text-2xl md:text-3xl font-black mb-4 text-orange-600">💡 Wat is De Weekhap?</h2>
           <p class="text-base md:text-lg text-slate-700 leading-relaxed mb-6">
@@ -540,13 +542,12 @@ function render() {
               </li>
               <li class="flex gap-3">
                 <span class="w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm">3</span>
-                <span class="pt-1"><strong>Genereer weekmenu</strong> - Krijg speciale wensen vraag!</span>
+                <span class="pt-1"><strong>Klik genereer</strong> - Krijg vraag voor speciale wensen!</span>
               </li>
             </ol>
           </div>
         </div>
 
-        <!-- Generator -->
         <div class="text-center py-8 md:py-12 bg-white rounded-3xl shadow-xl mb-8 md:mb-12">
           <h1 class="text-3xl md:text-5xl font-black mb-4 px-4">Welkom, ${currentUser.name}! 👋</h1>
           
@@ -956,7 +957,6 @@ function saveMenu() {
   render();
 }
 
-// Rest of functions (showRecipe, copyRecipeIngredients, etc.) remain same as before
 function showRecipe(idx, isSaved, isMyRecipes = false) {
   let recipe;
   if (isMyRecipes) {

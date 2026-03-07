@@ -80,6 +80,15 @@ body { top: 0 !important; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
+/* Sticky Tab Navigation */
+.tab-navigation {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 /* Mobile Navigation */
 .mobile-menu {
   display: none;
@@ -844,8 +853,8 @@ function showRecipe(idx, isSaved, isMyRecipes = false) {
         <button onclick="this.closest('.fixed').remove()" class="text-3xl md:text-4xl font-bold text-slate-400 hover:text-slate-600 ml-4">×</button>
       </div>
       
-      <!-- Tab Navigation -->
-      <div class="sticky top-0 bg-white z-10 px-4 md:px-6 pt-4">
+      <!-- Tab Navigation - STICKY -->
+      <div class="tab-navigation px-4 md:px-6 pt-4">
         <div class="flex gap-1 md:gap-2 border-b overflow-x-auto">
           <button data-tab="ingredients" onclick="switchTab('ingredients')" class="tab-btn px-3 md:px-6 py-2 md:py-3 font-bold rounded-t-xl bg-orange-600 text-white transition-all whitespace-nowrap">
             🥘 Ingrediënten

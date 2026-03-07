@@ -51,7 +51,14 @@
 <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;900&display=swap');
-body { font-family: 'Outfit', sans-serif; }
+body { 
+  font-family: 'Outfit', sans-serif;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+* {
+  max-width: 100%;
+}
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -60,17 +67,48 @@ body { font-family: 'Outfit', sans-serif; }
 .logo-img { object-fit: contain; }
 .goog-te-banner-frame { display: none !important; }
 .goog-te-combo { 
-  padding: 8px 12px;
+  padding: 6px 8px;
   border-radius: 8px;
   border: 2px solid #e2e8f0;
   font-weight: 600;
   background: white;
   cursor: pointer;
+  font-size: 12px;
 }
 body { top: 0 !important; }
 #google_translate_element { display: inline-block; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
+
+/* Mobile Navigation */
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem;
+  z-index: 40;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+.mobile-menu.active {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .desktop-nav { display: none !important; }
+  .tab-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn { display: none !important; }
+}
 </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-200 min-h-screen">
@@ -79,6 +117,15 @@ body { top: 0 !important; }
 
 <script>
 let activeTab = 'ingredients';
+let mobileMenuOpen = false;
+
+function toggleMobileMenu() {
+  mobileMenuOpen = !mobileMenuOpen;
+  const menu = document.getElementById('mobileMenu');
+  if (menu) {
+    menu.classList.toggle('active');
+  }
+}
 
 function switchTab(tabName) {
   activeTab = tabName;
@@ -234,141 +281,84 @@ function render() {
   if (view === 'login') {
     app.innerHTML = `
       <div class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-10 shadow-2xl max-w-md w-full">
-          <img src="logo.jpg" alt="DeWeekHap logo weekmenu generator" class="w-48 h-auto mx-auto mb-6 logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+        <div class="bg-white rounded-3xl p-6 md:p-10 shadow-2xl max-w-md w-full">
+          <img src="logo.jpg" alt="DeWeekHap logo weekmenu generator" class="w-40 md:w-48 h-auto mx-auto mb-6 logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
           <div class="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl hidden items-center justify-center mx-auto mb-6 text-white text-3xl font-black">W</div>
-          <h1 class="text-4xl font-black text-center mb-8">De Weekhap</h1>
+          <h1 class="text-3xl md:text-4xl font-black text-center mb-8">De Weekhap</h1>
           <div id="loginForm">
-            <input id="email" type="email" placeholder="Email" class="w-full p-4 mb-3 border-2 rounded-xl" />
-            <input id="password" type="password" placeholder="Wachtwoord" class="w-full p-4 mb-4 border-2 rounded-xl" />
-            <button onclick="login()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold mb-3 hover:bg-orange-700">Inloggen</button>
-            <button onclick="showRegister()" class="w-full bg-slate-200 text-slate-700 p-4 rounded-xl font-bold hover:bg-slate-300">Registreren</button>
+            <input id="email" type="email" placeholder="Email" class="w-full p-3 md:p-4 mb-3 border-2 rounded-xl text-sm md:text-base" />
+            <input id="password" type="password" placeholder="Wachtwoord" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+            <button onclick="login()" class="w-full bg-orange-600 text-white p-3 md:p-4 rounded-xl font-bold mb-3 hover:bg-orange-700 text-sm md:text-base">Inloggen</button>
+            <button onclick="showRegister()" class="w-full bg-slate-200 text-slate-700 p-3 md:p-4 rounded-xl font-bold hover:bg-slate-300 text-sm md:text-base">Registreren</button>
           </div>
           <div id="registerForm" class="hidden">
-            <input id="regName" type="text" placeholder="Naam" class="w-full p-4 mb-3 border-2 rounded-xl" />
-            <input id="regEmail" type="email" placeholder="Email" class="w-full p-4 mb-3 border-2 rounded-xl" />
-            <input id="regPassword" type="password" placeholder="Wachtwoord" class="w-full p-4 mb-4 border-2 rounded-xl" />
-            <button onclick="register()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold mb-3 hover:bg-orange-700">Account Aanmaken</button>
-            <button onclick="showLogin()" class="w-full bg-slate-200 text-slate-700 p-4 rounded-xl font-bold hover:bg-slate-300">Terug naar Login</button>
+            <input id="regName" type="text" placeholder="Naam" class="w-full p-3 md:p-4 mb-3 border-2 rounded-xl text-sm md:text-base" />
+            <input id="regEmail" type="email" placeholder="Email" class="w-full p-3 md:p-4 mb-3 border-2 rounded-xl text-sm md:text-base" />
+            <input id="regPassword" type="password" placeholder="Wachtwoord" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+            <button onclick="register()" class="w-full bg-orange-600 text-white p-3 md:p-4 rounded-xl font-bold mb-3 hover:bg-orange-700 text-sm md:text-base">Account Aanmaken</button>
+            <button onclick="showLogin()" class="w-full bg-slate-200 text-slate-700 p-3 md:p-4 rounded-xl font-bold hover:bg-slate-300 text-sm md:text-base">Terug naar Login</button>
           </div>
-          <p class="text-center mt-6 text-sm text-slate-500">Admin? Email: admin@weekhap.nl | Pass: admin123</p>
-          <button onclick="changeView('info')" class="w-full mt-4 text-orange-600 font-bold hover:underline">ℹ️ Hoe werkt het?</button>
+          <p class="text-center mt-6 text-xs md:text-sm text-slate-500">Admin? Email: admin@weekhap.nl | Pass: admin123</p>
+          <button onclick="changeView('info')" class="w-full mt-4 text-orange-600 font-bold hover:underline text-sm md:text-base">ℹ️ Hoe werkt het?</button>
         </div>
       </div>
     `;
   } else if (view === 'info') {
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-4xl mx-auto p-4 py-12">
-        <div class="bg-white rounded-3xl p-8 shadow-xl mb-6">
-          <img src="logo.jpg" alt="DeWeekHap logo" class="w-64 h-auto mx-auto mb-6 logo-img" />
-          <h1 class="text-5xl font-black mb-4 text-center">🍽️ Welkom bij De Weekhap!</h1>
-          <p class="text-xl text-center text-slate-600 mb-8">Jouw slimme weekmenu generator</p>
+      <div class="max-w-4xl mx-auto p-4 py-8 md:py-12">
+        <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl mb-6">
+          <img src="logo.jpg" alt="DeWeekHap logo" class="w-48 md:w-64 h-auto mx-auto mb-6 logo-img" />
+          <h1 class="text-3xl md:text-5xl font-black mb-4 text-center">🍽️ Welkom bij De Weekhap!</h1>
+          <p class="text-lg md:text-xl text-center text-slate-600 mb-8">Jouw slimme weekmenu generator</p>
           
           <!-- Share Buttons -->
-          <div class="flex gap-3 p-4 bg-slate-50 rounded-2xl justify-center mb-8">
-            <a href="https://wa.me/?text=Kijk%20eens%20naar%20deze%20geweldige%20weekmenu%20generator!%20https://jopkomp43-alt.github.io/DeWeekHap.nl/" target="_blank" class="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg hover:shadow-xl transition-all" title="Deel via WhatsApp">💬</a>
-            <a href="https://www.facebook.com/sharer/sharer.php?u=https://jopkomp43-alt.github.io/DeWeekHap.nl/" target="_blank" class="w-12 h-12 bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center justify-center text-white text-xl shadow-lg hover:shadow-xl transition-all" title="Deel op Facebook">📘</a>
-            <a href="https://twitter.com/intent/tweet?url=https://jopkomp43-alt.github.io/DeWeekHap.nl/&text=Weekmenu%20generator%20gevonden!" target="_blank" class="w-12 h-12 bg-black hover:bg-gray-800 rounded-xl flex items-center justify-center text-white text-xl shadow-lg hover:shadow-xl transition-all" title="Deel op X">🐦</a>
-            <a href="mailto:?subject=Weekmenu%20generator&body=Kijk%20eens!%20https://jopkomp43-alt.github.io/DeWeekHap.nl/" class="w-12 h-12 bg-red-500 hover:bg-red-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg hover:shadow-xl transition-all" title="Deel per Email">✉️</a>
-            <button onclick="navigator.clipboard.writeText('https://jopkomp43-alt.github.io/DeWeekHap.nl/'); alert('🔗 Link gekopieerd!')" class="w-12 h-12 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg hover:shadow-xl transition-all" title="Kopieer link">🔗</button>
+          <div class="flex flex-wrap gap-2 md:gap-3 p-4 bg-slate-50 rounded-2xl justify-center mb-8">
+            <a href="https://wa.me/?text=Kijk%20eens%20naar%20deze%20geweldige%20weekmenu%20generator!%20https://jopkomp43-alt.github.io/DeWeekHap.nl/" target="_blank" class="w-10 h-10 md:w-12 md:h-12 bg-green-500 hover:bg-green-600 rounded-xl flex items-center justify-center text-white text-lg md:text-xl shadow-lg hover:shadow-xl transition-all" title="Deel via WhatsApp">💬</a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=https://jopkomp43-alt.github.io/DeWeekHap.nl/" target="_blank" class="w-10 h-10 md:w-12 md:h-12 bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center justify-center text-white text-lg md:text-xl shadow-lg hover:shadow-xl transition-all" title="Deel op Facebook">📘</a>
+            <a href="https://twitter.com/intent/tweet?url=https://jopkomp43-alt.github.io/DeWeekHap.nl/&text=Weekmenu%20generator%20gevonden!" target="_blank" class="w-10 h-10 md:w-12 md:h-12 bg-black hover:bg-gray-800 rounded-xl flex items-center justify-center text-white text-lg md:text-xl shadow-lg hover:shadow-xl transition-all" title="Deel op X">🐦</a>
+            <a href="mailto:?subject=Weekmenu%20generator&body=Kijk%20eens!%20https://jopkomp43-alt.github.io/DeWeekHap.nl/" class="w-10 h-10 md:w-12 md:h-12 bg-red-500 hover:bg-red-600 rounded-xl flex items-center justify-center text-white text-lg md:text-xl shadow-lg hover:shadow-xl transition-all" title="Deel per Email">✉️</a>
+            <button onclick="navigator.clipboard.writeText('https://jopkomp43-alt.github.io/DeWeekHap.nl/'); alert('🔗 Link gekopieerd!')" class="w-10 h-10 md:w-12 md:h-12 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center text-white text-lg md:text-xl shadow-lg hover:shadow-xl transition-all" title="Kopieer link">🔗</button>
           </div>
           
-          <div class="space-y-8">
+          <div class="space-y-6 md:space-y-8">
             <div>
-              <h2 class="text-3xl font-black mb-3 text-orange-600">💡 Wat is De Weekhap?</h2>
-              <p class="text-lg text-slate-700 leading-relaxed">
+              <h2 class="text-2xl md:text-3xl font-black mb-3 text-orange-600">💡 Wat is De Weekhap?</h2>
+              <p class="text-base md:text-lg text-slate-700 leading-relaxed">
                 De Weekhap is jouw persoonlijke kookassistent die automatisch een gevarieerd weekmenu voor je samenstelt. 
                 Nooit meer het gedoe van "wat eten we vandaag?" - wij regelen het voor je! Met honderden recepten uit de hele wereld 
                 creëren we elke week een nieuw, verrassend menu op basis van jouw voorkeuren.
               </p>
             </div>
 
-            <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl">
-              <h2 class="text-3xl font-black mb-4">🎯 Hoe werkt het?</h2>
-              <ol class="space-y-3 text-lg">
+            <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6 rounded-2xl">
+              <h2 class="text-2xl md:text-3xl font-black mb-4">🎯 Hoe werkt het?</h2>
+              <ol class="space-y-3 text-base md:text-lg">
                 <li class="flex gap-3">
-                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">1</span>
-                  <span><strong>Stel je voorkeuren in</strong> - Vertel ons wat je WEL en NIET wilt eten</span>
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">1</span>
+                  <span class="pt-1"><strong>Stel je voorkeuren in</strong> - Vertel ons wat je WEL en NIET wilt eten</span>
                 </li>
                 <li class="flex gap-3">
-                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">2</span>
-                  <span><strong>Kies aantal personen</strong> - Voor hoeveel mensen kook je?</span>
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">2</span>
+                  <span class="pt-1"><strong>Kies aantal personen</strong> - Voor hoeveel mensen kook je?</span>
                 </li>
                 <li class="flex gap-3">
-                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">3</span>
-                  <span><strong>Genereer weekmenu</strong> - Krijg 7 unieke recepten voor elke dag</span>
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">3</span>
+                  <span class="pt-1"><strong>Genereer weekmenu</strong> - Krijg 7 unieke recepten voor elke dag</span>
                 </li>
                 <li class="flex gap-3">
-                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">4</span>
-                  <span><strong>Bekijk boodschappenlijst</strong> - Alle ingrediënten overzichtelijk op een rij</span>
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">4</span>
+                  <span class="pt-1"><strong>Bekijk boodschappenlijst</strong> - Alle ingrediënten overzichtelijk op een rij</span>
                 </li>
                 <li class="flex gap-3">
-                  <span class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">5</span>
-                  <span><strong>Bewaar je favorieten</strong> - Klik op het hartje bij recepten die je lekker vindt</span>
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">5</span>
+                  <span class="pt-1"><strong>Bewaar je favorieten</strong> - Klik op het hartje bij recepten die je lekker vindt</span>
                 </li>
               </ol>
             </div>
 
-            <div>
-              <h2 class="text-3xl font-black mb-4">✨ Wat kun je allemaal?</h2>
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="bg-slate-50 p-4 rounded-xl">
-                  <div class="text-2xl mb-2">🎲</div>
-                  <h3 class="font-bold mb-1">Weekmenu Generator</h3>
-                  <p class="text-sm text-slate-600">Krijg elke week 7 unieke recepten voor maandag t/m zondag</p>
-                </div>
-                <div class="bg-slate-50 p-4 rounded-xl">
-                  <div class="text-2xl mb-2">🎛️</div>
-                  <h3 class="font-bold mb-1">Persoonlijke Voorkeuren</h3>
-                  <p class="text-sm text-slate-600">Filter op ingrediënten die je WEL of NIET wilt</p>
-                </div>
-                <div class="bg-slate-50 p-4 rounded-xl">
-                  <div class="text-2xl mb-2">🛒</div>
-                  <h3 class="font-bold mb-1">Boodschappenlijst</h3>
-                  <p class="text-sm text-slate-600">Automatisch gegenereerde lijst met alle ingrediënten</p>
-                </div>
-                <div class="bg-slate-50 p-4 rounded-xl">
-                  <div class="text-2xl mb-2">❤️</div>
-                  <h3 class="font-bold mb-1">Favoriete Recepten</h3>
-                  <p class="text-sm text-slate-600">Bewaar je lievelingsgerechten in je eigen collectie</p>
-                </div>
-                <div class="bg-slate-50 p-4 rounded-xl">
-                  <div class="text-2xl mb-2">⭐</div>
-                  <h3 class="font-bold mb-1">Reviews & Ratings</h3>
-                  <p class="text-sm text-slate-600">Beoordeel recepten en lees wat anderen ervan vinden</p>
-                </div>
-                <div class="bg-slate-50 p-4 rounded-xl">
-                  <div class="text-2xl mb-2">👥</div>
-                  <h3 class="font-bold mb-1">Community Recepten</h3>
-                  <p class="text-sm text-slate-600">Deel je eigen recepten met andere gebruikers</p>
-                </div>
-                <div class="bg-slate-50 p-4 rounded-xl">
-                  <div class="text-2xl mb-2">🌍</div>
-                  <h3 class="font-bold mb-1">Internationale Keuken</h3>
-                  <p class="text-sm text-slate-600">Van Italiaans tot Aziatisch - kies uit honderden recepten</p>
-                </div>
-                <div class="bg-slate-50 p-4 rounded-xl">
-                  <div class="text-2xl mb-2">🖨️</div>
-                  <h3 class="font-bold mb-1">Print & Exporteer</h3>
-                  <p class="text-sm text-slate-600">Print je weekmenu of kopieer je boodschappenlijst</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-green-50 p-6 rounded-2xl border-2 border-green-200">
-              <h2 class="text-3xl font-black mb-3 text-green-700">🎉 Waarom De Weekhap?</h2>
-              <ul class="space-y-2 text-lg">
-                <li>✅ <strong>Bespaar tijd</strong> - Geen uren meer nadenken over wat te koken</li>
-                <li>✅ <strong>Gevarieerd eten</strong> - Elke week nieuwe inspiratie</li>
-                <li>✅ <strong>Minder verspilling</strong> - Exacte boodschappenlijst = geen overbodige aankopen</li>
-                <li>✅ <strong>Op jouw manier</strong> - Filter op allergieën, voorkeuren en aantal personen</li>
-                <li>✅ <strong>100% gratis</strong> - Geen verborgen kosten of abonnementen</li>
-              </ul>
-            </div>
-
             <div class="text-center">
-              <button onclick="changeView('${currentUser ? 'home' : 'login'}')" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-12 py-6 rounded-2xl font-black text-xl shadow-xl hover:scale-105 transition-all">
+              <button onclick="changeView('${currentUser ? 'home' : 'login'}')" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-8 md:px-12 py-4 md:py-6 rounded-2xl font-black text-lg md:text-xl shadow-xl hover:scale-105 transition-all">
                 ${currentUser ? '🍽️ Naar Weekmenu Generator' : '🚀 Start Nu!'}
               </button>
             </div>
@@ -385,50 +375,50 @@ function render() {
     
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-6xl mx-auto p-4 py-12">
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
         <!-- Compact Feature Info Strip -->
         <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-3 rounded-xl mb-6 shadow-lg">
-          <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+          <div class="grid grid-cols-2 md:flex md:flex-wrap items-center justify-center gap-3 md:gap-x-6 md:gap-y-2 text-xs md:text-sm">
             <div class="flex items-center gap-2">
-              <span class="text-xl">🌍</span>
-              <span><strong>Vertalen:</strong> Klik rechtsboven op taalkeuzelijst</span>
+              <span class="text-lg md:text-xl">🌍</span>
+              <span class="text-xs md:text-sm"><strong>Vertalen</strong></span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-xl">❤️</span>
-              <span><strong>Favorieten:</strong> Klik op hartje bij recepten</span>
+              <span class="text-lg md:text-xl">❤️</span>
+              <span class="text-xs md:text-sm"><strong>Favorieten</strong></span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-xl">🛒</span>
-              <span><strong>Boodschappen:</strong> Automatisch gegenereerd</span>
+              <span class="text-lg md:text-xl">🛒</span>
+              <span class="text-xs md:text-sm"><strong>Boodschappen</strong></span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-xl">💾</span>
-              <span><strong>Menu bewaren:</strong> Na genereren opslaan</span>
+              <span class="text-lg md:text-xl">💾</span>
+              <span class="text-xs md:text-sm"><strong>Menu opslaan</strong></span>
             </div>
           </div>
         </div>
 
-        <div class="text-center py-12 bg-white rounded-3xl shadow-xl mb-12">
-          <h1 class="text-5xl font-black mb-4">Welkom, ${currentUser.name}! 👋</h1>
+        <div class="text-center py-8 md:py-12 bg-white rounded-3xl shadow-xl mb-8 md:mb-12">
+          <h1 class="text-3xl md:text-5xl font-black mb-4 px-4">Welkom, ${currentUser.name}! 👋</h1>
           
           <div class="max-w-2xl mx-auto mb-8 px-4">
-            <p class="text-sm text-slate-600 mb-2">💡 Typ wat je WEL/NIET wilt eten</p>
-            <input id="prefWel" placeholder="WEL willen (bijv: kip pasta vegetarisch)" value="${prefs.wel || ''}" class="w-full p-3 mb-2 border-2 rounded-xl text-sm" />
-            <input id="prefNiet" placeholder="NIET willen (bijv: vis garnalen noten)" value="${prefs.niet || ''}" class="w-full p-3 mb-3 border-2 rounded-xl text-sm" />
+            <p class="text-xs md:text-sm text-slate-600 mb-2">💡 Typ wat je WEL/NIET wilt eten</p>
+            <input id="prefWel" placeholder="WEL (bijv: kip pasta)" value="${prefs.wel || ''}" class="w-full p-3 mb-2 border-2 rounded-xl text-sm" />
+            <input id="prefNiet" placeholder="NIET (bijv: vis noten)" value="${prefs.niet || ''}" class="w-full p-3 mb-3 border-2 rounded-xl text-sm" />
             <button onclick="savePrefs()" class="bg-green-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-green-700 text-sm">💾 Opslaan</button>
           </div>
           
-          <p class="text-xl text-slate-600 mb-2">Kies uit <span class="text-orange-600 font-black">${filtered.length} recepten</span></p>
-          ${prefs.wel || prefs.niet ? '<p class="text-sm text-green-600 font-bold mb-6">✓ Voorkeuren actief</p>' : '<p class="text-sm text-slate-500 mb-6">Stel voorkeuren in voor gepersonaliseerde menu\'s</p>'}
+          <p class="text-lg md:text-xl text-slate-600 mb-2 px-4">Kies uit <span class="text-orange-600 font-black">${filtered.length} recepten</span></p>
+          ${prefs.wel || prefs.niet ? '<p class="text-xs md:text-sm text-green-600 font-bold mb-6">✓ Voorkeuren actief</p>' : '<p class="text-xs md:text-sm text-slate-500 mb-6">Stel voorkeuren in voor gepersonaliseerde menu\'s</p>'}
           
           <div class="flex justify-center items-center gap-4 mb-8">
-            <span class="text-lg font-bold">Personen:</span>
+            <span class="text-base md:text-lg font-bold">Personen:</span>
             <button onclick="servings=Math.max(1,servings-1);render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200">−</button>
-            <span class="text-3xl font-black">${servings}</span>
+            <span class="text-2xl md:text-3xl font-black">${servings}</span>
             <button onclick="servings++;render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200">+</button>
           </div>
           
-          <button onclick="generateMenu()" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-12 py-6 rounded-2xl font-black text-xl shadow-xl hover:scale-105 transition-all">🍽️ Genereer Weekmenu</button>
+          <button onclick="generateMenu()" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-8 md:px-12 py-4 md:py-6 rounded-2xl font-black text-base md:text-xl shadow-xl hover:scale-105 transition-all mx-4">🍽️ Genereer Weekmenu</button>
         </div>
         ${currentMenu.length > 0 ? renderMenu() : ''}
       </div>
@@ -437,10 +427,10 @@ function render() {
     const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8">Opgeslagen Weekmenu 💚</h1>
-        ${saved.length === 0 ? '<div class="bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Geen opgeslagen weekmenu. Genereer een menu en klik "Bewaar Menu"!</p></div>' : `
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-8">Opgeslagen Weekmenu 💚</h1>
+        ${saved.length === 0 ? '<div class="bg-white rounded-3xl p-8 md:p-12 text-center"><p class="text-lg md:text-xl text-slate-500">Geen opgeslagen weekmenu. Genereer een menu en klik "Bewaar Menu"!</p></div>' : `
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             ${saved.map((r,i) => renderRecipeCard(r, i, true)).join('')}
           </div>
         `}
@@ -453,12 +443,12 @@ function render() {
     if (menu.length === 0) {
       app.innerHTML = `
         ${renderNav()}
-        <div class="max-w-4xl mx-auto p-4 py-12">
-          <div class="bg-white rounded-3xl p-12 text-center">
-            <div class="text-6xl mb-4">🛒</div>
-            <h1 class="text-4xl font-black mb-4">Boodschappenlijst</h1>
-            <p class="text-xl text-slate-500 mb-6">Genereer eerst een weekmenu om je boodschappenlijst te zien!</p>
-            <button onclick="changeView('home')" class="bg-orange-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-orange-700">Naar Home</button>
+        <div class="max-w-4xl mx-auto p-4 py-8 md:py-12">
+          <div class="bg-white rounded-3xl p-8 md:p-12 text-center">
+            <div class="text-5xl md:text-6xl mb-4">🛒</div>
+            <h1 class="text-3xl md:text-4xl font-black mb-4">Boodschappenlijst</h1>
+            <p class="text-lg md:text-xl text-slate-500 mb-6">Genereer eerst een weekmenu om je boodschappenlijst te zien!</p>
+            <button onclick="changeView('home')" class="bg-orange-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold hover:bg-orange-700">Naar Home</button>
           </div>
         </div>
       `;
@@ -470,30 +460,30 @@ function render() {
       
       app.innerHTML = `
         ${renderNav()}
-        <div class="max-w-4xl mx-auto p-4 py-12">
-          <div class="bg-white rounded-3xl p-8 shadow-xl">
-            <div class="flex items-center justify-between mb-6">
+        <div class="max-w-4xl mx-auto p-4 py-8 md:py-12">
+          <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
               <div>
-                <h1 class="text-4xl font-black mb-2">🛒 Boodschappenlijst</h1>
-                <p class="text-slate-600">Voor ${servings} personen • ${menu.length} recepten</p>
+                <h1 class="text-3xl md:text-4xl font-black mb-2">🛒 Boodschappenlijst</h1>
+                <p class="text-sm md:text-base text-slate-600">Voor ${servings} personen • ${menu.length} recepten</p>
               </div>
-              <button onclick="copyShoppingList()" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700">📋 Kopieer</button>
+              <button onclick="copyShoppingList()" class="w-full md:w-auto bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700 whitespace-nowrap">📋 Kopieer</button>
             </div>
             
             <div class="mb-6">
-              <h2 class="text-xl font-bold mb-3">📅 Deze week op het menu:</h2>
+              <h2 class="text-lg md:text-xl font-bold mb-3">📅 Deze week op het menu:</h2>
               <div class="flex flex-wrap gap-2">
-                ${menu.map(r => `<span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">${r.title}</span>`).join('')}
+                ${menu.map(r => `<span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs md:text-sm font-semibold">${r.title}</span>`).join('')}
               </div>
             </div>
             
-            <div class="bg-slate-50 p-6 rounded-2xl">
-              <h2 class="text-xl font-bold mb-4">🥘 Alle ingrediënten (${allIngredients.length})</h2>
+            <div class="bg-slate-50 p-4 md:p-6 rounded-2xl">
+              <h2 class="text-lg md:text-xl font-bold mb-4">🥘 Alle ingrediënten (${allIngredients.length})</h2>
               <ul class="space-y-2">
                 ${allIngredients.map((ing, i) => `
                   <li class="flex items-start gap-3 p-2 hover:bg-white rounded-lg transition-colors">
                     <input type="checkbox" class="w-5 h-5 mt-0.5 accent-orange-600 flex-shrink-0" />
-                    <span class="flex-1">${ing}</span>
+                    <span class="flex-1 text-sm md:text-base">${ing}</span>
                   </li>
                 `).join('')}
               </ul>
@@ -509,10 +499,10 @@ function render() {
     
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8">Mijn Recepten ⭐ (${myRecipes.length})</h1>
-        ${myRecipes.length === 0 ? '<div class="bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Nog geen recepten opgeslagen. Klik op het hartje bij een recept!</p></div>' : `
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-8">Mijn Recepten ⭐ (${myRecipes.length})</h1>
+        ${myRecipes.length === 0 ? '<div class="bg-white rounded-3xl p-8 md:p-12 text-center"><p class="text-lg md:text-xl text-slate-500">Nog geen recepten opgeslagen. Klik op het hartje bij een recept!</p></div>' : `
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             ${myRecipes.map((r,i) => renderRecipeCard(r, i, false, true)).join('')}
           </div>
         `}
@@ -522,27 +512,27 @@ function render() {
     const approved = db.get('approvedRecipes') || [];
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8">Community Recepten 👥 (${approved.length})</h1>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-8">Community Recepten 👥 (${approved.length})</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           ${approved.map((r,i) => renderRecipeCard(r, i)).join('')}
-          ${approved.length === 0 ? '<div class="col-span-3 bg-white rounded-3xl p-12 text-center"><p class="text-xl text-slate-500">Nog geen goedgekeurde recepten</p></div>' : ''}
+          ${approved.length === 0 ? '<div class="col-span-1 md:col-span-2 lg:col-span-3 bg-white rounded-3xl p-8 md:p-12 text-center"><p class="text-lg md:text-xl text-slate-500">Nog geen goedgekeurde recepten</p></div>' : ''}
         </div>
       </div>
     `;
   } else if (view === 'upload') {
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-3xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-4">Voeg Recept Toe 📤</h1>
-        <p class="text-slate-600 mb-8">Je recept wordt eerst goedgekeurd door admin</p>
-        <div class="bg-white rounded-3xl p-8 shadow-xl">
-          <input id="title" placeholder="Receptnaam" class="w-full p-4 mb-4 border-2 rounded-xl" />
-          <input id="category" placeholder="Categorie (bijv. Italiaans)" class="w-full p-4 mb-4 border-2 rounded-xl" />
-          <input id="image" placeholder="Foto URL (optioneel)" class="w-full p-4 mb-4 border-2 rounded-xl" />
-          <textarea id="ingredients" placeholder="Ingrediënten (1 per regel)" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl"></textarea>
-          <textarea id="steps" placeholder="Bereidingsstappen (1 per regel)" rows="6" class="w-full p-4 mb-4 border-2 rounded-xl"></textarea>
-          <button onclick="uploadRecipe()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-bold hover:bg-orange-700">Verstuur ter Goedkeuring</button>
+      <div class="max-w-3xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-4">Voeg Recept Toe 📤</h1>
+        <p class="text-sm md:text-base text-slate-600 mb-8">Je recept wordt eerst goedgekeurd door admin</p>
+        <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl">
+          <input id="title" placeholder="Receptnaam" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+          <input id="category" placeholder="Categorie (bijv. Italiaans)" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+          <input id="image" placeholder="Foto URL (optioneel)" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+          <textarea id="ingredients" placeholder="Ingrediënten (1 per regel)" rows="6" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base"></textarea>
+          <textarea id="steps" placeholder="Bereidingsstappen (1 per regel)" rows="6" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base"></textarea>
+          <button onclick="uploadRecipe()" class="w-full bg-orange-600 text-white p-3 md:p-4 rounded-xl font-bold hover:bg-orange-700 text-sm md:text-base">Verstuur ter Goedkeuring</button>
         </div>
       </div>
     `;
@@ -552,54 +542,54 @@ function render() {
     const pending = db.pendingRecipes();
     app.innerHTML = `
       ${renderNav()}
-      <div class="max-w-6xl mx-auto p-4 py-12">
-        <h1 class="text-4xl font-black mb-8 text-red-600">⚙️ Admin Panel</h1>
-        <div class="grid md:grid-cols-4 gap-6 mb-12">
-          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-orange-600">${users.length}</div>
-            <div class="text-xl font-bold mt-2">Gebruikers</div>
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-8 text-red-600">⚙️ Admin Panel</h1>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-orange-600">${users.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Gebruikers</div>
           </div>
-          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-blue-600">${RECIPES.length}</div>
-            <div class="text-xl font-bold mt-2">Standaard Recepten</div>
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-blue-600">${RECIPES.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Recepten</div>
           </div>
-          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-green-600">${approved.length}</div>
-            <div class="text-xl font-bold mt-2">Goedgekeurd</div>
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-green-600">${approved.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Goedgekeurd</div>
           </div>
-          <div class="bg-white p-8 rounded-3xl shadow-xl text-center">
-            <div class="text-5xl font-black text-yellow-600">${pending.length}</div>
-            <div class="text-xl font-bold mt-2">Te Beoordelen</div>
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-yellow-600">${pending.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Te Beoordelen</div>
           </div>
         </div>
         
         ${pending.length > 0 ? `
-          <h2 class="text-3xl font-black mb-4 text-yellow-600">Te Beoordelen Recepten (${pending.length})</h2>
-          <div class="grid md:grid-cols-2 gap-6 mb-12">
+          <h2 class="text-2xl md:text-3xl font-black mb-4 text-yellow-600">Te Beoordelen Recepten (${pending.length})</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-12">
             ${pending.map(r => `
-              <div class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-6 shadow-xl">
+              <div class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 md:p-6 shadow-xl">
                 <img src="${r.img}" class="w-full h-40 object-cover rounded-xl mb-4" />
-                <h3 class="font-black text-xl mb-2">${r.title}</h3>
-                <p class="text-sm text-slate-600 mb-1"><strong>Categorie:</strong> ${r.cat}</p>
-                <p class="text-sm text-slate-600 mb-1"><strong>Door:</strong> ${r.author}</p>
+                <h3 class="font-black text-lg md:text-xl mb-2">${r.title}</h3>
+                <p class="text-xs md:text-sm text-slate-600 mb-1"><strong>Categorie:</strong> ${r.cat}</p>
+                <p class="text-xs md:text-sm text-slate-600 mb-1"><strong>Door:</strong> ${r.author}</p>
                 <div class="flex gap-3 mt-4">
-                  <button onclick="approveRecipe('${r.id}')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">✅ Goedkeuren</button>
-                  <button onclick="rejectRecipe('${r.id}')" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700">❌ Afwijzen</button>
+                  <button onclick="approveRecipe('${r.id}')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 text-sm md:text-base">✅ Goedkeuren</button>
+                  <button onclick="rejectRecipe('${r.id}')" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 text-sm md:text-base">❌ Afwijzen</button>
                 </div>
               </div>
             `).join('')}
           </div>
         ` : ''}
         
-        <h2 class="text-3xl font-black mb-4">Gebruikers</h2>
-        <div class="bg-white rounded-3xl p-6 shadow-xl">
+        <h2 class="text-2xl md:text-3xl font-black mb-4">Gebruikers</h2>
+        <div class="bg-white rounded-3xl p-4 md:p-6 shadow-xl">
           ${users.map(u => `
-            <div class="flex items-center justify-between p-4 border-b last:border-b-0">
-              <div>
-                <div class="font-bold">${u.name}</div>
-                <div class="text-sm text-slate-500">${u.email}</div>
+            <div class="flex items-center justify-between p-3 md:p-4 border-b last:border-b-0 gap-4">
+              <div class="min-w-0 flex-1">
+                <div class="font-bold text-sm md:text-base truncate">${u.name}</div>
+                <div class="text-xs md:text-sm text-slate-500 truncate">${u.email}</div>
               </div>
-              ${!u.isAdmin ? `<button onclick="deleteUser('${u.email}')" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Verwijder</button>` : '<span class="text-red-600 font-bold">Admin</span>'}
+              ${!u.isAdmin ? `<button onclick="deleteUser('${u.email}')" class="bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-red-600 text-xs md:text-sm whitespace-nowrap flex-shrink-0">Verwijder</button>` : '<span class="text-red-600 font-bold text-xs md:text-sm whitespace-nowrap flex-shrink-0">Admin</span>'}
             </div>
           `).join('')}
         </div>
@@ -626,19 +616,43 @@ function renderNav() {
     <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3 cursor-pointer" onclick="changeView('info')">
-          <img src="logo.jpg" alt="DeWeekHap logo" class="h-12 w-auto logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+          <img src="logo.jpg" alt="DeWeekHap logo" class="h-10 md:h-12 w-auto logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
           <div class="w-10 h-10 bg-orange-600 rounded-xl hidden items-center justify-center text-white font-black">W</div>
         </div>
-        <div class="flex items-center gap-2 text-sm">
-          <div id="google_translate_element" class="mr-2"></div>
-          <button onclick="changeView('home')" class="px-4 py-2 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Home</button>
-          <button onclick="changeView('saved')" class="px-4 py-2 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Weekmenu (${savedMenu.length})</button>
-          <button onclick="changeView('shopping')" class="px-4 py-2 rounded-lg font-bold ${view==='shopping'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🛒 Boodschappen</button>
-          <button onclick="changeView('myrecipes')" class="px-4 py-2 rounded-lg font-bold ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Mijn Recepten (${myRecipes.length})</button>
-          <button onclick="changeView('community')" class="px-4 py-2 rounded-lg font-bold ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Community</button>
-          <button onclick="changeView('upload')" class="px-4 py-2 rounded-lg font-bold ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">+ Recept</button>
-          ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-4 py-2 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700'} relative">⚙️ Admin${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
-          <button onclick="logout()" class="px-4 py-2 rounded-lg font-bold bg-slate-200 hover:bg-slate-300">Uitloggen</button>
+        
+        <!-- Mobile Menu Button -->
+        <button onclick="toggleMobileMenu()" class="mobile-menu-btn md:hidden p-2 hover:bg-slate-100 rounded-lg">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+        
+        <!-- Desktop Navigation -->
+        <div class="desktop-nav hidden md:flex items-center gap-1 lg:gap-2 text-xs lg:text-sm overflow-x-auto">
+          <div id="google_translate_element" class="mr-1"></div>
+          <button onclick="changeView('home')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Home</button>
+          <button onclick="changeView('saved')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Menu (${savedMenu.length})</button>
+          <button onclick="changeView('shopping')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='shopping'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🛒</button>
+          <button onclick="changeView('myrecipes')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Recepten (${myRecipes.length})</button>
+          <button onclick="changeView('community')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Community</button>
+          <button onclick="changeView('upload')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">+ Recept</button>
+          ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700'} relative">⚙️${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
+          <button onclick="logout()" class="px-2 lg:px-4 py-2 rounded-lg font-bold bg-slate-200 hover:bg-slate-300 whitespace-nowrap">Uit</button>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu -->
+      <div id="mobileMenu" class="mobile-menu">
+        <div class="flex flex-col gap-2">
+          <div id="google_translate_element" class="mb-2"></div>
+          <button onclick="changeView('home');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🏠 Home</button>
+          <button onclick="changeView('saved');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">📅 Weekmenu (${savedMenu.length})</button>
+          <button onclick="changeView('shopping');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='shopping'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🛒 Boodschappen</button>
+          <button onclick="changeView('myrecipes');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'}">⭐ Mijn Recepten (${myRecipes.length})</button>
+          <button onclick="changeView('community');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">👥 Community</button>
+          <button onclick="changeView('upload');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">📤 Recept Toevoegen</button>
+          ${currentUser.isAdmin ? `<button onclick="changeView('admin');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700'}">⚙️ Admin${pendingCount > 0 ? ` (${pendingCount})` : ''}</button>` : ''}
+          <button onclick="logout();toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold bg-slate-200 hover:bg-slate-300">🚪 Uitloggen</button>
         </div>
       </div>
     </nav>
@@ -651,14 +665,14 @@ function renderMenu() {
   
   return `
     <div>
-      <div class="flex items-center justify-between mb-8">
-        <h2 class="text-4xl font-black">Jouw Weekmenu 📅</h2>
-        <div class="flex gap-4">
-          ${!isSaved ? `<button onclick="saveMenu()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700">💾 Bewaar Menu</button>` : '<span class="text-green-600 font-bold text-lg">✅ Menu Opgeslagen</span>'}
-          <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700">🖨️ Print</button>
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+        <h2 class="text-3xl md:text-4xl font-black">Jouw Weekmenu 📅</h2>
+        <div class="flex flex-wrap gap-3 w-full md:w-auto">
+          ${!isSaved ? `<button onclick="saveMenu()" class="flex-1 md:flex-initial bg-green-600 text-white px-4 md:px-6 py-3 rounded-xl font-bold hover:bg-green-700 text-sm md:text-base whitespace-nowrap">💾 Bewaar</button>` : '<span class="text-green-600 font-bold text-base md:text-lg">✅ Opgeslagen</span>'}
+          <button onclick="window.print()" class="flex-1 md:flex-initial bg-blue-600 text-white px-4 md:px-6 py-3 rounded-xl font-bold hover:bg-blue-700 text-sm md:text-base whitespace-nowrap">🖨️ Print</button>
         </div>
       </div>
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         ${currentMenu.map((r,i) => renderRecipeCard(r, i)).join('')}
       </div>
     </div>
@@ -678,13 +692,13 @@ function renderRecipeCard(recipe, idx, isSaved = false, isMyRecipes = false) {
           <img src="${recipe.img}" class="w-full h-full object-cover" />
           ${recipe.day ? `<div class="absolute top-2 left-2 bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-bold">${recipe.day}</div>` : ''}
         </div>
-        <h3 class="font-black text-lg mb-1">${recipe.title}</h3>
+        <h3 class="font-black text-base md:text-lg mb-1">${recipe.title}</h3>
         <div class="flex items-center justify-between">
           <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-semibold">${recipe.cat}</span>
-          <span class="text-sm font-bold">⭐ ${avgRating} (${reviews.length})</span>
+          <span class="text-xs md:text-sm font-bold">⭐ ${avgRating} (${reviews.length})</span>
         </div>
       </div>
-      <button onclick="toggleSaveRecipe('${recipe.id}', event)" class="absolute top-6 right-6 w-12 h-12 rounded-full ${isRecipeSaved ? 'bg-gradient-to-br from-pink-500 to-red-500 shadow-lg' : 'bg-white border-2 border-slate-300'} hover:scale-110 transition-all flex items-center justify-center text-2xl">
+      <button onclick="toggleSaveRecipe('${recipe.id}', event)" class="absolute top-6 right-6 w-10 h-10 md:w-12 md:h-12 rounded-full ${isRecipeSaved ? 'bg-gradient-to-br from-pink-500 to-red-500 shadow-lg' : 'bg-white border-2 border-slate-300'} hover:scale-110 transition-all flex items-center justify-center text-xl md:text-2xl">
         ${isRecipeSaved ? '❤️' : '🤍'}
       </button>
     </div>
@@ -749,11 +763,13 @@ function logout() {
   currentUser = null;
   db.set('currentUser', null);
   view = 'login';
+  mobileMenuOpen = false;
   render();
 }
 
 function changeView(v) {
   view = v;
+  mobileMenuOpen = false;
   render();
 }
 
@@ -816,44 +832,44 @@ function showRecipe(idx, isSaved, isMyRecipes = false) {
   modal.innerHTML = `
     <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-auto" onclick="event.stopPropagation()">
       <!-- Header with close button -->
-      <div class="sticky top-0 bg-white z-10 p-6 pb-0 flex justify-between items-start border-b">
+      <div class="sticky top-0 bg-white z-10 p-4 md:p-6 pb-0 flex justify-between items-start border-b">
         <div class="flex-1 mb-4">
-          <img src="${recipe.img}" class="w-full h-48 object-cover rounded-2xl mb-4" />
-          <h2 class="text-3xl font-black mb-2">${recipe.title}</h2>
+          <img src="${recipe.img}" class="w-full h-40 md:h-48 object-cover rounded-2xl mb-4" />
+          <h2 class="text-2xl md:text-3xl font-black mb-2">${recipe.title}</h2>
           <div class="flex items-center gap-3">
-            <span class="bg-orange-100 text-orange-800 px-3 py-2 rounded-full font-bold text-sm">${recipe.cat}</span>
-            <span class="text-slate-500 text-sm">Voor ${servings} personen</span>
+            <span class="bg-orange-100 text-orange-800 px-3 py-2 rounded-full font-bold text-xs md:text-sm">${recipe.cat}</span>
+            <span class="text-slate-500 text-xs md:text-sm">Voor ${servings} personen</span>
           </div>
         </div>
-        <button onclick="this.closest('.fixed').remove()" class="text-4xl font-bold text-slate-400 hover:text-slate-600 ml-4">×</button>
+        <button onclick="this.closest('.fixed').remove()" class="text-3xl md:text-4xl font-bold text-slate-400 hover:text-slate-600 ml-4">×</button>
       </div>
       
       <!-- Tab Navigation -->
-      <div class="sticky top-0 bg-white z-10 px-6 pt-4">
-        <div class="flex gap-2 border-b">
-          <button data-tab="ingredients" onclick="switchTab('ingredients')" class="tab-btn px-6 py-3 font-bold rounded-t-xl bg-orange-600 text-white transition-all">
+      <div class="sticky top-0 bg-white z-10 px-4 md:px-6 pt-4">
+        <div class="flex gap-1 md:gap-2 border-b overflow-x-auto">
+          <button data-tab="ingredients" onclick="switchTab('ingredients')" class="tab-btn px-3 md:px-6 py-2 md:py-3 font-bold rounded-t-xl bg-orange-600 text-white transition-all whitespace-nowrap">
             🥘 Ingrediënten
           </button>
-          <button data-tab="steps" onclick="switchTab('steps')" class="tab-btn px-6 py-3 font-bold rounded-t-xl bg-slate-100 text-slate-700 transition-all">
-            📋 Stappenplan
+          <button data-tab="steps" onclick="switchTab('steps')" class="tab-btn px-3 md:px-6 py-2 md:py-3 font-bold rounded-t-xl bg-slate-100 text-slate-700 transition-all whitespace-nowrap">
+            📋 Stappen
           </button>
-          <button data-tab="shopping" onclick="switchTab('shopping')" class="tab-btn px-6 py-3 font-bold rounded-t-xl bg-slate-100 text-slate-700 transition-all">
+          <button data-tab="shopping" onclick="switchTab('shopping')" class="tab-btn px-3 md:px-6 py-2 md:py-3 font-bold rounded-t-xl bg-slate-100 text-slate-700 transition-all whitespace-nowrap">
             🛒 Boodschappen
           </button>
         </div>
       </div>
       
       <!-- Tab Content -->
-      <div class="p-6">
+      <div class="p-4 md:p-6">
         <!-- Ingredients Tab -->
         <div id="tab-ingredients" class="tab-content active">
-          <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl">
-            <h3 class="text-xl font-bold mb-4 text-orange-800">Wat heb je nodig?</h3>
-            <ul class="space-y-3">
+          <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6 rounded-2xl">
+            <h3 class="text-lg md:text-xl font-bold mb-4 text-orange-800">Wat heb je nodig?</h3>
+            <ul class="space-y-2 md:space-y-3">
               ${ingredients.map(i => `
-                <li class="flex items-start gap-3 bg-white p-3 rounded-xl">
-                  <span class="text-orange-600 text-xl flex-shrink-0">•</span>
-                  <span class="flex-1 text-lg">${i}</span>
+                <li class="flex items-start gap-3 bg-white p-2 md:p-3 rounded-xl">
+                  <span class="text-orange-600 text-lg md:text-xl flex-shrink-0">•</span>
+                  <span class="flex-1 text-sm md:text-lg">${i}</span>
                 </li>
               `).join('')}
             </ul>
@@ -862,13 +878,13 @@ function showRecipe(idx, isSaved, isMyRecipes = false) {
         
         <!-- Steps Tab -->
         <div id="tab-steps" class="tab-content">
-          <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl">
-            <h3 class="text-xl font-bold mb-4 text-blue-800">Hoe maak je het?</h3>
-            <ol class="space-y-4">
+          <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 md:p-6 rounded-2xl">
+            <h3 class="text-lg md:text-xl font-bold mb-4 text-blue-800">Hoe maak je het?</h3>
+            <ol class="space-y-3 md:space-y-4">
               ${steps.map((s, i) => `
-                <li class="flex gap-4 bg-white p-4 rounded-xl">
-                  <span class="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-lg">${i+1}</span>
-                  <span class="flex-1 pt-2 text-lg">${s}</span>
+                <li class="flex gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl">
+                  <span class="w-8 h-8 md:w-10 md:h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-lg">${i+1}</span>
+                  <span class="flex-1 pt-1 md:pt-2 text-sm md:text-lg">${s}</span>
                 </li>
               `).join('')}
             </ol>
@@ -877,18 +893,18 @@ function showRecipe(idx, isSaved, isMyRecipes = false) {
         
         <!-- Shopping List Tab -->
         <div id="tab-shopping" class="tab-content">
-          <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-xl font-bold text-green-800">Boodschappenlijst</h3>
-              <button onclick="copyRecipeIngredients('${recipe.id}')" class="bg-green-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 text-sm">
+          <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 md:p-6 rounded-2xl">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
+              <h3 class="text-lg md:text-xl font-bold text-green-800">Boodschappenlijst</h3>
+              <button onclick="copyRecipeIngredients('${recipe.id}')" class="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 text-sm whitespace-nowrap">
                 📋 Kopieer
               </button>
             </div>
             <ul class="space-y-2">
               ${ingredients.map((ing, i) => `
-                <li class="flex items-start gap-3 bg-white p-3 rounded-xl hover:shadow-md transition-shadow">
+                <li class="flex items-start gap-3 bg-white p-2 md:p-3 rounded-xl hover:shadow-md transition-shadow">
                   <input type="checkbox" class="w-5 h-5 mt-0.5 accent-green-600 flex-shrink-0" />
-                  <span class="flex-1">${ing}</span>
+                  <span class="flex-1 text-sm md:text-base">${ing}</span>
                 </li>
               `).join('')}
             </ul>
@@ -897,31 +913,31 @@ function showRecipe(idx, isSaved, isMyRecipes = false) {
       </div>
       
       <!-- Reviews Section -->
-      <div class="p-6 pt-0 border-t mt-6">
-        <h3 class="text-2xl font-bold mb-4">Reviews (${reviews.length})</h3>
+      <div class="p-4 md:p-6 pt-0 border-t mt-6">
+        <h3 class="text-xl md:text-2xl font-bold mb-4">Reviews (${reviews.length})</h3>
         <div class="space-y-3 mb-6 max-h-60 overflow-y-auto">
-          ${reviews.length === 0 ? '<p class="text-slate-500">Nog geen reviews. Wees de eerste!</p>' : reviews.map(r => `
-            <div class="bg-slate-50 p-4 rounded-xl">
+          ${reviews.length === 0 ? '<p class="text-sm md:text-base text-slate-500">Nog geen reviews. Wees de eerste!</p>' : reviews.map(r => `
+            <div class="bg-slate-50 p-3 md:p-4 rounded-xl">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">${r.user}</span>
-                <span class="text-orange-600 font-bold">⭐ ${r.rating}/5</span>
+                <span class="font-bold text-sm md:text-base">${r.user}</span>
+                <span class="text-orange-600 font-bold text-sm md:text-base">⭐ ${r.rating}/5</span>
               </div>
-              <p>${r.comment}</p>
+              <p class="text-sm md:text-base">${r.comment}</p>
             </div>
           `).join('')}
         </div>
         
-        <div class="bg-slate-50 p-6 rounded-2xl">
-          <h4 class="font-bold mb-3">Voeg Review Toe</h4>
-          <select id="rating" class="w-full p-3 mb-3 border-2 rounded-xl">
+        <div class="bg-slate-50 p-4 md:p-6 rounded-2xl">
+          <h4 class="font-bold mb-3 text-sm md:text-base">Voeg Review Toe</h4>
+          <select id="rating" class="w-full p-3 mb-3 border-2 rounded-xl text-sm md:text-base">
             <option value="5">5 ⭐ Uitstekend</option>
             <option value="4">4 ⭐ Goed</option>
             <option value="3">3 ⭐ Gemiddeld</option>
             <option value="2">2 ⭐ Matig</option>
             <option value="1">1 ⭐ Slecht</option>
           </select>
-          <textarea id="comment" placeholder="Jouw review..." class="w-full p-3 mb-3 border-2 rounded-xl" rows="3"></textarea>
-          <button onclick="addReview('${recipe.id}')" class="w-full bg-orange-600 text-white p-3 rounded-xl font-bold hover:bg-orange-700">Publiceer Review</button>
+          <textarea id="comment" placeholder="Jouw review..." class="w-full p-3 mb-3 border-2 rounded-xl text-sm md:text-base" rows="3"></textarea>
+          <button onclick="addReview('${recipe.id}')" class="w-full bg-orange-600 text-white p-3 rounded-xl font-bold hover:bg-orange-700 text-sm md:text-base">Publiceer Review</button>
         </div>
       </div>
     </div>

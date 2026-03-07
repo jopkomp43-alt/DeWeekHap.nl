@@ -194,12 +194,12 @@ const RECIPES = [
 let mealDBCache = [];
 let mealDBLoading = false;
 
-async function fetchMealDBRecipes() {
-  if (mealDBLoading) return;
+async function fetchMealDBRecipes(count = 20) {
+  if (mealDBLoading) return [];
   mealDBLoading = true;
   try {
     const promises = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < count; i++) {
       promises.push(fetch('https://www.themealdb.com/api/json/v1/1/random.php'));
     }
     const responses = await Promise.all(promises);
@@ -214,7 +214,14 @@ async function fetchMealDBRecipes() {
       const steps = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7);
       return {id: 'mdb' + meal.idMeal, title: meal.strMeal, img: meal.strMealThumb, ingr: ingredients.join('||'), steps: steps.join('||'), cat: meal.strCategory || 'Internationaal', author: 'TheMealDB', source: 'mealdb'};
     });
-    mealDBCache = meals;
+    
+    // Add new meals to cache (avoid duplicates)
+    meals.forEach(meal => {
+      if (!mealDBCache.find(m => m.id === meal.id)) {
+        mealDBCache.push(meal);
+      }
+    });
+    
     mealDBLoading = false;
     return meals;
   } catch (error) {
@@ -841,28 +848,57 @@ function changeView(v) {
 }
 
 async function generateMenu() {
-  if (mealDBCache.length < 10) {
-    const loadingMsg = document.createElement('div');
-    loadingMsg.className = 'fixed top-20 right-4 bg-green-600 text-white px-6 py-3 rounded-xl font-bold shadow-xl z-50';
-    loadingMsg.textContent = '🌍 Laden van nieuwe recepten...';
-    document.body.appendChild(loadingMsg);
-    await fetchMealDBRecipes();
+  // Show loading message
+  const loadingMsg = document.createElement('div');
+  loadingMsg.id = 'loadingMsg';
+  loadingMsg.className = 'fixed top-20 right-4 bg-orange-600 text-white px-6 py-3 rounded-xl font-bold shadow-xl z-50';
+  loadingMsg.textContent = '🍽️ Weekmenu genereren...';
+  document.body.appendChild(loadingMsg);
+  
+  // Keep loading until we have enough recipes (min 14 to avoid duplicates)
+  const minRecipes = 14;
+  let attempts = 0;
+  const maxAttempts = 5;
+  
+  while (attempts < maxAttempts) {
+    const filtered = filterByPrefs(db.recipes());
+    
+    if (filtered.length >= minRecipes) {
+      // We have enough recipes!
+      break;
+    }
+    
+    // Load more recipes
+    loadingMsg.textContent = `🌍 Nieuwe recepten laden... (${filtered.length}/${minRecipes})`;
+    await fetchMealDBRecipes(20);
+    attempts++;
+  }
+  
+  const filtered = filterByPrefs(db.recipes());
+  
+  if (filtered.length < 7) {
     loadingMsg.remove();
+    return alert(`⚠️ Niet genoeg recepten met jouw voorkeuren (${filtered.length} beschikbaar). Probeer andere voorkeuren!`);
   }
   
   const days = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
-  const filtered = filterByPrefs(db.recipes());
-  if (filtered.length < 7) return alert(`⚠️ Niet genoeg recepten met jouw voorkeuren (${filtered.length} beschikbaar)`);
   const shuffled = shuffleArray(filtered);
   const selected = shuffled.slice(0, 7);
+  
   if (lastGeneratedIds.length > 0) {
     const hasOverlap = selected.some(r => lastGeneratedIds.includes(r.id));
     if (hasOverlap && filtered.length >= 14) {
+      loadingMsg.remove();
       return generateMenu();
     }
   }
+  
   currentMenu = selected.map((r,i) => ({...r, day: days[i]}));
   lastGeneratedIds = selected.map(r => r.id);
+  
+  loadingMsg.textContent = '✅ Weekmenu klaar!';
+  setTimeout(() => loadingMsg.remove(), 1500);
+  
   render();
 }
 

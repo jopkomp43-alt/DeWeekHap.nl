@@ -178,7 +178,7 @@ function formatDateTime(dateString) {
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()} ${hours}:${minutes}`;
 }
 
-// Woordenboek voor NL -> EN vertalingen
+// Woordenboek voor NL -> EN vertalingen (zoeken)
 const TRANSLATION_MAP = {
   'kip': 'chicken',
   'vis': 'fish',
@@ -202,6 +202,44 @@ const TRANSLATION_MAP = {
   'stoofpot': 'stew',
   'ovenschotel': 'casserole bake'
 };
+
+// Woordenboek voor EN -> NL vertalingen (ingrediënten/termen)
+const EN_TO_NL = {
+  'chicken': 'kip', 'fish': 'vis', 'salmon': 'zalm', 'tuna': 'tonijn', 'shrimp': 'garnalen', 'prawns': 'garnalen',
+  'beef': 'rundvlees', 'pork': 'varkensvlees', 'lamb': 'lamsvlees', 'turkey': 'kalkoen',
+  'pasta': 'pasta', 'spaghetti': 'spaghetti', 'rice': 'rijst', 'potato': 'aardappel', 'potatoes': 'aardappelen',
+  'onion': 'ui', 'onions': 'uien', 'garlic': 'knoflook', 'tomato': 'tomaat', 'tomatoes': 'tomaten',
+  'carrot': 'wortel', 'carrots': 'wortels', 'pepper': 'paprika', 'bell pepper': 'paprika',
+  'mushroom': 'champignon', 'mushrooms': 'champignons', 'broccoli': 'broccoli', 'spinach': 'spinazie',
+  'lettuce': 'sla', 'cucumber': 'komkommer', 'cheese': 'kaas', 'butter': 'boter', 'milk': 'melk',
+  'cream': 'room', 'egg': 'ei', 'eggs': 'eieren', 'flour': 'bloem', 'sugar': 'suiker', 'salt': 'zout',
+  'olive oil': 'olijfolie', 'oil': 'olie', 'vinegar': 'azijn', 'soy sauce': 'sojasaus',
+  'ginger': 'gember', 'chili': 'chili', 'curry': 'curry', 'spice': 'kruiden', 'spices': 'kruiden',
+  'bread': 'brood', 'noodles': 'noedels', 'soup': 'soep', 'salad': 'salade', 'sauce': 'saus',
+  'cup': 'kopje', 'tablespoon': 'eetlepel', 'teaspoon': 'theelepel', 'tbsp': 'el', 'tsp': 'tl',
+  'slice': 'plak', 'sliced': 'gesneden', 'chopped': 'gehakt', 'diced': 'in blokjes',
+  'minced': 'fijngehakt', 'fresh': 'vers', 'dried': 'gedroogd', 'frozen': 'bevroren',
+  'heat': 'verhit', 'cook': 'kook', 'boil': 'kook', 'fry': 'bak', 'bake': 'bak',
+  'grill': 'gril', 'roast': 'rooster', 'stir': 'roer', 'mix': 'meng', 'add': 'voeg toe',
+  'pour': 'giet', 'serve': 'serveer', 'season': 'breng op smaak', 'taste': 'proef',
+  'until': 'totdat', 'minutes': 'minuten', 'hours': 'uur', 'medium': 'medium', 'high': 'hoog', 'low': 'laag'
+};
+
+function translateText(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  let translated = text;
+  const lowerText = text.toLowerCase();
+  
+  // Vertaal bekende woorden/zinnen
+  Object.entries(EN_TO_NL).forEach(([en, nl]) => {
+    // Case-insensitive replacement met woordgrenzen
+    const regex = new RegExp('\\b' + en + '\\b', 'gi');
+    translated = translated.replace(regex, nl);
+  });
+  
+  return translated;
+}
 
 const RECIPES = [
   {id:'r1',title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti||200g spek||4 eieren||100g parmezaan||Zout en peper',steps:'Kook pasta volgens verpakking||Bak spek krokant||Klop eieren met kaas||Meng warme pasta met spek en ei-mengsel||Breng op smaak met peper',cat:'Italiaans',author:'admin'},
@@ -234,10 +272,30 @@ async function fetchMealDBRecipes(count = 20) {
       for (let i = 1; i <= 20; i++) {
         const ingredient = meal[`strIngredient${i}`];
         const measure = meal[`strMeasure${i}`];
-        if (ingredient && ingredient.trim()) ingredients.push(`${measure || ''} ${ingredient}`.trim());
+        if (ingredient && ingredient.trim()) {
+          const translatedIng = translateText(ingredient);
+          const translatedMeasure = translateText(measure || '');
+          ingredients.push(`${translatedMeasure} ${translatedIng}`.trim());
+        }
       }
-      const steps = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7);
-      return {id: 'mdb' + meal.idMeal, title: meal.strMeal, img: meal.strMealThumb, ingr: ingredients.join('||'), steps: steps.join('||'), cat: meal.strCategory || 'Internationaal', author: 'TheMealDB', source: 'mealdb'};
+      
+      const rawSteps = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7);
+      const steps = rawSteps.map(step => translateText(step));
+      
+      const translatedTitle = translateText(meal.strMeal);
+      const translatedCat = translateText(meal.strCategory || 'Internationaal');
+      
+      return {
+        id: 'mdb' + meal.idMeal, 
+        title: translatedTitle, 
+        img: meal.strMealThumb, 
+        ingr: ingredients.join('||'), 
+        steps: steps.join('||'), 
+        cat: translatedCat, 
+        author: 'TheMealDB', 
+        source: 'mealdb',
+        originalTitle: meal.strMeal
+      };
     });
     
     meals.forEach(meal => {

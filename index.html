@@ -178,6 +178,31 @@ function formatDateTime(dateString) {
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()} ${hours}:${minutes}`;
 }
 
+// Woordenboek voor NL -> EN vertalingen
+const TRANSLATION_MAP = {
+  'kip': 'chicken',
+  'vis': 'fish',
+  'zalm': 'salmon',
+  'tonijn': 'tuna',
+  'garnalen': 'shrimp prawns',
+  'rund': 'beef',
+  'varken': 'pork',
+  'lam': 'lamb',
+  'pasta': 'pasta spaghetti',
+  'rijst': 'rice',
+  'aardappel': 'potato',
+  'groenten': 'vegetables veggie',
+  'vegetarisch': 'vegetarian veggie',
+  'soep': 'soup',
+  'salade': 'salad',
+  'pizza': 'pizza',
+  'taco': 'taco',
+  'noodles': 'noodles noodle',
+  'curry': 'curry',
+  'stoofpot': 'stew',
+  'ovenschotel': 'casserole bake'
+};
+
 const RECIPES = [
   {id:'r1',title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti||200g spek||4 eieren||100g parmezaan||Zout en peper',steps:'Kook pasta volgens verpakking||Bak spek krokant||Klop eieren met kaas||Meng warme pasta met spek en ei-mengsel||Breng op smaak met peper',cat:'Italiaans',author:'admin'},
   {id:'r2',title:'Thaise Rode Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el currypasta||300g kip||1 paprika||100g taugé||Basmati rijst',steps:'Bak currypasta in pan||Voeg kokosmelk toe||Breng aan de kook||Voeg kip en groenten toe||Laat 15 min sudderen||Serveer met rijst',cat:'Aziatisch',author:'admin'},
@@ -260,6 +285,15 @@ function shuffleArray(array) {
   return arr;
 }
 
+function expandSearchTerm(term) {
+  const lowerTerm = term.toLowerCase();
+  // Zoek naar exacte match in woordenboek
+  if (TRANSLATION_MAP[lowerTerm]) {
+    return `${term} ${TRANSLATION_MAP[lowerTerm]}`;
+  }
+  return term;
+}
+
 function filterByPrefs(recipes, extraFilter = '') {
   const prefs = db.preferences()[currentUser.email];
   
@@ -270,10 +304,17 @@ function filterByPrefs(recipes, extraFilter = '') {
       const extraTerms = extraFilter.toLowerCase().split(' ').filter(t => t.trim());
       let hasExtraMatch = false;
       for (const term of extraTerms) {
-        if (txt.includes(term)) {
-          hasExtraMatch = true;
-          break;
+        // Expandeer zoekterm met vertalingen
+        const expandedTerm = expandSearchTerm(term);
+        const searchWords = expandedTerm.toLowerCase().split(' ');
+        
+        for (const word of searchWords) {
+          if (txt.includes(word)) {
+            hasExtraMatch = true;
+            break;
+          }
         }
+        if (hasExtraMatch) break;
       }
       if (!hasExtraMatch) return false;
     }
@@ -281,7 +322,11 @@ function filterByPrefs(recipes, extraFilter = '') {
     if (prefs && prefs.niet) {
       const nietTerms = prefs.niet.toLowerCase().split(' ').filter(t => t.trim());
       for (const term of nietTerms) {
-        if (txt.includes(term)) return false;
+        const expandedTerm = expandSearchTerm(term);
+        const searchWords = expandedTerm.toLowerCase().split(' ');
+        for (const word of searchWords) {
+          if (txt.includes(word)) return false;
+        }
       }
     }
     if (prefs && prefs.wel) {
@@ -289,10 +334,15 @@ function filterByPrefs(recipes, extraFilter = '') {
       if (welTerms.length > 0) {
         let hasMatch = false;
         for (const term of welTerms) {
-          if (txt.includes(term)) {
-            hasMatch = true;
-            break;
+          const expandedTerm = expandSearchTerm(term);
+          const searchWords = expandedTerm.toLowerCase().split(' ');
+          for (const word of searchWords) {
+            if (txt.includes(word)) {
+              hasMatch = true;
+              break;
+            }
           }
+          if (hasMatch) break;
         }
         if (!hasMatch) return false;
       }
@@ -331,18 +381,18 @@ function showGenerateDialog() {
       <div class="bg-orange-50 p-4 rounded-2xl mb-4">
         <p class="text-xs md:text-sm font-bold text-orange-800 mb-2">💡 Voorbeelden:</p>
         <div class="flex flex-wrap gap-2">
-          <button onclick="document.getElementById('extraWish').value='pizza'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🍕 Pizza</button>
+          <button onclick="document.getElementById('extraWish').value='kip'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🍗 Kip</button>
           <button onclick="document.getElementById('extraWish').value='pasta'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🍝 Pasta</button>
-          <button onclick="document.getElementById('extraWish').value='soep'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🍲 Soep</button>
-          <button onclick="document.getElementById('extraWish').value='salade'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🥗 Salade</button>
+          <button onclick="document.getElementById('extraWish').value='vis'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🐟 Vis</button>
           <button onclick="document.getElementById('extraWish').value='vegetarisch'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🥕 Vegetarisch</button>
+          <button onclick="document.getElementById('extraWish').value='soep'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🍲 Soep</button>
         </div>
       </div>
       
       <input 
         id="extraWish" 
         type="text" 
-        placeholder="Bijv: pizza, pasta, snelle recepten..." 
+        placeholder="Bijv: kip, pasta, vis..." 
         class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base"
       />
       
@@ -364,7 +414,6 @@ function showGenerateDialog() {
   `;
   document.body.appendChild(modal);
   
-  // Event listener HIER toevoegen, niet in HTML
   document.getElementById('btnGenerate').addEventListener('click', async function() {
     const extraWish = document.getElementById('extraWish').value.trim();
     modal.remove();
@@ -381,7 +430,7 @@ async function generateMenu(extraFilter = '') {
   
   const minRecipes = 14;
   let attempts = 0;
-  const maxAttempts = 10;
+  const maxAttempts = 12;
   
   while (attempts < maxAttempts) {
     const currentRecipes = db.recipes();
@@ -394,14 +443,15 @@ async function generateMenu(extraFilter = '') {
       break;
     }
     
+    const expandedSearch = expandSearchTerm(extraFilter);
     loadingMsg.textContent = extraFilter 
-      ? `🌍 Laden... ${filtered.length}/${minRecipes} recepten met "${extraFilter}"`
+      ? `🌍 Laden... ${filtered.length}/${minRecipes} recepten (zoekt: ${expandedSearch})`
       : `🌍 Laden... ${filtered.length}/${minRecipes} recepten`;
     
     console.log(`🌍 Nieuwe recepten laden... (${filtered.length}/${minRecipes})`);
-    await fetchMealDBRecipes(30);
+    await fetchMealDBRecipes(40);
     attempts++;
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 300));
   }
   
   const finalRecipes = db.recipes();
@@ -411,7 +461,8 @@ async function generateMenu(extraFilter = '') {
   
   if (filtered.length < 7) {
     loadingMsg.remove();
-    return alert(`⚠️ Niet genoeg recepten gevonden (${filtered.length} beschikbaar).\n\n${extraFilter ? `Probeer zonder "${extraFilter}" of kies andere wensen.` : 'Probeer andere voorkeuren!'}`);
+    const expandedInfo = extraFilter ? expandSearchTerm(extraFilter) : '';
+    return alert(`⚠️ Niet genoeg recepten gevonden (${filtered.length} beschikbaar).\n\n${extraFilter ? `Gezocht naar: ${expandedInfo}\n\nTip: Probeer een bredere zoekterm of laat het veld leeg!` : 'Probeer andere voorkeuren!'}`);
   }
   
   const days = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
@@ -494,7 +545,7 @@ function render() {
                 </li>
                 <li class="flex gap-3">
                   <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">3</span>
-                  <span class="pt-1"><strong>Geef speciale wensen op</strong> - Zin in pizza? Typ het!</span>
+                  <span class="pt-1"><strong>Geef speciale wensen op</strong> - Zin in kip? Typ het!</span>
                 </li>
                 <li class="flex gap-3">
                   <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">4</span>

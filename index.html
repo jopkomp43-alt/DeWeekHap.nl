@@ -855,26 +855,38 @@ async function generateMenu() {
   loadingMsg.textContent = '🍽️ Weekmenu genereren...';
   document.body.appendChild(loadingMsg);
   
-  // Keep loading until we have enough recipes (min 14 to avoid duplicates)
   const minRecipes = 14;
   let attempts = 0;
   const maxAttempts = 5;
   
+  // Load until we have enough matching recipes
   while (attempts < maxAttempts) {
-    const filtered = filterByPrefs(db.recipes());
+    // Check current state EVERY time
+    const currentRecipes = db.recipes();
+    const filtered = filterByPrefs(currentRecipes);
+    
+    console.log(`Poging ${attempts + 1}: ${filtered.length} recepten beschikbaar (doel: ${minRecipes})`);
     
     if (filtered.length >= minRecipes) {
-      // We have enough recipes!
+      console.log('Genoeg recepten gevonden!');
       break;
     }
     
-    // Load more recipes
+    // Load more
     loadingMsg.textContent = `🌍 Nieuwe recepten laden... (${filtered.length}/${minRecipes})`;
-    await fetchMealDBRecipes(20);
+    const newRecipes = await fetchMealDBRecipes(20);
+    console.log(`${newRecipes.length} nieuwe recepten geladen`);
     attempts++;
+    
+    // Small delay to ensure cache is updated
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
   
-  const filtered = filterByPrefs(db.recipes());
+  // Final check with fresh data
+  const finalRecipes = db.recipes();
+  const filtered = filterByPrefs(finalRecipes);
+  
+  console.log(`Eindresultaat: ${filtered.length} recepten beschikbaar`);
   
   if (filtered.length < 7) {
     loadingMsg.remove();

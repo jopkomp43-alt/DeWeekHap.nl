@@ -258,6 +258,12 @@ let mealDBCache = [];
 let mealDBLoading = false;
 
 async function fetchMealDBRecipes(count = 20) {
+  const RECIPES = [
+  {id:'r1',title:'Spaghetti Carbonara',img:'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400',ingr:'400g spaghetti||200g spek||4 eieren||100g parmezaan||Zout en peper',steps:'Kook pasta volgens verpakking||Bak spek krokant||Klop eieren met kaas||Meng warme pasta met spek en ei-mengsel||Breng op smaak met peper',cat:'Italiaans',author:'admin',calories:2200},
+  {id:'r2',title:'Thaise Rode Curry',img:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400',ingr:'400ml kokosmelk||3el currypasta||300g kip||1 paprika||100g taugé||Basmati rijst',steps:'Bak currypasta in pan||Voeg kokosmelk toe||Breng aan de kook||Voeg kip en groenten toe||Laat 15 min sudderen||Serveer met rijst',cat:'Aziatisch',author:'admin',calories:1920},
+  {id:'r3',title:'Klassieke Lasagne',img:'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400',ingr:'12 lasagne vellen||500g rundergehakt||1 ui||2 blikjes tomatensaus||500ml bechamel||200g kaas||Olijfolie',steps:'Bak gehakt met ui||Voeg tomatensaus toe||Laag lasagnevellen, gehaktsaus, bechamel||Herhaal lagen||Eindig met kaas||Bak 40 min op 180°C',cat:'Italiaans',author:'admin',calories:2800},
+  {id:'r4',title:'Gegrilde Zalm',img:'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400',ingr:'4 zalmfilets||2 citroenen||3 el olijfolie||Verse dille||500g aardappelen||Broccoli',steps:'Marineer zalm met citroen, olie en dille||Gril 6-8 min per kant||Kook aardappelen||Stoom broccoli||Serveer samen',cat:'Vis',author:'admin',calories:1680},
+  {id:'r5',title:'Vegetarische Chili',img:'https://images.unsplash.com/photo-160
   if (mealDBLoading) return [];
   mealDBLoading = true;
   try {

@@ -271,40 +271,7 @@ let mealDBLoading = false;
       
       const rawSteps = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7);
       const steps = rawSteps.map(step => translateText(step));
-      
-      const translatedTitle = translateText(meal.strMeal);
-      const translatedCat = translateText(meal.strCategory || 'Internationaal');
-      
-      return {
-        id: 'mdb' + meal.idMeal, 
-        title: translatedTitle, 
-        img: meal.strMealThumb, 
-        ingr: ingredients.join('||'), 
-        steps: steps.join('||'), 
-        cat: translatedCat, 
-        author: 'TheMealDB', 
-        source: 'mealdb',
-        originalTitle: meal.strMeal
-      };
-    });
     
-    meals.forEach(meal => {
-      if (!mealDBCache.find(m => m.id === meal.id)) {
-        mealDBCache.push(meal);
-      }
-    });
-    
-    mealDBLoading = false;
-    return meals;
-  } catch (error) {
-    console.error('Fout bij laden TheMealDB:', error);
-    mealDBLoading = false;
-    return [];
-  }
-}
-
-const db = {
-  get: (key) => JSON.parse(localStorage.getItem(key) || 'null'),
   set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
   users: () => db.get('users') || [],
   recipes: () => {

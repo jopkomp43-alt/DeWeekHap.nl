@@ -257,17 +257,7 @@ const RECIPES = [
 let mealDBCache = [];
 let mealDBLoading = false;
 
-async function fetchMealDBRecipes(count = 20) {
-  if (mealDBLoading) return [];
-  mealDBLoading = true;
-  try {
-    const promises = [];
-    for (let i = 0; i < count; i++) {
-      promises.push(fetch('https://www.themealdb.com/api/json/v1/1/random.php'));
-    }
-    const responses = await Promise.all(promises);
-    const data = await Promise.all(responses.map(r => r.json()));
-    const meals = data.filter(d => d.meals && d.meals[0]).map(d => d.meals[0]).map(meal => {
+
       const ingredients = [];
       for (let i = 1; i <= 20; i++) {
         const ingredient = meal[`strIngredient${i}`];

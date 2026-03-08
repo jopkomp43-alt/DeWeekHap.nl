@@ -203,3 +203,863 @@ const TRANSLATION_MAP = {
 };
 
 const EN_TO_
+function copyShoppingList() {
+  const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+  const menu = saved.length > 0 ? saved : currentMenu;
+  if (menu.length === 0) return alert('⚠️ Geen weekmenu om te kopiëren!');
+  
+  const allIngredients = [];
+  menu.forEach(recipe => {
+    recipe.ingr.split('||').forEach(ing => allIngredients.push(ing));
+  });
+  const text = `BOODSCHAPPENLIJST - De Weekhap\n\n${allIngredients.map((ing, i) => `${i+1}. ${ing}`).join('\n')}`;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('✅ Gekopieerd naar klembord!');
+  });
+}
+
+function showGenerateDialog() {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full" onclick="event.stopPropagation()">
+      <h2 class="text-2xl md:text-3xl font-black mb-4 text-center">🎯 Speciale Wensen?</h2>
+      <p class="text-sm md:text-base text-slate-600 mb-6 text-center">
+        Heb je vandaag zin in iets specifieks? Typ het hieronder (optioneel)
+      </p>
+      
+      <div class="bg-orange-50 p-4 rounded-2xl mb-4">
+        <p class="text-xs md:text-sm font-bold text-orange-800 mb-2">💡 Voorbeelden:</p>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="document.getElementById('extraWish').value='kip'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🍗 Kip</button>
+          <button onclick="document.getElementById('extraWish').value='pasta'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🍝 Pasta</button>
+          <button onclick="document.getElementById('extraWish').value='vis'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🐟 Vis</button>
+          <button onclick="document.getElementById('extraWish').value='vegetarisch'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🥕 Vegetarisch</button>
+          <button onclick="document.getElementById('extraWish').value='soep'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🍲 Soep</button>
+        </div>
+      </div>
+      
+      <input 
+        id="extraWish" 
+        type="text" 
+        placeholder="Bijv: kip, pasta, vis..." 
+        class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base"
+      />
+      
+      <div class="flex gap-3">
+        <button 
+          onclick="this.closest('.fixed').remove()" 
+          class="flex-1 bg-slate-200 text-slate-700 p-3 md:p-4 rounded-xl font-bold hover:bg-slate-300 text-sm md:text-base"
+        >
+          ❌ Annuleren
+        </button>
+        <button 
+          id="btnGenerate"
+          class="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 text-white p-3 md:p-4 rounded-xl font-bold hover:scale-105 transition-all text-sm md:text-base"
+        >
+          ✨ Genereer!
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  document.getElementById('btnGenerate').addEventListener('click', async function() {
+    const extraWish = document.getElementById('extraWish').value.trim();
+    modal.remove();
+    await generateMenu(extraWish);
+  });
+}
+
+async function generateMenu(extraFilter = '') {
+  const loadingMsg = document.createElement('div');
+  loadingMsg.id = 'loadingMsg';
+  loadingMsg.className = 'fixed top-20 right-4 bg-orange-600 text-white px-6 py-3 rounded-xl font-bold shadow-xl z-50';
+  loadingMsg.textContent = extraFilter ? `🔍 Zoeken naar "${extraFilter}"...` : '🍽️ Weekmenu genereren...';
+  document.body.appendChild(loadingMsg);
+  
+  const minRecipes = 14;
+  let attempts = 0;
+  const maxAttempts = 12;
+  
+  while (attempts < maxAttempts) {
+    const currentRecipes = db.recipes();
+    const filtered = filterByPrefs(currentRecipes, extraFilter);
+    
+    console.log(`Poging ${attempts + 1}: ${filtered.length} recepten beschikbaar (doel: ${minRecipes})`);
+    
+    if (filtered.length >= minRecipes) {
+      console.log('✅ Genoeg recepten gevonden!');
+      break;
+    }
+    
+    const expandedSearch = expandSearchTerm(extraFilter);
+    loadingMsg.textContent = extraFilter 
+      ? `🌍 Laden... ${filtered.length}/${minRecipes} recepten (zoekt: ${expandedSearch})`
+      : `🌍 Laden... ${filtered.length}/${minRecipes} recepten`;
+    
+    console.log(`🌍 Nieuwe recepten laden... (${filtered.length}/${minRecipes})`);
+    await fetchMealDBRecipes(40);
+    attempts++;
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+  
+  const finalRecipes = db.recipes();
+  const filtered = filterByPrefs(finalRecipes, extraFilter);
+  
+  console.log(`Finale check: ${filtered.length} recepten beschikbaar`);
+  
+  if (filtered.length < 7) {
+    loadingMsg.remove();
+    const expandedInfo = extraFilter ? expandSearchTerm(extraFilter) : '';
+    return alert(`⚠️ Niet genoeg recepten gevonden (${filtered.length} beschikbaar).\n\n${extraFilter ? `Gezocht naar: ${expandedInfo}\n\nTip: Probeer een bredere zoekterm of laat het veld leeg!` : 'Probeer andere voorkeuren!'}`);
+  }
+  
+  const days = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
+  const shuffled = shuffleArray(filtered);
+  const selected = shuffled.slice(0, 7);
+  
+  if (lastGeneratedIds.length > 0) {
+    const hasOverlap = selected.some(r => lastGeneratedIds.includes(r.id));
+    if (hasOverlap && filtered.length >= 14) {
+      console.log('⚠️ Overlap gedetecteerd, opnieuw genereren...');
+      loadingMsg.remove();
+      return generateMenu(extraFilter);
+    }
+  }
+  
+  currentMenu = selected.map((r,i) => ({...r, day: days[i]}));
+  lastGeneratedIds = selected.map(r => r.id);
+  
+  loadingMsg.textContent = '✅ Weekmenu klaar!';
+  setTimeout(() => loadingMsg.remove(), 1500);
+  
+  render();
+}function render() {
+  const app = document.getElementById('app');
+  
+  if (view === 'login') {
+    app.innerHTML = `
+      <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-10 shadow-2xl max-w-md w-full">
+          <img src="logo.jpg" alt="DeWeekHap logo weekmenu generator" class="w-40 md:w-48 h-auto mx-auto mb-6 logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+          <div class="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl hidden items-center justify-center mx-auto mb-6 text-white text-3xl font-black">W</div>
+          <h1 class="text-3xl md:text-4xl font-black text-center mb-8">De Weekhap</h1>
+          <div id="loginForm">
+            <input id="email" type="email" placeholder="Email" class="w-full p-3 md:p-4 mb-3 border-2 rounded-xl text-sm md:text-base" />
+            <input id="password" type="password" placeholder="Wachtwoord" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+            <button onclick="login()" class="w-full bg-orange-600 text-white p-3 md:p-4 rounded-xl font-bold mb-3 hover:bg-orange-700 text-sm md:text-base">Inloggen</button>
+            <button onclick="showRegister()" class="w-full bg-slate-200 text-slate-700 p-3 md:p-4 rounded-xl font-bold hover:bg-slate-300 text-sm md:text-base">Registreren</button>
+          </div>
+          <div id="registerForm" class="hidden">
+            <input id="regName" type="text" placeholder="Naam" class="w-full p-3 md:p-4 mb-3 border-2 rounded-xl text-sm md:text-base" />
+            <input id="regEmail" type="email" placeholder="Email" class="w-full p-3 md:p-4 mb-3 border-2 rounded-xl text-sm md:text-base" />
+            <input id="regPassword" type="password" placeholder="Wachtwoord" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+            <button onclick="register()" class="w-full bg-orange-600 text-white p-3 md:p-4 rounded-xl font-bold mb-3 hover:bg-orange-700 text-sm md:text-base">Account Aanmaken</button>
+            <button onclick="showLogin()" class="w-full bg-slate-200 text-slate-700 p-3 md:p-4 rounded-xl font-bold hover:bg-slate-300 text-sm md:text-base">Terug naar Login</button>
+          </div>
+          <button onclick="changeView('info')" class="w-full mt-4 text-orange-600 font-bold hover:underline text-sm md:text-base">ℹ️ Hoe werkt het?</button>
+        </div>
+      </div>
+    `;
+  } else if (view === 'info') {
+    app.innerHTML = `
+      ${renderNav()}
+      <div class="max-w-4xl mx-auto p-4 py-8 md:py-12">
+        <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl mb-6">
+          <img src="logo.jpg" alt="DeWeekHap logo" class="w-48 md:w-64 h-auto mx-auto mb-6 logo-img" />
+          <h1 class="text-3xl md:text-5xl font-black mb-4 text-center">🍽️ Welkom bij De Weekhap!</h1>
+          <p class="text-lg md:text-xl text-center text-slate-600 mb-8">Jouw slimme weekmenu generator</p>
+          
+          <div class="space-y-6 md:space-y-8">
+            <div>
+              <h2 class="text-2xl md:text-3xl font-black mb-3 text-orange-600">💡 Wat is De Weekhap?</h2>
+              <p class="text-base md:text-lg text-slate-700 leading-relaxed">
+                De Weekhap is jouw persoonlijke kookassistent die automatisch een gevarieerd weekmenu voor je samenstelt. 
+                Nooit meer het gedoe van "wat eten we vandaag?" - wij regelen het voor je!
+              </p>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6 rounded-2xl">
+              <h2 class="text-2xl md:text-3xl font-black mb-4">🎯 Hoe werkt het?</h2>
+              <ol class="space-y-3 text-base md:text-lg">
+                <li class="flex gap-3">
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">1</span>
+                  <span class="pt-1"><strong>Stel voorkeuren in</strong> - Wat wil je WEL/NIET eten</span>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">2</span>
+                  <span class="pt-1"><strong>Kies aantal personen</strong> - Voor wie kook je?</span>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">3</span>
+                  <span class="pt-1"><strong>Geef speciale wensen op</strong> - Zin in kip? Typ het!</span>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">4</span>
+                  <span class="pt-1"><strong>Genereer weekmenu</strong> - 7 perfecte recepten</span>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-7 h-7 md:w-8 md:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">5</span>
+                  <span class="pt-1"><strong>Bekijk boodschappenlijst</strong> - Alles op een rij</span>
+                </li>
+              </ol>
+            </div>
+
+            <div class="text-center">
+              <button onclick="changeView('${currentUser ? 'home' : 'login'}')" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-8 md:px-12 py-4 md:py-6 rounded-2xl font-black text-lg md:text-xl shadow-xl hover:scale-105 transition-all">
+                ${currentUser ? '🍽️ Naar Weekmenu Generator' : '🚀 Start Nu!'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (view === 'home') {
+    const prefs = db.preferences()[currentUser.email] || {};
+    
+    app.innerHTML = `
+      ${renderNav()}
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
+        <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl mb-8">
+          <h2 class="text-2xl md:text-3xl font-black mb-4 text-orange-600">💡 Wat is De Weekhap?</h2>
+          <p class="text-base md:text-lg text-slate-700 leading-relaxed mb-6">
+            De Weekhap is jouw persoonlijke kookassistent die automatisch een gevarieerd weekmenu voor je samenstelt. 
+            Nooit meer het gedoe van "wat eten we vandaag?" - wij regelen het voor je!
+          </p>
+          
+          <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6 rounded-2xl">
+            <h3 class="text-xl md:text-2xl font-black mb-4">🎯 Hoe werkt het?</h3>
+            <ol class="space-y-3 text-sm md:text-base">
+              <li class="flex gap-3">
+                <span class="w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm">1</span>
+                <span class="pt-1"><strong>Stel voorkeuren in</strong> - Wat wil je WEL/NIET eten</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm">2</span>
+                <span class="pt-1"><strong>Kies personen</strong> - Voor wie kook je?</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm">3</span>
+                <span class="pt-1"><strong>Klik genereer</strong> - Krijg vraag voor speciale wensen!</span>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="text-center py-8 md:py-12 bg-white rounded-3xl shadow-xl mb-8 md:mb-12">
+          <h1 class="text-3xl md:text-5xl font-black mb-4 px-4">Welkom, ${currentUser.name}! 👋</h1>
+          
+          <div class="max-w-2xl mx-auto mb-8 px-4">
+            <p class="text-xs md:text-sm text-slate-600 mb-2">💡 Typ wat je WEL/NIET wilt eten</p>
+            <input id="prefWel" placeholder="WEL (bijv: kip pasta)" value="${prefs.wel || ''}" class="w-full p-3 mb-2 border-2 rounded-xl text-sm" />
+            <input id="prefNiet" placeholder="NIET (bijv: vis noten)" value="${prefs.niet || ''}" class="w-full p-3 mb-3 border-2 rounded-xl text-sm" />
+            <button onclick="savePrefs()" class="bg-green-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-green-700 text-sm">💾 Opslaan</button>
+          </div>
+          
+          <p class="text-lg md:text-xl text-orange-600 font-black mb-2 px-4">🍽️ Kies uit vele verschillende recepten</p>
+          ${prefs.wel || prefs.niet ? '<p class="text-xs md:text-sm text-green-600 font-bold mb-6">✓ Voorkeuren actief</p>' : '<p class="text-xs md:text-sm text-slate-500 mb-6">Stel voorkeuren in voor gepersonaliseerde menu\'s</p>'}
+          
+          <div class="flex justify-center items-center gap-4 mb-8">
+            <span class="text-base md:text-lg font-bold">Personen:</span>
+            <button onclick="servings=Math.max(1,servings-1);render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200">−</button>
+            <span class="text-2xl md:text-3xl font-black">${servings}</span>
+            <button onclick="servings++;render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200">+</button>
+          </div>
+          
+          <button onclick="showGenerateDialog()" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-8 md:px-12 py-4 md:py-6 rounded-2xl font-black text-base md:text-xl shadow-xl hover:scale-105 transition-all mx-4">🍽️ Genereer Weekmenu</button>
+        </div>
+        ${currentMenu.length > 0 ? renderMenu() : ''}
+      </div>
+    `;  } else if (view === 'saved') {
+    const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+    app.innerHTML = `
+      ${renderNav()}
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-8">Opgeslagen Weekmenu 💚</h1>
+        ${saved.length === 0 ? '<div class="bg-white rounded-3xl p-8 md:p-12 text-center"><p class="text-lg md:text-xl text-slate-500">Geen opgeslagen weekmenu. Genereer een menu en klik "Bewaar Menu"!</p></div>' : `
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            ${saved.map((r,i) => renderRecipeCard(r, i, true)).join('')}
+          </div>
+        `}
+      </div>
+    `;
+  } else if (view === 'shopping') {
+    const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+    const menu = saved.length > 0 ? saved : currentMenu;
+    
+    if (menu.length === 0) {
+      app.innerHTML = `
+        ${renderNav()}
+        <div class="max-w-4xl mx-auto p-4 py-8 md:py-12">
+          <div class="bg-white rounded-3xl p-8 md:p-12 text-center">
+            <div class="text-5xl md:text-6xl mb-4">🛒</div>
+            <h1 class="text-3xl md:text-4xl font-black mb-4">Boodschappenlijst</h1>
+            <p class="text-lg md:text-xl text-slate-500 mb-6">Genereer eerst een weekmenu om je boodschappenlijst te zien!</p>
+            <button onclick="changeView('home')" class="bg-orange-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold hover:bg-orange-700">Naar Home</button>
+          </div>
+        </div>
+      `;
+    } else {
+      const allIngredients = [];
+      menu.forEach(recipe => {
+        recipe.ingr.split('||').forEach(ing => allIngredients.push(ing));
+      });
+      
+      app.innerHTML = `
+        ${renderNav()}
+        <div class="max-w-4xl mx-auto p-4 py-8 md:py-12">
+          <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 class="text-3xl md:text-4xl font-black mb-2">🛒 Boodschappenlijst</h1>
+                <p class="text-sm md:text-base text-slate-600">Voor ${servings} personen • ${menu.length} recepten</p>
+              </div>
+              <button onclick="copyShoppingList()" class="w-full md:w-auto bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700 whitespace-nowrap">📋 Kopieer</button>
+            </div>
+            
+            <div class="mb-6">
+              <h2 class="text-lg md:text-xl font-bold mb-3">📅 Deze week op het menu:</h2>
+              <div class="flex flex-wrap gap-2">
+                ${menu.map(r => `<span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs md:text-sm font-semibold">${r.title}</span>`).join('')}
+              </div>
+            </div>
+            
+            <div class="bg-slate-50 p-4 md:p-6 rounded-2xl">
+              <h2 class="text-lg md:text-xl font-bold mb-4">🥘 Alle ingrediënten (${allIngredients.length})</h2>
+              <ul class="space-y-2">
+                ${allIngredients.map((ing, i) => `
+                  <li class="flex items-start gap-3 p-2 hover:bg-white rounded-lg transition-colors">
+                    <input type="checkbox" class="w-5 h-5 mt-0.5 accent-orange-600 flex-shrink-0" />
+                    <span class="flex-1 text-sm md:text-base">${ing}</span>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  } else if (view === 'myrecipes') {
+    const saved = db.savedRecipes()[currentUser.email] || [];
+    const allRecipes = db.recipes();
+    const myRecipes = saved.map(id => allRecipes.find(r => r.id === id)).filter(r => r);
+    
+    app.innerHTML = `
+      ${renderNav()}
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-8">Mijn Recepten ⭐ (${myRecipes.length})</h1>
+        ${myRecipes.length === 0 ? '<div class="bg-white rounded-3xl p-8 md:p-12 text-center"><p class="text-lg md:text-xl text-slate-500">Nog geen recepten opgeslagen. Klik op het hartje bij een recept!</p></div>' : `
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            ${myRecipes.map((r,i) => renderRecipeCard(r, i, false, true)).join('')}
+          </div>
+        `}
+      </div>
+    `;
+  } else if (view === 'community') {
+    const approved = db.get('approvedRecipes') || [];
+    app.innerHTML = `
+      ${renderNav()}
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-8">Community Recepten 👥 (${approved.length})</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          ${approved.map((r,i) => renderRecipeCard(r, i)).join('')}
+          ${approved.length === 0 ? '<div class="col-span-1 md:col-span-2 lg:col-span-3 bg-white rounded-3xl p-8 md:p-12 text-center"><p class="text-lg md:text-xl text-slate-500">Nog geen goedgekeurde recepten</p></div>' : ''}
+        </div>
+      </div>
+    `;
+  } else if (view === 'upload') {
+    app.innerHTML = `
+      ${renderNav()}
+      <div class="max-w-3xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-4">Voeg Recept Toe 📤</h1>
+        <p class="text-sm md:text-base text-slate-600 mb-8">Je recept wordt eerst goedgekeurd door admin</p>
+        <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl">
+          <input id="title" placeholder="Receptnaam" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+          <input id="category" placeholder="Categorie (bijv. Italiaans)" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+          <input id="image" placeholder="Foto URL (optioneel)" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base" />
+          <textarea id="ingredients" placeholder="Ingrediënten (1 per regel)" rows="6" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base"></textarea>
+          <textarea id="steps" placeholder="Bereidingsstappen (1 per regel)" rows="6" class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base"></textarea>
+          <button onclick="uploadRecipe()" class="w-full bg-orange-600 text-white p-3 md:p-4 rounded-xl font-bold hover:bg-orange-700 text-sm md:text-base">Verstuur ter Goedkeuring</button>
+        </div>
+      </div>
+    `;
+  } else if (view === 'admin' && currentUser.isAdmin) {
+    const users = db.users();
+    const approved = db.get('approvedRecipes') || [];
+    const pending = db.pendingRecipes();
+    app.innerHTML = `
+      ${renderNav()}
+      <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
+        <h1 class="text-3xl md:text-4xl font-black mb-8 text-red-600">⚙️ Admin Panel</h1>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-orange-600">${users.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Gebruikers</div>
+          </div>
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-blue-600">${RECIPES.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Recepten</div>
+          </div>
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-green-600">${approved.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Goedgekeurd</div>
+          </div>
+          <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center">
+            <div class="text-4xl md:text-5xl font-black text-yellow-600">${pending.length}</div>
+            <div class="text-base md:text-xl font-bold mt-2">Te Beoordelen</div>
+          </div>
+        </div>
+        
+        ${pending.length > 0 ? `
+          <h2 class="text-2xl md:text-3xl font-black mb-4 text-yellow-600">Te Beoordelen Recepten (${pending.length})</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-12">
+            ${pending.map(r => `
+              <div class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 md:p-6 shadow-xl">
+                <img src="${r.img}" class="w-full h-40 object-cover rounded-xl mb-4" />
+                <h3 class="font-black text-lg md:text-xl mb-2">${r.title}</h3>
+                <p class="text-xs md:text-sm text-slate-600 mb-1"><strong>Categorie:</strong> ${r.cat}</p>
+                <p class="text-xs md:text-sm text-slate-600 mb-1"><strong>Door:</strong> ${r.author}</p>
+                <div class="flex gap-3 mt-4">
+                  <button onclick="approveRecipe('${r.id}')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 text-sm md:text-base">✅ Goedkeuren</button>
+                  <button onclick="rejectRecipe('${r.id}')" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 text-sm md:text-base">❌ Afwijzen</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+        
+        <h2 class="text-2xl md:text-3xl font-black mb-4">Gebruikers Overzicht</h2>
+        <div class="bg-white rounded-3xl p-4 md:p-6 shadow-xl">
+          ${users.map(u => `
+            <div class="p-4 md:p-6 border-b last:border-b-0">
+              <div class="flex items-start justify-between gap-4 mb-3">
+                <div class="flex-1 min-w-0">
+                  <div class="font-black text-lg md:text-xl mb-1 truncate">${u.name}</div>
+                  <div class="text-sm md:text-base text-slate-600 truncate">${u.email}</div>
+                </div>
+                ${!u.isAdmin ? `<button onclick="deleteUser('${u.email}')" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm whitespace-nowrap flex-shrink-0">Verwijder</button>` : '<span class="text-red-600 font-bold text-sm whitespace-nowrap flex-shrink-0">Admin</span>'}
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm">
+                <div class="flex items-center gap-2">
+                  <span class="text-blue-600">📅</span>
+                  <span class="text-slate-600">Lid sinds: <strong>${u.registeredAt ? formatDate(u.registeredAt) : 'Onbekend'}</strong></span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-green-600">🕐</span>
+                  <span class="text-slate-600">Laatst online: <strong>${u.lastLogin ? formatDateTime(u.lastLogin) : 'Nooit'}</strong></span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-orange-600">📊</span>
+                  <span class="text-slate-600">Logins: <strong>${u.loginCount || 0}x</strong></span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+}
+
+function savePrefs() {
+  const wel = document.getElementById('prefWel').value.trim();
+  const niet = document.getElementById('prefNiet').value.trim();
+  const allPrefs = db.preferences();
+  allPrefs[currentUser.email] = {wel, niet};
+  db.set('userPreferences', allPrefs);
+  alert('✅ Voorkeuren opgeslagen!');
+  render();
+}
+
+function renderNav() {
+  const savedMenu = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+  const myRecipes = db.savedRecipes()[currentUser.email] || [];
+  const pendingCount = db.pendingRecipes().length;
+  return `
+    <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
+      <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="changeView('info')">
+          <img src="logo.jpg" alt="DeWeekHap logo" class="h-10 md:h-12 w-auto logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+          <div class="w-10 h-10 bg-orange-600 rounded-xl hidden items-center justify-center text-white font-black">W</div>
+        </div>
+        
+        <button onclick="toggleMobileMenu()" class="mobile-menu-btn md:hidden p-2 hover:bg-slate-100 rounded-lg">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+        
+        <div class="desktop-nav hidden md:flex items-center gap-1 lg:gap-2 text-xs lg:text-sm overflow-x-auto">
+          <div id="google_translate_element" class="mr-1"></div>
+          <button onclick="changeView('home')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Home</button>
+          <button onclick="changeView('saved')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Menu (${savedMenu.length})</button>
+          <button onclick="changeView('shopping')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='shopping'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🛒</button>
+          <button onclick="changeView('myrecipes')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Recepten (${myRecipes.length})</button>
+          <button onclick="changeView('community')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">Community</button>
+          <button onclick="changeView('upload')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">+ Recept</button>
+          ${currentUser.isAdmin ? `<button onclick="changeView('admin')" class="px-2 lg:px-4 py-2 rounded-lg font-bold whitespace-nowrap ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700'} relative">⚙️${pendingCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${pendingCount}</span>` : ''}</button>` : ''}
+          <button onclick="logout()" class="px-2 lg:px-4 py-2 rounded-lg font-bold bg-slate-200 hover:bg-slate-300 whitespace-nowrap">Uit</button>
+        </div>
+      </div>
+      
+      <div id="mobileMenu" class="mobile-menu">
+        <div class="flex flex-col gap-2">
+          <div id="google_translate_element" class="mb-2"></div>
+          <button onclick="changeView('home');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🏠 Home</button>
+          <button onclick="changeView('saved');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">📅 Weekmenu (${savedMenu.length})</button>
+          <button onclick="changeView('shopping');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='shopping'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🛒 Boodschappen</button>
+          <button onclick="changeView('myrecipes');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'}">⭐ Mijn Recepten (${myRecipes.length})</button>
+          <button onclick="changeView('community');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">👥 Community</button>
+          <button onclick="changeView('upload');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">📤 Recept Toevoegen</button>
+          ${currentUser.isAdmin ? `<button onclick="changeView('admin');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700'}">⚙️ Admin${pendingCount > 0 ? ` (${pendingCount})` : ''}</button>` : ''}
+          <button onclick="logout();toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold bg-slate-200 hover:bg-slate-300">🚪 Uitloggen</button>
+        </div>
+      </div>
+    </nav>
+  `;
+}
+
+function renderMenu() {
+  const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+  const isSaved = saved.length === currentMenu.length && saved.every((r,i) => r.id === currentMenu[i].id);
+  
+  return `
+    <div>
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+        <h2 class="text-3xl md:text-4xl font-black">Jouw Weekmenu 📅</h2>
+        <div class="flex flex-wrap gap-3 w-full md:w-auto">
+          ${!isSaved ? `<button onclick="saveMenu()" class="flex-1 md:flex-initial bg-green-600 text-white px-4 md:px-6 py-3 rounded-xl font-bold hover:bg-green-700 text-sm md:text-base whitespace-nowrap">💾 Bewaar</button>` : '<span class="text-green-600 font-bold text-base md:text-lg">✅ Opgeslagen</span>'}
+          <button onclick="window.print()" class="flex-1 md:flex-initial bg-blue-600 text-white px-4 md:px-6 py-3 rounded-xl font-bold hover:bg-blue-700 text-sm md:text-base whitespace-nowrap">🖨️ Print</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        ${currentMenu.map((r,i) => renderRecipeCard(r, i)).join('')}
+      </div>
+    </div>
+  `;
+}function renderRecipeCard(r, index, fromSaved = false, fromMyRecipes = false) {
+  const savedRecipes = db.savedRecipes()[currentUser.email] || [];
+  const isFavorite = savedRecipes.includes(r.id);
+  const cal = estimateCalories(r);
+  
+  return `
+    <div class="bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
+      <div class="relative">
+        <img src="${r.img}" alt="${r.title}" class="w-full h-48 object-cover" onerror="this.src='https://via.placeholder.com/400x300?text=Geen+foto'" />
+        <div class="absolute top-3 right-3">
+          <button onclick="toggleFavorite('${r.id}')" class="w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${isFavorite ? 'bg-red-500 text-white' : 'bg-white/80 text-slate-400 hover:bg-white'} shadow-lg">
+            ${isFavorite ? '❤️' : '🤍'}
+          </button>
+        </div>
+        <div class="absolute bottom-3 left-3">
+          <span class="bg-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold">${r.cat}</span>
+        </div>
+      </div>
+      <div class="p-5">
+        <h3 class="font-black text-lg md:text-xl mb-2 line-clamp-2">${r.title}</h3>
+        <div class="flex items-center gap-2 text-xs md:text-sm text-slate-600 mb-4">
+          <span>🔥 ~${cal} kcal</span>
+          <span>•</span>
+          <span>👥 ${servings}p</span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="showRecipe(${index}, ${fromSaved}, ${fromMyRecipes})" class="flex-1 bg-orange-600 text-white py-2.5 rounded-xl font-bold hover:bg-orange-700 text-sm">Bekijk</button>
+          ${!fromSaved && !fromMyRecipes ? `<button onclick="replaceRecipe(${index})" class="px-4 py-2.5 bg-slate-200 rounded-xl font-bold hover:bg-slate-300 text-sm">🔄</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function showRecipe(index, fromSaved = false, fromMyRecipes = false) {
+  let recipe;
+  if (fromMyRecipes) {
+    const saved = db.savedRecipes()[currentUser.email] || [];
+    const allRecipes = db.recipes();
+    const myRecipes = saved.map(id => allRecipes.find(r => r.id === id)).filter(r => r);
+    recipe = myRecipes[index];
+  } else if (fromSaved) {
+    const savedMenu = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+    recipe = savedMenu[index];
+  } else {
+    recipe = currentMenu[index];
+  }
+  
+  if (!recipe) return;
+  
+  const ingredients = recipe.ingr.split('||').filter(i => i.trim());
+  const steps = recipe.steps.split('||').filter(s => s.trim());
+  const cal = estimateCalories(recipe);
+  
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 modal-backdrop';
+  modal.onclick = (e) => {if(e.target === modal) modal.remove();};
+  
+  modal.innerHTML = `
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+      <div class="relative">
+        <img src="${recipe.img}" alt="${recipe.title}" class="w-full h-64 object-cover" />
+        <button onclick="this.closest('.modal-backdrop').remove()" class="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center font-bold hover:bg-white shadow-lg">✕</button>
+      </div>
+      
+      <div class="p-6 md:p-8 overflow-y-auto max-h-[calc(90vh-16rem)]">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div class="flex-1">
+            <h2 class="text-3xl md:text-4xl font-black mb-2">${recipe.title}</h2>
+            <div class="flex flex-wrap gap-2 items-center text-sm md:text-base text-slate-600">
+              <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-semibold">${recipe.cat}</span>
+              <span>•</span>
+              <span>🔥 ~${cal} kcal/portie</span>
+              <span>•</span>
+              <span>👥 ${servings} personen</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex gap-2 border-b mb-6 overflow-x-auto">
+          <button onclick="switchTab(this, 'ingredients')" class="tab-btn px-4 md:px-6 py-3 font-bold border-b-2 border-orange-600 text-orange-600 whitespace-nowrap">Ingrediënten</button>
+          <button onclick="switchTab(this, 'steps')" class="tab-btn px-4 md:px-6 py-3 font-bold text-slate-600 hover:text-orange-600 whitespace-nowrap">Bereiding</button>
+          <button onclick="switchTab(this, 'shopping')" class="tab-btn px-4 md:px-6 py-3 font-bold text-slate-600 hover:text-orange-600 whitespace-nowrap">Boodschappen</button>
+        </div>
+        
+        <div id="ingredients" class="tab-content">
+          <h3 class="text-xl md:text-2xl font-black mb-4">🥘 Ingrediënten</h3>
+          <ul class="space-y-2">
+            ${ingredients.map(ing => `
+              <li class="flex items-start gap-3 p-2 hover:bg-orange-50 rounded-lg transition-colors">
+                <input type="checkbox" class="w-5 h-5 mt-0.5 accent-orange-600" />
+                <span class="flex-1 text-sm md:text-base">${ing}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+        
+        <div id="steps" class="tab-content hidden">
+          <h3 class="text-xl md:text-2xl font-black mb-4">👨‍🍳 Bereidingswijze</h3>
+          <ol class="space-y-4">
+            ${steps.map((step, i) => `
+              <li class="flex gap-4 p-4 bg-slate-50 rounded-xl">
+                <div class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">${i+1}</div>
+                <p class="flex-1 pt-1 text-sm md:text-base">${step}</p>
+              </li>
+            `).join('')}
+          </ol>
+        </div>
+        
+        <div id="shopping" class="tab-content hidden">
+          <h3 class="text-xl md:text-2xl font-black mb-4">🛒 Boodschappenlijst</h3>
+          <ul class="space-y-2">
+            ${ingredients.map(ing => `
+              <li class="flex items-start gap-3 p-2 hover:bg-orange-50 rounded-lg transition-colors">
+                <input type="checkbox" class="w-5 h-5 mt-0.5 accent-orange-600" />
+                <span class="flex-1 text-sm md:text-base">${ing}</span>
+              </li>
+            `).join('')}
+          </ul>
+          <button onclick="copyIngredients(\`${ingredients.join('\\n')}\`)" class="mt-4 w-full bg-orange-600 text-white py-3 rounded-xl font-bold hover:bg-orange-700">📋 Kopieer Lijst</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function switchTab(btn, tabName) {
+  const modal = btn.closest('.bg-white');
+  modal.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('border-orange-600', 'text-orange-600');
+    b.classList.add('text-slate-600');
+  });
+  btn.classList.add('border-orange-600', 'text-orange-600');
+  btn.classList.remove('text-slate-600');
+  
+  modal.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+  modal.querySelector(`#${tabName}`).classList.remove('hidden');
+}
+
+function copyIngredients(text) {
+  navigator.clipboard.writeText(text);
+  alert('✅ Ingrediënten gekopieerd!');
+}
+
+function copyShoppingList() {
+  const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
+  const menu = saved.length > 0 ? saved : currentMenu;
+  const allIngredients = [];
+  menu.forEach(recipe => {
+    recipe.ingr.split('||').forEach(ing => allIngredients.push(ing));
+  });
+  const text = `🛒 Boodschappenlijst\n\n${allIngredients.join('\n')}`;
+  navigator.clipboard.writeText(text);
+  alert('✅ Boodschappenlijst gekopieerd!');
+}
+
+function toggleFavorite(id) {
+  const saved = db.savedRecipes()[currentUser.email] || [];
+  const idx = saved.indexOf(id);
+  if (idx > -1) {
+    saved.splice(idx, 1);
+  } else {
+    saved.push(id);
+  }
+  const all = db.savedRecipes();
+  all[currentUser.email] = saved;
+  db.set('savedRecipes', all);
+  render();
+}
+
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobileMenu');
+  menu.classList.toggle('mobile-menu-open');
+}
+function estimateCalories(recipe) {
+  const base = 400;
+  const ingredients = recipe.ingr.toLowerCase();
+  let cal = base;
+  
+  if (ingredients.includes('kip') || ingredients.includes('chicken')) cal += 50;
+  if (ingredients.includes('vis') || ingredients.includes('fish') || ingredients.includes('salmon')) cal += 30;
+  if (ingredients.includes('pasta') || ingredients.includes('rice') || ingredients.includes('rijst')) cal += 100;
+  if (ingredients.includes('kaas') || ingredients.includes('cheese') || ingredients.includes('room')) cal += 80;
+  if (ingredients.includes('olie') || ingredients.includes('oil') || ingredients.includes('boter')) cal += 60;
+  
+  return Math.round(cal / servings);
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return 'Onbekend';
+  const date = new Date(timestamp);
+  return date.toLocaleDateString('nl-NL', {day: '2-digit', month: 'short', year: 'numeric'});
+}
+
+function formatDateTime(timestamp) {
+  if (!timestamp) return 'Nooit';
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'Nu';
+  if (diffMins < 60) return `${diffMins}m geleden`;
+  if (diffHours < 24) return `${diffHours}u geleden`;
+  if (diffDays < 7) return `${diffDays}d geleden`;
+  return date.toLocaleDateString('nl-NL', {day: '2-digit', month: 'short'});
+}
+
+function deleteUser(email) {
+  if (!confirm(`Weet je zeker dat je ${email} wilt verwijderen?`)) return;
+  const users = db.users().filter(u => u.email !== email);
+  db.set('users', users);
+  
+  const prefs = db.preferences();
+  delete prefs[email];
+  db.set('userPreferences', prefs);
+  
+  const savedMenus = db.savedMenus();
+  delete savedMenus[email];
+  db.set('savedMenus', savedMenus);
+  
+  const savedRecipes = db.savedRecipes();
+  delete savedRecipes[email];
+  db.set('savedRecipes', savedRecipes);
+  
+  alert('✅ Gebruiker verwijderd');
+  render();
+}
+
+function approveRecipe(id) {
+  const pending = db.pendingRecipes();
+  const recipe = pending.find(r => r.id === id);
+  if (!recipe) return;
+  
+  const approved = db.get('approvedRecipes') || [];
+  approved.push(recipe);
+  db.set('approvedRecipes', approved);
+  
+  RECIPES.push(recipe);
+  db.set('recipes', RECIPES);
+  
+  const newPending = pending.filter(r => r.id !== id);
+  db.set('pendingRecipes', newPending);
+  
+  alert('✅ Recept goedgekeurd en toegevoegd aan database!');
+  render();
+}
+
+function rejectRecipe(id) {
+  if (!confirm('Weet je zeker dat je dit recept wilt afwijzen?')) return;
+  const pending = db.pendingRecipes();
+  const newPending = pending.filter(r => r.id !== id);
+  db.set('pendingRecipes', newPending);
+  alert('✅ Recept afgewezen');
+  render();
+}
+
+function uploadRecipe() {
+  const title = document.getElementById('title').value.trim();
+  const category = document.getElementById('category').value.trim();
+  const image = document.getElementById('image').value.trim() || 'https://via.placeholder.com/400x300?text=Geen+foto';
+  const ingredients = document.getElementById('ingredients').value.trim();
+  const steps = document.getElementById('steps').value.trim();
+  
+  if (!title || !category || !ingredients || !steps) {
+    alert('⚠️ Vul alle velden in');
+    return;
+  }
+  
+  const recipe = {
+    id: 'custom_' + Date.now(),
+    title,
+    cat: category,
+    img: image,
+    ingr: ingredients.split('\n').filter(i => i.trim()).join('||'),
+    steps: steps.split('\n').filter(s => s.trim()).join('||'),
+    author: currentUser.email,
+    submittedAt: Date.now()
+  };
+  
+  const pending = db.pendingRecipes();
+  pending.push(recipe);
+  db.set('pendingRecipes', pending);
+  
+  alert('✅ Recept ingediend! Het wordt beoordeeld door een admin.');
+  changeView('community');
+}
+
+function initGoogleTranslate() {
+  if (window.google && window.google.translate) {
+    new window.google.translate.TranslateElement({
+      pageLanguage: 'nl',
+      includedLanguages: 'en,nl,de,fr,es',
+      layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
+    }, 'google_translate_element');
+  }
+}
+
+function loadGoogleTranslate() {
+  const script = document.createElement('script');
+  script.src = '//translate.google.com/translate_a/element.js?cb=initGoogleTranslate';
+  document.head.appendChild(script);
+}
+
+window.initGoogleTranslate = initGoogleTranslate;
+
+render();
+loadGoogleTranslate();
+
+const observer = new MutationObserver(() => {
+  const translateElements = document.querySelectorAll('#google_translate_element');
+  translateElements.forEach(el => {
+    if (el && !el.querySelector('.goog-te-combo')) {
+      initGoogleTranslate();
+    }
+  });
+});
+
+observer.observe(document.body, {childList: true, subtree: true});

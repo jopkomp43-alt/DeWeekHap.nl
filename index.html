@@ -256,6 +256,12 @@ const RECIPES = [
 
 let mealDBCache = [];
 let mealDBLoading = false;
+
+async function fetchMealDBRecipes(count = 20) {
+  if (mealDBLoading) return [];
+  mealDBLoading = true;
+  try {
+    const promises = [];
     for (let i = 0; i < count; i++) {
       promises.push(fetch('https://www.themealdb.com/api/json/v1/1/random.php'));
     }

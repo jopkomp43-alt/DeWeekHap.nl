@@ -12,13 +12,13 @@
 <!-- Open Graph / Social Media -->
 <meta property="og:title" content="DeWeekHap.nl - #1 Gratis Weekmenu Generator">
 <meta property="og:description" content="Weekmenu maken in 30 seconden! Boodschappenlijst automatisch. 100% gratis.">
-<meta property="og:image" content="https://jopkomp43-alt.github.io/DeWeekHap.nl/logo.jpg">
-<meta property="og:url" content="https://jopkomp43-alt.github.io/DeWeekHap.nl/">
+<meta property="og:image" content="https://www.deweekhap.nl/logo.jpg">
+<meta property="og:url" content="https://www.deweekhap.nl/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DeWeekHap - Weekmenu Generator">
 <meta name="twitter:description" content="Gratis weekmenu voor hele week + boodschappenlijst!">
-<meta name="twitter:image" content="https://jopkomp43-alt.github.io/DeWeekHap.nl/logo.jpg">
+<meta name="twitter:image" content="https://www.deweekhap.nl/logo.jpg">
 
 <!-- Schema.org Structured Data -->
 <script type="application/ld+json">
@@ -27,7 +27,7 @@
   "@type": "WebApplication",
   "name": "DeWeekHap.nl - Weekmenu Generator",
   "description": "Gratis online weekmenu generator met automatische boodschappenlijst",
-  "url": "https://jopkomp43-alt.github.io/DeWeekHap.nl/",
+  "url": "https://www.deweekhap.nl/",
   "applicationCategory": "FoodApplication",
   "operatingSystem": "Any",
   "offers": {
@@ -40,13 +40,15 @@
     "ratingValue": "4.8",
     "reviewCount": "127"
   },
-  "image": "https://jopkomp43-alt.github.io/DeWeekHap.nl/logo.jpg"
+  "image": "https://www.deweekhap.nl/logo.jpg"
 }
 </script>
 
 <link rel="icon" href="logo.jpg" type="image/jpeg">
 <link rel="apple-touch-icon" href="logo.jpg">
 <link rel="manifest" href="manifest.json">
+<!-- FIX #7: styles-fix.css wordt nu correct ingeladen -->
+<link rel="stylesheet" href="styles-fix.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <style>
@@ -118,6 +120,57 @@ body { top: 0 !important; }
 @media (min-width: 769px) {
   .mobile-menu-btn { display: none !important; }
 }
+
+/* FIX #4: Sluitknop minimale tap-grootte */
+.modal-close-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f1f5f9;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #64748b;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: none;
+}
+.modal-close-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* FIX #5: Tab-knoppen in modal altijd zichtbaar op kleine schermen */
+.modal-tab-btn {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.7rem;
+  padding: 0.5rem 0.25rem;
+}
+@media (min-width: 480px) {
+  .modal-tab-btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* FIX #3: Modal sticky header correct */
+.modal-inner {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+.modal-scrollable {
+  overflow-y: auto;
+  flex: 1;
+}
 </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-200 min-h-screen">
@@ -128,12 +181,23 @@ body { top: 0 !important; }
 let activeTab = 'ingredients';
 let mobileMenuOpen = false;
 
+// FIX #2: Hamburger menu sluit correct (verwijdert ook .active class)
 function toggleMobileMenu() {
   mobileMenuOpen = !mobileMenuOpen;
   const menu = document.getElementById('mobileMenu');
   if (menu) {
-    menu.classList.toggle('active');
+    if (mobileMenuOpen) {
+      menu.classList.add('active');
+    } else {
+      menu.classList.remove('active');
+    }
   }
+}
+
+function closeMobileMenu() {
+  mobileMenuOpen = false;
+  const menu = document.getElementById('mobileMenu');
+  if (menu) menu.classList.remove('active');
 }
 
 function switchTab(tabName) {
@@ -155,7 +219,11 @@ function switchTab(tabName) {
   }
 }
 
+// FIX #1: Slechts 1 google translate element per pagina, met unieke ID
+let translateInitialized = false;
 function googleTranslateElementInit() {
+  if (translateInitialized) return;
+  translateInitialized = true;
   new google.translate.TranslateElement({
     pageLanguage: 'nl',
     includedLanguages: 'nl,en,de,fr,es,it,pt,pl,tr,ar',
@@ -178,7 +246,6 @@ function formatDateTime(dateString) {
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()} ${hours}:${minutes}`;
 }
 
-// Woordenboek voor NL -> EN vertalingen (zoeken)
 const TRANSLATION_MAP = {
   'kip': 'chicken',
   'vis': 'fish',
@@ -203,7 +270,6 @@ const TRANSLATION_MAP = {
   'ovenschotel': 'casserole bake'
 };
 
-// Woordenboek voor EN -> NL vertalingen (ingrediënten/termen)
 const EN_TO_NL = {
   'chicken': 'kip', 'fish': 'vis', 'salmon': 'zalm', 'tuna': 'tonijn', 'shrimp': 'garnalen', 'prawns': 'garnalen',
   'beef': 'rundvlees', 'pork': 'varkensvlees', 'lamb': 'lamsvlees', 'turkey': 'kalkoen',
@@ -227,17 +293,11 @@ const EN_TO_NL = {
 
 function translateText(text) {
   if (!text || typeof text !== 'string') return text;
-  
   let translated = text;
-  const lowerText = text.toLowerCase();
-  
-  // Vertaal bekende woorden/zinnen
   Object.entries(EN_TO_NL).forEach(([en, nl]) => {
-    // Case-insensitive replacement met woordgrenzen
     const regex = new RegExp('\\b' + en + '\\b', 'gi');
     translated = translated.replace(regex, nl);
   });
-  
   return translated;
 }
 
@@ -278,32 +338,27 @@ async function fetchMealDBRecipes(count = 20) {
           ingredients.push(`${translatedMeasure} ${translatedIng}`.trim());
         }
       }
-      
       const rawSteps = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7);
       const steps = rawSteps.map(step => translateText(step));
-      
       const translatedTitle = translateText(meal.strMeal);
       const translatedCat = translateText(meal.strCategory || 'Internationaal');
-      
       return {
-        id: 'mdb' + meal.idMeal, 
-        title: translatedTitle, 
-        img: meal.strMealThumb, 
-        ingr: ingredients.join('||'), 
-        steps: steps.join('||'), 
-        cat: translatedCat, 
-        author: 'TheMealDB', 
+        id: 'mdb' + meal.idMeal,
+        title: translatedTitle,
+        img: meal.strMealThumb,
+        ingr: ingredients.join('||'),
+        steps: steps.join('||'),
+        cat: translatedCat,
+        author: 'TheMealDB',
         source: 'mealdb',
         originalTitle: meal.strMeal
       };
     });
-    
     meals.forEach(meal => {
       if (!mealDBCache.find(m => m.id === meal.id)) {
         mealDBCache.push(meal);
       }
     });
-    
     mealDBLoading = false;
     return meals;
   } catch (error) {
@@ -345,7 +400,6 @@ function shuffleArray(array) {
 
 function expandSearchTerm(term) {
   const lowerTerm = term.toLowerCase();
-  // Zoek naar exacte match in woordenboek
   if (TRANSLATION_MAP[lowerTerm]) {
     return `${term} ${TRANSLATION_MAP[lowerTerm]}`;
   }
@@ -354,29 +408,21 @@ function expandSearchTerm(term) {
 
 function filterByPrefs(recipes, extraFilter = '') {
   const prefs = db.preferences()[currentUser.email];
-  
   return recipes.filter(r => {
     const txt = `${r.title} ${r.cat} ${r.ingr}`.toLowerCase();
-    
     if (extraFilter && extraFilter.trim()) {
       const extraTerms = extraFilter.toLowerCase().split(' ').filter(t => t.trim());
       let hasExtraMatch = false;
       for (const term of extraTerms) {
-        // Expandeer zoekterm met vertalingen
         const expandedTerm = expandSearchTerm(term);
         const searchWords = expandedTerm.toLowerCase().split(' ');
-        
         for (const word of searchWords) {
-          if (txt.includes(word)) {
-            hasExtraMatch = true;
-            break;
-          }
+          if (txt.includes(word)) { hasExtraMatch = true; break; }
         }
         if (hasExtraMatch) break;
       }
       if (!hasExtraMatch) return false;
     }
-    
     if (prefs && prefs.niet) {
       const nietTerms = prefs.niet.toLowerCase().split(' ').filter(t => t.trim());
       for (const term of nietTerms) {
@@ -395,10 +441,7 @@ function filterByPrefs(recipes, extraFilter = '') {
           const expandedTerm = expandSearchTerm(term);
           const searchWords = expandedTerm.toLowerCase().split(' ');
           for (const word of searchWords) {
-            if (txt.includes(word)) {
-              hasMatch = true;
-              break;
-            }
+            if (txt.includes(word)) { hasMatch = true; break; }
           }
           if (hasMatch) break;
         }
@@ -413,7 +456,6 @@ function copyShoppingList() {
   const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
   const menu = saved.length > 0 ? saved : currentMenu;
   if (menu.length === 0) return alert('⚠️ Geen weekmenu om te kopiëren!');
-  
   const allIngredients = [];
   menu.forEach(recipe => {
     recipe.ingr.split('||').forEach(ing => allIngredients.push(ing));
@@ -428,14 +470,12 @@ function showGenerateDialog() {
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4';
   modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-  
   modal.innerHTML = `
     <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full" onclick="event.stopPropagation()">
       <h2 class="text-2xl md:text-3xl font-black mb-4 text-center">🎯 Speciale Wensen?</h2>
       <p class="text-sm md:text-base text-slate-600 mb-6 text-center">
         Heb je vandaag zin in iets specifieks? Typ het hieronder (optioneel)
       </p>
-      
       <div class="bg-orange-50 p-4 rounded-2xl mb-4">
         <p class="text-xs md:text-sm font-bold text-orange-800 mb-2">💡 Voorbeelden:</p>
         <div class="flex flex-wrap gap-2">
@@ -446,14 +486,12 @@ function showGenerateDialog() {
           <button onclick="document.getElementById('extraWish').value='soep'" class="bg-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-orange-100">🍲 Soep</button>
         </div>
       </div>
-      
       <input 
         id="extraWish" 
         type="text" 
         placeholder="Bijv: kip, pasta, vis..." 
         class="w-full p-3 md:p-4 mb-4 border-2 rounded-xl text-sm md:text-base"
       />
-      
       <div class="flex gap-3">
         <button 
           onclick="this.closest('.fixed').remove()" 
@@ -471,7 +509,6 @@ function showGenerateDialog() {
     </div>
   `;
   document.body.appendChild(modal);
-  
   document.getElementById('btnGenerate').addEventListener('click', async function() {
     const extraWish = document.getElementById('extraWish').value.trim();
     modal.remove();
@@ -485,72 +522,55 @@ async function generateMenu(extraFilter = '') {
   loadingMsg.className = 'fixed top-20 right-4 bg-orange-600 text-white px-6 py-3 rounded-xl font-bold shadow-xl z-50';
   loadingMsg.textContent = extraFilter ? `🔍 Zoeken naar "${extraFilter}"...` : '🍽️ Weekmenu genereren...';
   document.body.appendChild(loadingMsg);
-  
+
   const minRecipes = 14;
   let attempts = 0;
   const maxAttempts = 12;
-  
+
   while (attempts < maxAttempts) {
     const currentRecipes = db.recipes();
     const filtered = filterByPrefs(currentRecipes, extraFilter);
-    
-    console.log(`Poging ${attempts + 1}: ${filtered.length} recepten beschikbaar (doel: ${minRecipes})`);
-    
-    if (filtered.length >= minRecipes) {
-      console.log('✅ Genoeg recepten gevonden!');
-      break;
-    }
-    
+    if (filtered.length >= minRecipes) break;
     const expandedSearch = expandSearchTerm(extraFilter);
-    loadingMsg.textContent = extraFilter 
+    loadingMsg.textContent = extraFilter
       ? `🌍 Laden... ${filtered.length}/${minRecipes} recepten (zoekt: ${expandedSearch})`
       : `🌍 Laden... ${filtered.length}/${minRecipes} recepten`;
-    
-    console.log(`🌍 Nieuwe recepten laden... (${filtered.length}/${minRecipes})`);
     await fetchMealDBRecipes(40);
     attempts++;
     await new Promise(resolve => setTimeout(resolve, 300));
   }
-  
+
   const finalRecipes = db.recipes();
   const filtered = filterByPrefs(finalRecipes, extraFilter);
-  
-  console.log(`Finale check: ${filtered.length} recepten beschikbaar`);
-  
+
   if (filtered.length < 7) {
     loadingMsg.remove();
     const expandedInfo = extraFilter ? expandSearchTerm(extraFilter) : '';
     return alert(`⚠️ Niet genoeg recepten gevonden (${filtered.length} beschikbaar).\n\n${extraFilter ? `Gezocht naar: ${expandedInfo}\n\nTip: Probeer een bredere zoekterm of laat het veld leeg!` : 'Probeer andere voorkeuren!'}`);
   }
-  
+
   const days = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
   const shuffled = shuffleArray(filtered);
   const selected = shuffled.slice(0, 7);
-  
+
   if (lastGeneratedIds.length > 0) {
     const hasOverlap = selected.some(r => lastGeneratedIds.includes(r.id));
     if (hasOverlap && filtered.length >= 14) {
-      console.log('⚠️ Overlap gedetecteerd, opnieuw genereren...');
       loadingMsg.remove();
       return generateMenu(extraFilter);
     }
   }
-  
+
   currentMenu = selected.map((r,i) => ({...r, day: days[i]}));
   lastGeneratedIds = selected.map(r => r.id);
-  
   loadingMsg.textContent = '✅ Weekmenu klaar!';
   setTimeout(() => loadingMsg.remove(), 1500);
-  
   render();
 }
 
-// RENDER FUNCTION EN OVERIGE CODE BLIJFT HETZELFDE...
-// (rest van de code zoals in vorige werkende versie)
-
 function render() {
   const app = document.getElementById('app');
-  
+
   if (view === 'login') {
     app.innerHTML = `
       <div class="min-h-screen flex items-center justify-center p-4">
@@ -583,7 +603,6 @@ function render() {
           <img src="logo.jpg" alt="DeWeekHap logo" class="w-48 md:w-64 h-auto mx-auto mb-6 logo-img" />
           <h1 class="text-3xl md:text-5xl font-black mb-4 text-center">🍽️ Welkom bij De Weekhap!</h1>
           <p class="text-lg md:text-xl text-center text-slate-600 mb-8">Jouw slimme weekmenu generator</p>
-          
           <div class="space-y-6 md:space-y-8">
             <div>
               <h2 class="text-2xl md:text-3xl font-black mb-3 text-orange-600">💡 Wat is De Weekhap?</h2>
@@ -592,7 +611,6 @@ function render() {
                 Nooit meer het gedoe van "wat eten we vandaag?" - wij regelen het voor je!
               </p>
             </div>
-
             <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6 rounded-2xl">
               <h2 class="text-2xl md:text-3xl font-black mb-4">🎯 Hoe werkt het?</h2>
               <ol class="space-y-3 text-base md:text-lg">
@@ -618,7 +636,6 @@ function render() {
                 </li>
               </ol>
             </div>
-
             <div class="text-center">
               <button onclick="changeView('${currentUser ? 'home' : 'login'}')" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-8 md:px-12 py-4 md:py-6 rounded-2xl font-black text-lg md:text-xl shadow-xl hover:scale-105 transition-all">
                 ${currentUser ? '🍽️ Naar Weekmenu Generator' : '🚀 Start Nu!'}
@@ -630,7 +647,6 @@ function render() {
     `;
   } else if (view === 'home') {
     const prefs = db.preferences()[currentUser.email] || {};
-    
     app.innerHTML = `
       ${renderNav()}
       <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
@@ -640,7 +656,6 @@ function render() {
             De Weekhap is jouw persoonlijke kookassistent die automatisch een gevarieerd weekmenu voor je samenstelt. 
             Nooit meer het gedoe van "wat eten we vandaag?" - wij regelen het voor je!
           </p>
-          
           <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6 rounded-2xl">
             <h3 class="text-xl md:text-2xl font-black mb-4">🎯 Hoe werkt het?</h3>
             <ol class="space-y-3 text-sm md:text-base">
@@ -662,24 +677,20 @@ function render() {
 
         <div class="text-center py-8 md:py-12 bg-white rounded-3xl shadow-xl mb-8 md:mb-12">
           <h1 class="text-3xl md:text-5xl font-black mb-4 px-4">Welkom, ${currentUser.name}! 👋</h1>
-          
           <div class="max-w-2xl mx-auto mb-8 px-4">
             <p class="text-xs md:text-sm text-slate-600 mb-2">💡 Typ wat je WEL/NIET wilt eten</p>
             <input id="prefWel" placeholder="WEL (bijv: kip pasta)" value="${prefs.wel || ''}" class="w-full p-3 mb-2 border-2 rounded-xl text-sm" />
             <input id="prefNiet" placeholder="NIET (bijv: vis noten)" value="${prefs.niet || ''}" class="w-full p-3 mb-3 border-2 rounded-xl text-sm" />
             <button onclick="savePrefs()" class="bg-green-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-green-700 text-sm">💾 Opslaan</button>
           </div>
-          
           <p class="text-lg md:text-xl text-orange-600 font-black mb-2 px-4">🍽️ Kies uit vele verschillende recepten</p>
           ${prefs.wel || prefs.niet ? '<p class="text-xs md:text-sm text-green-600 font-bold mb-6">✓ Voorkeuren actief</p>' : '<p class="text-xs md:text-sm text-slate-500 mb-6">Stel voorkeuren in voor gepersonaliseerde menu\'s</p>'}
-          
           <div class="flex justify-center items-center gap-4 mb-8">
             <span class="text-base md:text-lg font-bold">Personen:</span>
             <button onclick="servings=Math.max(1,servings-1);render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200">−</button>
             <span class="text-2xl md:text-3xl font-black">${servings}</span>
             <button onclick="servings++;render()" class="w-12 h-12 bg-orange-100 rounded-xl font-bold text-xl hover:bg-orange-200">+</button>
           </div>
-          
           <button onclick="showGenerateDialog()" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-8 md:px-12 py-4 md:py-6 rounded-2xl font-black text-base md:text-xl shadow-xl hover:scale-105 transition-all mx-4">🍽️ Genereer Weekmenu</button>
         </div>
         ${currentMenu.length > 0 ? renderMenu() : ''}
@@ -701,7 +712,6 @@ function render() {
   } else if (view === 'shopping') {
     const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
     const menu = saved.length > 0 ? saved : currentMenu;
-    
     if (menu.length === 0) {
       app.innerHTML = `
         ${renderNav()}
@@ -719,7 +729,6 @@ function render() {
       menu.forEach(recipe => {
         recipe.ingr.split('||').forEach(ing => allIngredients.push(ing));
       });
-      
       app.innerHTML = `
         ${renderNav()}
         <div class="max-w-4xl mx-auto p-4 py-8 md:py-12">
@@ -731,14 +740,12 @@ function render() {
               </div>
               <button onclick="copyShoppingList()" class="w-full md:w-auto bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700 whitespace-nowrap">📋 Kopieer</button>
             </div>
-            
             <div class="mb-6">
               <h2 class="text-lg md:text-xl font-bold mb-3">📅 Deze week op het menu:</h2>
               <div class="flex flex-wrap gap-2">
                 ${menu.map(r => `<span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs md:text-sm font-semibold">${r.title}</span>`).join('')}
               </div>
             </div>
-            
             <div class="bg-slate-50 p-4 md:p-6 rounded-2xl">
               <h2 class="text-lg md:text-xl font-bold mb-4">🥘 Alle ingrediënten (${allIngredients.length})</h2>
               <ul class="space-y-2">
@@ -758,7 +765,6 @@ function render() {
     const saved = db.savedRecipes()[currentUser.email] || [];
     const allRecipes = db.recipes();
     const myRecipes = saved.map(id => allRecipes.find(r => r.id === id)).filter(r => r);
-    
     app.innerHTML = `
       ${renderNav()}
       <div class="max-w-6xl mx-auto p-4 py-8 md:py-12">
@@ -824,7 +830,6 @@ function render() {
             <div class="text-base md:text-xl font-bold mt-2">Te Beoordelen</div>
           </div>
         </div>
-        
         ${pending.length > 0 ? `
           <h2 class="text-2xl md:text-3xl font-black mb-4 text-yellow-600">Te Beoordelen Recepten (${pending.length})</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-12">
@@ -842,7 +847,6 @@ function render() {
             `).join('')}
           </div>
         ` : ''}
-        
         <h2 class="text-2xl md:text-3xl font-black mb-4">Gebruikers Overzicht</h2>
         <div class="bg-white rounded-3xl p-4 md:p-6 shadow-xl">
           ${users.map(u => `
@@ -890,6 +894,7 @@ function renderNav() {
   const savedMenu = (db.savedMenus()[currentUser.email] || {}).recipes || [];
   const myRecipes = db.savedRecipes()[currentUser.email] || [];
   const pendingCount = db.pendingRecipes().length;
+  // FIX #1: Slechts 1 google_translate_element per pagina, in desktop nav
   return `
     <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -917,17 +922,17 @@ function renderNav() {
         </div>
       </div>
       
+      <!-- FIX #2: Mobiel menu zonder google_translate_element duplicaat -->
       <div id="mobileMenu" class="mobile-menu">
         <div class="flex flex-col gap-2">
-          <div id="google_translate_element" class="mb-2"></div>
-          <button onclick="changeView('home');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🏠 Home</button>
-          <button onclick="changeView('saved');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">📅 Weekmenu (${savedMenu.length})</button>
-          <button onclick="changeView('shopping');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='shopping'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🛒 Boodschappen</button>
-          <button onclick="changeView('myrecipes');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'}">⭐ Mijn Recepten (${myRecipes.length})</button>
-          <button onclick="changeView('community');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">👥 Community</button>
-          <button onclick="changeView('upload');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">📤 Recept Toevoegen</button>
-          ${currentUser.isAdmin ? `<button onclick="changeView('admin');toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700'}">⚙️ Admin${pendingCount > 0 ? ` (${pendingCount})` : ''}</button>` : ''}
-          <button onclick="logout();toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold bg-slate-200 hover:bg-slate-300">🚪 Uitloggen</button>
+          <button onclick="changeView('home');closeMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🏠 Home</button>
+          <button onclick="changeView('saved');closeMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='saved'?'bg-orange-600 text-white':'hover:bg-slate-100'}">📅 Weekmenu (${savedMenu.length})</button>
+          <button onclick="changeView('shopping');closeMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='shopping'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🛒 Boodschappen</button>
+          <button onclick="changeView('myrecipes');closeMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='myrecipes'?'bg-orange-600 text-white':'hover:bg-slate-100'}">⭐ Mijn Recepten (${myRecipes.length})</button>
+          <button onclick="changeView('community');closeMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='community'?'bg-orange-600 text-white':'hover:bg-slate-100'}">👥 Community</button>
+          <button onclick="changeView('upload');closeMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='upload'?'bg-orange-600 text-white':'hover:bg-slate-100'}">📤 Recept Toevoegen</button>
+          ${currentUser.isAdmin ? `<button onclick="changeView('admin');closeMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='admin'?'bg-red-600 text-white':'bg-red-100 text-red-700'}">⚙️ Admin${pendingCount > 0 ? ` (${pendingCount})` : ''}</button>` : ''}
+          <button onclick="logout();closeMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold bg-slate-200 hover:bg-slate-300">🚪 Uitloggen</button>
         </div>
       </div>
     </nav>
@@ -937,7 +942,6 @@ function renderNav() {
 function renderMenu() {
   const saved = (db.savedMenus()[currentUser.email] || {}).recipes || [];
   const isSaved = saved.length === currentMenu.length && saved.every((r,i) => r.id === currentMenu[i].id);
-  
   return `
     <div>
       <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
@@ -959,7 +963,6 @@ function renderRecipeCard(recipe, idx, isSaved = false, isMyRecipes = false) {
   const avgRating = reviews.length > 0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : 'N/A';
   const userSavedRecipes = db.savedRecipes()[currentUser.email] || [];
   const isRecipeSaved = userSavedRecipes.includes(recipe.id);
-  
   return `
     <div class="recipe-card bg-white rounded-2xl p-4 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 relative">
       <div onclick="showRecipe(${idx}, ${isSaved}, ${isMyRecipes})" class="cursor-pointer">
@@ -967,7 +970,7 @@ function renderRecipeCard(recipe, idx, isSaved = false, isMyRecipes = false) {
           <img src="${recipe.img}" class="w-full h-full object-cover" />
           ${recipe.day ? `<div class="absolute top-2 left-2 bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-bold">${recipe.day}</div>` : ''}
         </div>
-        <h3 class="font-black text-base md:text-lg mb-1">${recipe.title}</h3>
+        <h3 class="font-black text-base md:text-lg mb-1 leading-tight min-h-[2.5rem]">${recipe.title}</h3>
         <div class="flex items-center justify-between">
           <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-semibold">${recipe.cat}</span>
           <span class="text-xs md:text-sm font-bold">⭐ ${avgRating} (${reviews.length})</span>
@@ -1012,11 +1015,9 @@ function login() {
   const users = db.users();
   const userIndex = users.findIndex(u => u.email === email && u.password === password);
   if (userIndex === -1) return alert('❌ Verkeerde inloggegevens');
-  
   users[userIndex].lastLogin = new Date().toISOString();
   users[userIndex].loginCount = (users[userIndex].loginCount || 0) + 1;
   db.set('users', users);
-  
   currentUser = users[userIndex];
   db.set('currentUser', currentUser);
   view = 'home';
@@ -1030,12 +1031,8 @@ function register() {
   if (!name || !email || !password) return alert('⚠️ Vul alle velden in');
   const users = db.users();
   if (users.find(u => u.email === email)) return alert('❌ Email al in gebruik');
-  
-  const newUser = { 
-    name, 
-    email, 
-    password, 
-    isAdmin: false,
+  const newUser = {
+    name, email, password, isAdmin: false,
     registeredAt: new Date().toISOString(),
     lastLogin: new Date().toISOString(),
     loginCount: 1
@@ -1058,7 +1055,8 @@ function logout() {
 
 function changeView(v) {
   view = v;
-  mobileMenuOpen = false;
+  // FIX #2: gebruik closeMobileMenu voor correcte state reset
+  closeMobileMenu();
   render();
 }
 
@@ -1081,119 +1079,121 @@ function showRecipe(idx, isSaved, isMyRecipes = false) {
   } else {
     recipe = currentMenu[idx];
   }
-  
+
   const reviews = db.reviews()[recipe.id] || [];
   const ingredients = recipe.ingr.split('||');
   const steps = recipe.steps.split('||');
-  
   activeTab = 'ingredients';
-  
+
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4';
   modal.onclick = () => modal.remove();
-  
+
+  // FIX #3 & #4: Modal met correcte sticky header en grote sluitknop
   modal.innerHTML = `
-    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-auto" onclick="event.stopPropagation()">
-      <div class="sticky top-0 bg-white z-10 p-4 md:p-6 pb-0 flex justify-between items-start border-b">
-        <div class="flex-1 mb-4">
+    <div class="modal-inner bg-white rounded-3xl max-w-4xl w-full" onclick="event.stopPropagation()">
+      <div class="p-4 md:p-6 pb-0 flex justify-between items-start gap-3 border-b pb-4">
+        <div class="flex-1 min-w-0">
           <img src="${recipe.img}" class="w-full h-40 md:h-48 object-cover rounded-2xl mb-4" />
-          <h2 class="text-2xl md:text-3xl font-black mb-2">${recipe.title}</h2>
-          <div class="flex items-center gap-3">
+          <h2 class="text-2xl md:text-3xl font-black mb-2 leading-tight">${recipe.title}</h2>
+          <div class="flex items-center gap-3 flex-wrap">
             <span class="bg-orange-100 text-orange-800 px-3 py-2 rounded-full font-bold text-xs md:text-sm">${recipe.cat}</span>
             <span class="text-slate-500 text-xs md:text-sm">Voor ${servings} personen</span>
           </div>
         </div>
-        <button onclick="this.closest('.fixed').remove()" class="text-3xl md:text-4xl font-bold text-slate-400 hover:text-slate-600 ml-4">×</button>
+        <button onclick="this.closest('.fixed').remove()" class="modal-close-btn" aria-label="Sluiten">×</button>
       </div>
-      
-      <div class="tab-navigation px-4 md:px-6 pt-4">
-        <div class="flex gap-1 md:gap-2 border-b overflow-x-auto">
-          <button data-tab="ingredients" onclick="switchTab('ingredients')" class="tab-btn px-3 md:px-6 py-2 md:py-3 font-bold rounded-t-xl bg-orange-600 text-white transition-all whitespace-nowrap">
-            🥘 Ingrediënten
-          </button>
-          <button data-tab="steps" onclick="switchTab('steps')" class="tab-btn px-3 md:px-6 py-2 md:py-3 font-bold rounded-t-xl bg-slate-100 text-slate-700 transition-all whitespace-nowrap">
-            📋 Stappen
-          </button>
-          <button data-tab="shopping" onclick="switchTab('shopping')" class="tab-btn px-3 md:px-6 py-2 md:py-3 font-bold rounded-t-xl bg-slate-100 text-slate-700 transition-all whitespace-nowrap">
-            🛒 Boodschappen
-          </button>
-        </div>
-      </div>
-      
-      <div class="p-4 md:p-6">
-        <div id="tab-ingredients" class="tab-content active">
-          <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6 rounded-2xl">
-            <h3 class="text-lg md:text-xl font-bold mb-4 text-orange-800">Wat heb je nodig?</h3>
-            <ul class="space-y-2 md:space-y-3">
-              ${ingredients.map(i => `
-                <li class="flex items-start gap-3 bg-white p-2 md:p-3 rounded-xl">
-                  <span class="text-orange-600 text-lg md:text-xl flex-shrink-0">•</span>
-                  <span class="flex-1 text-sm md:text-lg">${i}</span>
-                </li>
-              `).join('')}
-            </ul>
+
+      <div class="modal-scrollable">
+        <!-- FIX #5: Tab-knoppen altijd zichtbaar op kleine schermen -->
+        <div class="px-4 md:px-6 pt-4 border-b">
+          <div class="flex gap-1">
+            <button data-tab="ingredients" onclick="switchTab('ingredients')" class="tab-btn modal-tab-btn font-bold rounded-t-xl bg-orange-600 text-white transition-all">
+              🥘 Ingrediënten
+            </button>
+            <button data-tab="steps" onclick="switchTab('steps')" class="tab-btn modal-tab-btn font-bold rounded-t-xl bg-slate-100 text-slate-700 transition-all">
+              📋 Stappen
+            </button>
+            <button data-tab="shopping" onclick="switchTab('shopping')" class="tab-btn modal-tab-btn font-bold rounded-t-xl bg-slate-100 text-slate-700 transition-all">
+              🛒 Boodschappen
+            </button>
           </div>
         </div>
-        
-        <div id="tab-steps" class="tab-content">
-          <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 md:p-6 rounded-2xl">
-            <h3 class="text-lg md:text-xl font-bold mb-4 text-blue-800">Hoe maak je het?</h3>
-            <ol class="space-y-3 md:space-y-4">
-              ${steps.map((s, i) => `
-                <li class="flex gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl">
-                  <span class="w-8 h-8 md:w-10 md:h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-lg">${i+1}</span>
-                  <span class="flex-1 pt-1 md:pt-2 text-sm md:text-lg">${s}</span>
-                </li>
-              `).join('')}
-            </ol>
-          </div>
-        </div>
-        
-        <div id="tab-shopping" class="tab-content">
-          <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 md:p-6 rounded-2xl">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
-              <h3 class="text-lg md:text-xl font-bold text-green-800">Boodschappenlijst</h3>
-              <button onclick="copyRecipeIngredients('${recipe.id}')" class="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 text-sm whitespace-nowrap">
-                📋 Kopieer
-              </button>
+
+        <div class="p-4 md:p-6">
+          <div id="tab-ingredients" class="tab-content active">
+            <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6 rounded-2xl">
+              <h3 class="text-lg md:text-xl font-bold mb-4 text-orange-800">Wat heb je nodig?</h3>
+              <ul class="space-y-2 md:space-y-3">
+                ${ingredients.map(i => `
+                  <li class="flex items-start gap-3 bg-white p-2 md:p-3 rounded-xl">
+                    <span class="text-orange-600 text-lg md:text-xl flex-shrink-0">•</span>
+                    <span class="flex-1 text-sm md:text-lg">${i}</span>
+                  </li>
+                `).join('')}
+              </ul>
             </div>
-            <ul class="space-y-2">
-              ${ingredients.map((ing, i) => `
-                <li class="flex items-start gap-3 bg-white p-2 md:p-3 rounded-xl hover:shadow-md transition-shadow">
-                  <input type="checkbox" class="w-5 h-5 mt-0.5 accent-green-600 flex-shrink-0" />
-                  <span class="flex-1 text-sm md:text-base">${ing}</span>
-                </li>
-              `).join('')}
-            </ul>
           </div>
-        </div>
-      </div>
-      
-      <div class="p-4 md:p-6 pt-0 border-t mt-6">
-        <h3 class="text-xl md:text-2xl font-bold mb-4">Reviews (${reviews.length})</h3>
-        <div class="space-y-3 mb-6 max-h-60 overflow-y-auto">
-          ${reviews.length === 0 ? '<p class="text-sm md:text-base text-slate-500">Nog geen reviews. Wees de eerste!</p>' : reviews.map(r => `
-            <div class="bg-slate-50 p-3 md:p-4 rounded-xl">
-              <div class="flex items-center justify-between mb-2">
-                <span class="font-bold text-sm md:text-base">${r.user}</span>
-                <span class="text-orange-600 font-bold text-sm md:text-base">⭐ ${r.rating}/5</span>
+
+          <div id="tab-steps" class="tab-content">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 md:p-6 rounded-2xl">
+              <h3 class="text-lg md:text-xl font-bold mb-4 text-blue-800">Hoe maak je het?</h3>
+              <ol class="space-y-3 md:space-y-4">
+                ${steps.map((s, i) => `
+                  <li class="flex gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl">
+                    <span class="w-8 h-8 md:w-10 md:h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-lg">${i+1}</span>
+                    <span class="flex-1 pt-1 md:pt-2 text-sm md:text-lg">${s}</span>
+                  </li>
+                `).join('')}
+              </ol>
+            </div>
+          </div>
+
+          <div id="tab-shopping" class="tab-content">
+            <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 md:p-6 rounded-2xl">
+              <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
+                <h3 class="text-lg md:text-xl font-bold text-green-800">Boodschappenlijst</h3>
+                <button onclick="copyRecipeIngredients('${recipe.id}')" class="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 text-sm whitespace-nowrap">
+                  📋 Kopieer
+                </button>
               </div>
-              <p class="text-sm md:text-base">${r.comment}</p>
+              <ul class="space-y-2">
+                ${ingredients.map((ing, i) => `
+                  <li class="flex items-start gap-3 bg-white p-2 md:p-3 rounded-xl hover:shadow-md transition-shadow">
+                    <input type="checkbox" class="w-5 h-5 mt-0.5 accent-green-600 flex-shrink-0" />
+                    <span class="flex-1 text-sm md:text-base">${ing}</span>
+                  </li>
+                `).join('')}
+              </ul>
             </div>
-          `).join('')}
+          </div>
         </div>
-        
-        <div class="bg-slate-50 p-4 md:p-6 rounded-2xl">
-          <h4 class="font-bold mb-3 text-sm md:text-base">Voeg Review Toe</h4>
-          <select id="rating" class="w-full p-3 mb-3 border-2 rounded-xl text-sm md:text-base">
-            <option value="5">5 ⭐ Uitstekend</option>
-            <option value="4">4 ⭐ Goed</option>
-            <option value="3">3 ⭐ Gemiddeld</option>
-            <option value="2">2 ⭐ Matig</option>
-            <option value="1">1 ⭐ Slecht</option>
-          </select>
-          <textarea id="comment" placeholder="Jouw review..." class="w-full p-3 mb-3 border-2 rounded-xl text-sm md:text-base" rows="3"></textarea>
-          <button onclick="addReview('${recipe.id}')" class="w-full bg-orange-600 text-white p-3 rounded-xl font-bold hover:bg-orange-700 text-sm md:text-base">Publiceer Review</button>
+
+        <div class="p-4 md:p-6 pt-0 border-t mt-2">
+          <h3 class="text-xl md:text-2xl font-bold mb-4">Reviews (${reviews.length})</h3>
+          <div class="space-y-3 mb-6 max-h-60 overflow-y-auto">
+            ${reviews.length === 0 ? '<p class="text-sm md:text-base text-slate-500">Nog geen reviews. Wees de eerste!</p>' : reviews.map(r => `
+              <div class="bg-slate-50 p-3 md:p-4 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-bold text-sm md:text-base">${r.user}</span>
+                  <span class="text-orange-600 font-bold text-sm md:text-base">⭐ ${r.rating}/5</span>
+                </div>
+                <p class="text-sm md:text-base">${r.comment}</p>
+              </div>
+            `).join('')}
+          </div>
+          <div class="bg-slate-50 p-4 md:p-6 rounded-2xl">
+            <h4 class="font-bold mb-3 text-sm md:text-base">Voeg Review Toe</h4>
+            <select id="rating" class="w-full p-3 mb-3 border-2 rounded-xl text-sm md:text-base">
+              <option value="5">5 ⭐ Uitstekend</option>
+              <option value="4">4 ⭐ Goed</option>
+              <option value="3">3 ⭐ Gemiddeld</option>
+              <option value="2">2 ⭐ Matig</option>
+              <option value="1">1 ⭐ Slecht</option>
+            </select>
+            <textarea id="comment" placeholder="Jouw review..." class="w-full p-3 mb-3 border-2 rounded-xl text-sm md:text-base" rows="3"></textarea>
+            <button onclick="addReview('${recipe.id}')" class="w-full bg-orange-600 text-white p-3 rounded-xl font-bold hover:bg-orange-700 text-sm md:text-base">Publiceer Review</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1205,7 +1205,6 @@ function copyRecipeIngredients(recipeId) {
   const allRecipes = db.recipes();
   const recipe = allRecipes.find(r => r.id === recipeId);
   if (!recipe) return;
-  
   const ingredients = recipe.ingr.split('||');
   const text = `BOODSCHAPPENLIJST - ${recipe.title}\n\n${ingredients.map((ing, i) => `${i+1}. ${ing}`).join('\n')}`;
   navigator.clipboard.writeText(text).then(() => {
@@ -1240,9 +1239,7 @@ function uploadRecipe() {
   const pending = db.pendingRecipes();
   pending.push({
     id: 'p' + Date.now(),
-    title,
-    cat: category,
-    img: image,
+    title, cat: category, img: image,
     ingr: ingredients.split('\n').filter(l=>l.trim()).join('||'),
     steps: steps.split('\n').filter(l=>l.trim()).join('||'),
     author: currentUser.name
@@ -1281,11 +1278,8 @@ function deleteUser(email) {
 
 const users = db.users();
 if (!users.find(u => u.email === 'admin@weekhap.nl')) {
-  users.push({ 
-    name: 'Admin', 
-    email: 'admin@weekhap.nl', 
-    password: 'admin123', 
-    isAdmin: true,
+  users.push({
+    name: 'Admin', email: 'admin@weekhap.nl', password: 'admin123', isAdmin: true,
     registeredAt: new Date().toISOString(),
     lastLogin: new Date().toISOString(),
     loginCount: 0
@@ -1294,14 +1288,8 @@ if (!users.find(u => u.email === 'admin@weekhap.nl')) {
 } else {
   let updated = false;
   users.forEach(u => {
-    if (!u.registeredAt) {
-      u.registeredAt = new Date('2026-01-01').toISOString();
-      updated = true;
-    }
-    if (!u.loginCount) {
-      u.loginCount = 0;
-      updated = true;
-    }
+    if (!u.registeredAt) { u.registeredAt = new Date('2026-01-01').toISOString(); updated = true; }
+    if (!u.loginCount) { u.loginCount = 0; updated = true; }
   });
   if (updated) db.set('users', users);
 }

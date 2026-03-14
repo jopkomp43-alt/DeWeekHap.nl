@@ -1,2 +1,0 @@
-Cache clear timestamp: 2026-02-22 18:33 CET
-Force rebuild to clear CDN cache

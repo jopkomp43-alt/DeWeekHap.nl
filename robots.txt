@@ -1,3 +1,12 @@
 User-agent: *
 Allow: /
+
+Disallow: /test.html
+Disallow: /inject.html
+Disallow: /seo-content.html
+Disallow: /CACHEBUSTER.txt
+Disallow: /INSTALL.md
+Disallow: /loader.js
+Disallow: /language-switch.js
+
 Sitemap: https://www.deweekhap.nl/sitemap.xml

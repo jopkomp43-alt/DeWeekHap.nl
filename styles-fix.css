@@ -1,35 +1,108 @@
 /* Remove white screen/loading issues */
-
-/* Ensure body is always visible */
 body {
   opacity: 1 !important;
   visibility: visible !important;
 }
-
-/* Remove any loading overlays */
 .loading-overlay,
 .white-screen,
 [class*="loading"] {
   display: none !important;
 }
-
-/* Ensure app container is visible */
 #app {
   opacity: 1 !important;
   visibility: visible !important;
   min-height: 100vh;
 }
-
-/* Language switch mobile responsiveness */
 @media (max-width: 640px) {
-  #lang-nl,
-  #lang-en {
+  #lang-nl, #lang-en {
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
   }
 }
-
-/* Smooth transitions */
 * {
   transition: opacity 0.2s ease-in-out;
+}
+
+/* =============================
+   HERO HEADER
+   ============================= */
+
+/* Plak een hero-banner boven het eerste blok op de info- en homepagina */
+#app > div > div:first-of-type {
+  position: relative;
+}
+
+.dw-hero {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 50%, #9a3412 100%);
+  color: white;
+  padding: 2.5rem 1.5rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 2rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(234, 88, 12, 0.35);
+}
+
+.dw-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 220px; height: 220px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50%;
+}
+
+.dw-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -40px;
+  width: 160px; height: 160px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+}
+
+.dw-hero-logo {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  margin: 0 auto 1rem;
+  display: block;
+  background: white;
+  padding: 6px;
+}
+
+.dw-hero-title {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.dw-hero-sub {
+  font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+  opacity: 0.92;
+  margin-bottom: 1.25rem;
+  font-weight: 600;
+}
+
+.dw-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.dw-hero-badge {
+  background: rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  color: white;
+  padding: 0.35rem 0.9rem;
+  border-radius: 2rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  backdrop-filter: blur(4px);
 }

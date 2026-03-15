@@ -16,6 +16,14 @@
     console.log('✅ Taalswitch geladen');
   };
   document.head.appendChild(jsScript);
+
+  // Load notes feature
+  const notesScript = document.createElement('script');
+  notesScript.src = 'notes.js';
+  notesScript.onload = function() {
+    console.log('✅ Notities feature geladen');
+  };
+  document.head.appendChild(notesScript);
   
   // Ensure body is visible immediately
   document.body.style.opacity = '1';

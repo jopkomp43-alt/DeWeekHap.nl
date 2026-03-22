@@ -1014,7 +1014,7 @@ function renderRecipeCard(recipe, idx, isSaved = false, isMyRecipes = false) {
           <img src="${recipe.img}" class="w-full h-full object-cover" />
           ${recipe.day ? `<div class="absolute top-2 left-2 bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-bold">${recipe.day}</div>` : ''}
         </div>
-        <h3 class="font-black text-base md:text-lg mb-1 leading-tight min-h-[2.5rem]">${recipe.title}</h3>
+      <h3 class="font-black text-base md:text-lg mb-1 leading-tight min-h-[2.5rem] text-slate-900">${recipe.title}</h3>
         <div class="flex items-center justify-between">
           <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-semibold">${recipe.cat}</span>
           <span class="text-xs md:text-sm font-bold">⭐ ${avgRating} (${reviews.length})</span>

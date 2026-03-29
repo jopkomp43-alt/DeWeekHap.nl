@@ -338,7 +338,7 @@ async function fetchMealDBRecipes(count = 20) {
       }
       const rawSteps = meal.strInstructions.split('.').map(s => s.trim()).filter(s => s.length > 10).slice(0, 7);
       const steps = rawSteps.map(step => translateText(step));
-      const translatedTitle = translateText(meal.strMeal);
+
       const translatedCat = translateText(meal.strCategory || 'Internationaal');
       return {
         id: 'mdb' + meal.idMeal,

@@ -1359,3 +1359,16 @@ if (currentUser) {
 </script>
 </body>
 </html>
+<!-- Taalkiezer -->
+<div class="lang-switcher" id="langSwitcher">
+  <button class="lang-btn" aria-haspopup="listbox" aria-expanded="false" id="langBtn">
+    <span class="lang-flag" id="langFlag">🇳🇱</span>
+    <span class="lang-code" id="langCode">NL</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+  </button>
+  <ul class="lang-menu" role="listbox" id="langMenu" aria-label="Kies taal">
+    <li role="option" data-lang="nl" class="lang-option active">🇳🇱 Nederlands</li>
+    <li role="option" data-lang="en" class="lang-option">🇬🇧 English</li>
+    <li role="option" data-lang="de" class="lang-option">🇩🇪 Deutsch</li>
+  </ul>
+</div>

@@ -1397,47 +1397,70 @@ if (currentUser) {
 </div>
 
 <script>
-(function() {
-  var flags = { nl: '🇳🇱', en: '🇬🇧', de: '🇩🇪' };
-  var codes = { nl: 'NL', en: 'EN', de: 'DE' };
-  var btn = document.getElementById('langBtn');
-  var menu = document.getElementById('langMenu');
-  var flagEl = document.getElementById('langFlag');
-  var codeEl = document.getElementById('langCode');
+<!-- VERTALING MET GOOGLE TRANSLATE — plak net voor </body> -->
 
-  if (!btn || !menu) return;
+<style>
+/* Verberg de standaard Google Translate balk bovenaan */
+.goog-te-banner-frame { display: none !important; }
+body { top: 0 !important; }
 
-  btn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    var rect = btn.getBoundingClientRect();
-    menu.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
-    menu.style.right = (window.innerWidth - rect.right) + 'px';
-    menu.classList.toggle('open');
-  });
+/* Eigen taalkiezer knop */
+#lang-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+#lang-select {
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+#lang-select:hover { background: #f5f5f5; }
+</style>
 
-  document.addEventListener('click', function() {
-    menu.classList.remove('open');
-  });
+<!-- Google Translate element (verborgen) -->
+<div id="google_translate_element" style="display:none;"></div>
 
-  menu.querySelectorAll('.lang-option').forEach(function(opt) {
-    opt.addEventListener('click', function() {
-      var lang = opt.getAttribute('data-lang');
-      flagEl.textContent = flags[lang];
-      codeEl.textContent = codes[lang];
-      menu.querySelectorAll('.lang-option').forEach(function(o) {
-        o.classList.remove('active');
-      });
-      opt.classList.add('active');
-      menu.classList.remove('open');
-      // Wissel tekst op pagina
-      document.querySelectorAll('[data-nl]').forEach(function(el) {
-        if (el.getAttribute('data-' + lang)) {
-          el.textContent = el.getAttribute('data-' + lang);
-        }
-      });
-    });
-  });
-})();
+<!-- Eigen nette knop -->
+<div id="lang-widget">
+  <select id="lang-select" onchange="doTranslate(this.value)">
+    <option value="">🌐 Taal</option>
+    <option value="nl">🇳🇱 Nederlands</option>
+    <option value="en">🇬🇧 English</option>
+    <option value="de">🇩🇪 Deutsch</option>
+    <option value="fr">🇫🇷 Français</option>
+    <option value="es">🇪🇸 Español</option>
+  </select>
+</div>
+
+<script>
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'nl',
+    autoDisplay: false
+  }, 'google_translate_element');
+}
+
+function doTranslate(lang) {
+  if (!lang) return;
+  var select = document.querySelector('.goog-te-combo');
+  if (select) {
+    select.value = lang;
+    select.dispatchEvent(new Event('change'));
+  } else {
+    // Wacht tot Google Translate klaar is
+    setTimeout(function() { doTranslate(lang); }, 300);
+  }
+}
+</script>
+
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </script>
 </body>
 </html>

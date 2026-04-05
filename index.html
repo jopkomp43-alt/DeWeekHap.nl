@@ -45,11 +45,12 @@
 </script>
 
 <link rel="icon" href="favicon.png" type="image/png">
-<link rel="apple-touch-icon" href="favicon.png"><!-- FIX #7: styles-fix.css wordt nu correct ingeladen -->
+<link rel="apple-touch-icon" href="favicon.png">
 <link rel="stylesheet" href="styles-fix.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-<style>/* Verberg Google Translate balk en herstel body positie */
+<style>
+/* Verberg Google Translate balk en herstel body positie */
 .goog-te-banner-frame.skiptranslate {
   display: none !important;
 }
@@ -136,7 +137,7 @@ body { top: 0 !important; }
   .mobile-menu-btn { display: none !important; }
 }
 
-/* FIX #4: Sluitknop minimale tap-grootte */
+/* Sluitknop minimale tap-grootte */
 .modal-close-btn {
   min-width: 44px;
   min-height: 44px;
@@ -157,7 +158,7 @@ body { top: 0 !important; }
   color: #1e293b;
 }
 
-/* FIX #5: Tab-knoppen in modal altijd zichtbaar op kleine schermen */
+/* Tab-knoppen in modal altijd zichtbaar op kleine schermen */
 .modal-tab-btn {
   flex: 1;
   min-width: 0;
@@ -175,7 +176,7 @@ body { top: 0 !important; }
   }
 }
 
-/* FIX #3: Modal sticky header correct */
+/* Modal sticky header correct */
 .modal-inner {
   display: flex;
   flex-direction: column;
@@ -196,7 +197,6 @@ body { top: 0 !important; }
 let activeTab = 'ingredients';
 let mobileMenuOpen = false;
 
-// FIX #2: Hamburger menu sluit correct (verwijdert ook .active class)
 function toggleMobileMenu() {
   mobileMenuOpen = !mobileMenuOpen;
   const menu = document.getElementById('mobileMenu');
@@ -234,7 +234,7 @@ function switchTab(tabName) {
   }
 }
 
-// FIX #1: Slechts 1 google translate element per pagina, met unieke ID
+// Slechts 1 google translate element per pagina, met unieke ID
 let translateInitialized = false;
 function googleTranslateElementInit() {
   if (translateInitialized) return;
@@ -245,6 +245,29 @@ function googleTranslateElementInit() {
     layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
     autoDisplay: false
   }, 'google_translate_element');
+}
+
+function doTranslate(lang) {
+  if (!lang) return;
+  
+  var select = document.querySelector('.goog-te-combo');
+  if (select) {
+    select.value = lang;
+    select.dispatchEvent(new Event('change'));
+    return;
+  }
+  
+  var poging = 0;
+  var wachten = setInterval(function() {
+    poging++;
+    var select = document.querySelector('.goog-te-combo');
+    if (select) {
+      clearInterval(wachten);
+      select.value = lang;
+      select.dispatchEvent(new Event('change'));
+    }
+    if (poging > 20) clearInterval(wachten);
+  }, 100);
 }
 
 function formatDate(dateString) {
@@ -955,7 +978,6 @@ function renderNav() {
   const savedMenu = (db.savedMenus()[currentUser.email] || {}).recipes || [];
   const myRecipes = db.savedRecipes()[currentUser.email] || [];
   const pendingCount = db.pendingRecipes().length;
-  // FIX #1: Slechts 1 google_translate_element per pagina, in desktop nav
   return `
     <nav class="bg-white/90 backdrop-blur border-b sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -983,7 +1005,6 @@ function renderNav() {
         </div>
       </div>
 
-      <!-- FIX #2: Mobiel menu zonder google_translate_element duplicaat -->
       <div id="mobileMenu" class="mobile-menu">
         <div class="flex flex-col gap-2">
           <button onclick="changeView('home');closeMobileMenu()" class="w-full text-left px-4 py-3 rounded-lg font-bold ${view==='home'?'bg-orange-600 text-white':'hover:bg-slate-100'}">🏠 Home</button>
@@ -1120,7 +1141,6 @@ function logout() {
 
 function changeView(v) {
   view = v;
-  // FIX #2: gebruik closeMobileMenu voor correcte state reset
   closeMobileMenu();
   render();
 }
@@ -1158,7 +1178,6 @@ function showRecipe(idx, isSaved, isMyRecipes = false) {
   modal.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4';
   modal.onclick = () => modal.remove();
 
-  // FIX #3 & #4: Modal met correcte sticky header en grote sluitknop
   modal.innerHTML = `
     <div class="modal-inner bg-white rounded-3xl max-w-4xl w-full" onclick="event.stopPropagation()">
       <div class="p-4 md:p-6 pb-0 flex justify-between items-start gap-3 border-b pb-4">
@@ -1174,7 +1193,6 @@ function showRecipe(idx, isSaved, isMyRecipes = false) {
       </div>
 
       <div class="modal-scrollable">
-        <!-- FIX #5: Tab-knoppen altijd zichtbaar op kleine schermen -->
         <div class="px-4 md:px-6 pt-4 border-b">
           <div class="flex gap-1">
             <button data-tab="ingredients" onclick="switchTab('ingredients')" class="tab-btn modal-tab-btn font-bold rounded-t-xl bg-orange-600 text-white transition-all">
@@ -1373,127 +1391,6 @@ if (currentUser) {
 } else {
   render();
 }
-</script><!-- TAALKIEZER — plak dit net voor </body> -->
-
-<style>
-.lang-switcher { position: relative; display: inline-block; }
-.lang-btn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 12px; border: 1px solid #ccc;
-  border-radius: 8px; background: white;
-  cursor: pointer; font-size: 14px; font-weight: 500;
-  color: #333;
-}
-.lang-btn:hover { background: #f5f5f5; }
-.lang-menu {
-  display: none; position: fixed;
-  background: white; border: 1px solid #ddd;
-  border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  list-style: none; padding: 4px; min-width: 160px; z-index: 9999;
-}
-.lang-menu.open { display: block; }
-.lang-option {
-  padding: 10px 14px; border-radius: 6px;
-  cursor: pointer; font-size: 14px; color: #333;
-}
-.lang-option:hover { background: #f0f0f0; }
-.lang-option.active { font-weight: 700; background: #e8f4f5; }
-</style>
-
-<div class="lang-switcher" id="langSwitcher" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
-  <button class="lang-btn" id="langBtn">
-    <span id="langFlag">🇳🇱</span>
-    <span id="langCode">NL</span>
-    ▾
-  </button>
-  <ul class="lang-menu" id="langMenu">
-    <li class="lang-option active" data-lang="nl">🇳🇱 Nederlands</li>
-    <li class="lang-option" data-lang="en">🇬🇧 English</li>
-    <li class="lang-option" data-lang="de">🇩🇪 Deutsch</li>
-  </ul>
-</div>
-
-<script>
-<!-- VERTALING MET GOOGLE TRANSLATE — plak net voor </body> -->
-
-<style>
-/* Verberg de standaard Google Translate balk bovenaan */
-.goog-te-banner-frame { display: none !important; }
-body { top: 0 !important; }
-
-/* Eigen taalkiezer knop */
-#lang-widget {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 9999;
-}
-
-
-<!-- Eigen nette knop -->
-<div id="lang-widget">
-  <select id="lang-select" onchange="doTranslate(this.value)">
-    <option value="">🌐 Taal</option>
-    <option value="nl">🇳🇱 Nederlands</option>
-    <option value="en">🇬🇧 English</option>
-    <option value="de">🇩🇪 Deutsch</option>
-    <option value="fr">🇫🇷 Français</option>
-    <option value="es">🇪🇸 Español</option>
-  </select>
-</div>
-
-<script>
-<script>
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({
-    pageLanguage: 'nl',
-    autoDisplay: false
-  }, 'google_translate_element');
-}
-
-function doTranslate(lang) {
-  if (!lang) return;
-  
-  var select = document.querySelector('.goog-te-combo');
-  if (select) {
-    select.value = lang;
-    select.dispatchEvent(new Event('change'));
-    return;
-  }
-  
-  var poging = 0;
-  var wachten = setInterval(function() {
-    poging++;
-    var select = document.querySelector('.goog-te-combo');
-    if (select) {
-      clearInterval(wachten);
-      select.value = lang;
-      select.dispatchEvent(new Event('change'));
-    }
-    if (poging > 20) clearInterval(wachten);
-  }, 100);
-}
-</script>
-
-<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-</script>
-function doTranslate(lang) {
-  if (!lang) return;
-  
-  // Gebruik de directe Google Translate URL methode
-  var huidigUrl = window.location.href;
-  var basisUrl = huidigUrl.replace(/^https?:\/\/translate\.google\.com\/translate.*?&u=/, '');
-  
-  if (lang === 'nl') {
-    // Ga terug naar de originele site
-    window.location.href = basisUrl.split('?')[0];
-  } else {
-    // Stuur naar Google Translate
-    window.location.href = 'https://translate.google.com/translate?sl=nl&tl=' + lang + '&u=' + encodeURIComponent(basisUrl);
-  }
-}
 </script>
 </body>
 </html>
-

@@ -8,3 +8,4 @@ Disallow: /CACHEBUSTER.txt
 Disallow: /INSTALL.md
 
 Sitemap: https://www.deweekhap.nl/sitemap.xml
+Sitemap: https://deweekhap.nl/sitemap.xml
